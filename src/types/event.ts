@@ -36,6 +36,13 @@ export interface Event {
   actionTriggerHoldEmail?: string;
   actionTriggerAskEmail?: string;
   hasConfirmedVenue?: boolean;
+  // Additional Airtable fields
+  description?: string;
+  tags?: string;
+  website?: string;
+  contactInfo?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface EventFields {

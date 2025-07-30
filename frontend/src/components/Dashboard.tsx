@@ -1,14 +1,19 @@
-import React from 'react';
-import { LogOut, RefreshCw, Users, Calendar, Globe, TrendingUp } from 'lucide-react';
+import React, { useState } from 'react';
+import { LogOut, RefreshCw, Users, Calendar, Globe, TrendingUp, Filter } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useDashboard } from '@/hooks/useDashboard';
+import { useTriageStatuses } from '@/hooks/useTriageStatuses';
 import { EventCard } from './EventCard';
 import { StatsCard } from './StatsCard';
 import { EventMap } from './EventMap';
 
 export function Dashboard() {
   const { user, logout } = useAuth();
-  const { data, loading, error, refresh } = useDashboard();
+  const [selectedTriageStatus, setSelectedTriageStatus] = useState<string>('');
+  const { data, loading, error, refresh } = useDashboard({ 
+    triageStatus: selectedTriageStatus || undefined 
+  });
+  const { statuses: triageStatuses, loading: statusesLoading } = useTriageStatuses();
 
   if (loading) {
     return (
@@ -65,6 +70,24 @@ export function Dashboard() {
               <p className="text-sm text-gray-600">{data.organizerEmail || user?.email}</p>
             </div>
             <div className="flex items-center space-x-4">
+              {/* Triage Status Filter */}
+              <div className="flex items-center space-x-2">
+                <Filter className="w-4 h-4 text-gray-500" />
+                <select
+                  value={selectedTriageStatus}
+                  onChange={(e) => setSelectedTriageStatus(e.target.value)}
+                  className="text-sm border border-gray-300 rounded-md px-3 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  disabled={statusesLoading}
+                >
+                  <option value="">All Status</option>
+                  {triageStatuses.map((status) => (
+                    <option key={status} value={status}>
+                      {status}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
               <button
                 onClick={refresh}
                 className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
@@ -95,7 +118,17 @@ export function Dashboard() {
         {/* Events Section */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">Your Events</h2>
+            <div className="flex items-center space-x-4">
+              <h2 className="text-xl font-semibold text-gray-900">Your Events</h2>
+              {selectedTriageStatus && (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  Filtered: {selectedTriageStatus}
+                </span>
+              )}
+              <span className="text-sm text-gray-500">
+                {data.events ? `${data.events.length} event${data.events.length !== 1 ? 's' : ''}` : ''}
+              </span>
+            </div>
             <span className="text-sm text-gray-500">
               Updates every 30 seconds
             </span>

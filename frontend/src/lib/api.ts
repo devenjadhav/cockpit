@@ -76,8 +76,24 @@ class ApiClient {
   }
 
   // Dashboard endpoints
-  async getDashboard(): Promise<ApiResponse<DashboardData>> {
-    const response: AxiosResponse<ApiResponse<DashboardData>> = await this.client.get('/dashboard');
+  async getDashboard(filters?: { triageStatus?: string }): Promise<ApiResponse<DashboardData>> {
+    const params = new URLSearchParams();
+    if (filters?.triageStatus) {
+      params.append('triageStatus', filters.triageStatus);
+    }
+    
+    const url = `/dashboard${params.toString() ? `?${params.toString()}` : ''}`;
+    const response: AxiosResponse<ApiResponse<DashboardData>> = await this.client.get(url);
+    return response.data;
+  }
+
+  async getTriageStatuses(): Promise<ApiResponse<string[]>> {
+    const response: AxiosResponse<ApiResponse<string[]>> = await this.client.get('/dashboard/triage-statuses');
+    return response.data;
+  }
+
+  async getAdminStatus(): Promise<ApiResponse<{ isAdmin: boolean }>> {
+    const response: AxiosResponse<ApiResponse<{ isAdmin: boolean }>> = await this.client.get('/admin/status');
     return response.data;
   }
 

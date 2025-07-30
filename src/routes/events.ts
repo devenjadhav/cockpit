@@ -82,6 +82,17 @@ router.get('/:eventId', async (req: AuthenticatedRequest, res) => {
       attendeeCount: 0, // No attendee tracking
       capacityPercentage: 0, // No capacity tracking
       isUpcoming: event.triageStatus === 'Approved',
+      // Include admin-only fields if user is admin
+      ...(isAdmin && {
+        organizerEmail: event.email,
+        registrationDeadline: event.registrationDeadline,
+        createdAt: event.createdAt,
+        updatedAt: event.updatedAt,
+        description: event.description,
+        tags: event.tags,
+        website: event.website,
+        contactInfo: event.contactInfo,
+      })
     };
 
     res.json({

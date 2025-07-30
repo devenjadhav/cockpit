@@ -2,8 +2,12 @@ import { airtableService } from './airtableService';
 import { DashboardData, DashboardStats, EventCardData } from '../types/dashboard';
 import { Event } from '../types/event';
 
+interface DashboardFilters {
+  triageStatus?: string;
+}
+
 export class DashboardService {
-  static async getDashboardData(organizerEmail: string, isAdmin: boolean = false): Promise<DashboardData> {
+  static async getDashboardData(organizerEmail: string, isAdmin: boolean = false, filters?: DashboardFilters): Promise<DashboardData> {
     let events: Event[];
     
     if (isAdmin) {
@@ -14,6 +18,13 @@ export class DashboardService {
       // Get only organizer's events for regular users
       events = await airtableService.getEventsByOrganizer(organizerEmail);
       console.log(`Found ${events.length} events for ${organizerEmail}:`, events.map(e => ({ name: e.eventName, format: e.eventFormat })));
+    }
+    
+    // Apply filters if provided
+    if (filters?.triageStatus) {
+      console.log(`Filtering events by triageStatus: ${filters.triageStatus}`);
+      events = events.filter(event => event.triageStatus === filters.triageStatus);
+      console.log(`After filtering: ${events.length} events remaining`);
     }
     
     // Create event cards without attendee data

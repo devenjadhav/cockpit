@@ -2,7 +2,11 @@ import { useState, useEffect } from 'react';
 import { apiClient } from '@/lib/api';
 import { DashboardData } from '@/types/api';
 
-export function useDashboard() {
+interface DashboardFilters {
+  triageStatus?: string;
+}
+
+export function useDashboard(filters?: DashboardFilters) {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -11,7 +15,7 @@ export function useDashboard() {
     try {
       setLoading(true);
       setError(null);
-      const response = await apiClient.getDashboard();
+      const response = await apiClient.getDashboard(filters);
       
       if (response.success && response.data) {
         setData(response.data);
@@ -27,7 +31,7 @@ export function useDashboard() {
 
   useEffect(() => {
     fetchDashboard();
-  }, []);
+  }, [filters?.triageStatus]);
 
   // Real-time updates - poll every 30 seconds
   useEffect(() => {

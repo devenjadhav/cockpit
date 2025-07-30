@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Calendar, MapPin, Users, Edit, Save, X, HelpCircle, FileText } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users, Edit, Save, X, HelpCircle, FileText, Mail, Clock, Tag, Globe, Phone, Database } from 'lucide-react';
 import { apiClient } from '@/lib/api';
 import { AuthGuard } from '@/components/AuthGuard';
 import { CountryFlag } from '@/components/ui/CountryFlag';
@@ -37,6 +37,15 @@ interface EventData {
   triageStatus?: string;
   hasConfirmedVenue?: boolean;
   notes?: string;
+  // Admin-only fields
+  organizerEmail?: string;
+  registrationDeadline?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  description?: string;
+  tags?: string;
+  website?: string;
+  contactInfo?: string;
 }
 
 export default function EventManagePage() {
@@ -73,15 +82,10 @@ export default function EventManagePage() {
 
   const checkAdminStatus = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/status`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-        },
-      });
+      const response = await apiClient.getAdminStatus();
 
-      if (response.ok) {
-        const data = await response.json();
-        setIsAdmin(data.isAdmin);
+      if (response.success) {
+        setIsAdmin(response.data.isAdmin);
       } else {
         setIsAdmin(false);
       }
@@ -151,12 +155,14 @@ export default function EventManagePage() {
     });
   };
 
-  if (loading) {
+  if (loading || adminLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading event...</p>
+          <p className="mt-4 text-gray-600">
+            {loading ? 'Loading event...' : 'Checking permissions...'}
+          </p>
         </div>
       </div>
     );
@@ -288,6 +294,70 @@ export default function EventManagePage() {
                 </span>
               )}
             </div>
+
+            {/* Event Description */}
+            {event.description && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Event Description</h3>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-gray-700 whitespace-pre-wrap">{event.description}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Event Tags */}
+            {event.tags && (
+              <div className="mb-6">
+                <div className="flex items-center space-x-2 mb-3">
+                  <Tag className="w-5 h-5 text-gray-600" />
+                  <h3 className="text-lg font-semibold text-gray-900">Tags</h3>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {event.tags.split(',').map((tag, index) => (
+                    <span
+                      key={index}
+                      className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full"
+                    >
+                      {tag.trim()}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Website and Contact Info */}
+            {(event.website || event.contactInfo) && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Contact Information</h3>
+                <div className="space-y-3">
+                  {event.website && (
+                    <div className="flex items-center text-gray-600">
+                      <Globe className="w-5 h-5 mr-3" />
+                      <div>
+                        <p className="font-medium">Website</p>
+                        <a 
+                          href={event.website} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 text-sm"
+                        >
+                          {event.website}
+                        </a>
+                      </div>
+                    </div>
+                  )}
+                  {event.contactInfo && (
+                    <div className="flex items-center text-gray-600">
+                      <Phone className="w-5 h-5 mr-3" />
+                      <div>
+                        <p className="font-medium">Contact</p>
+                        <p className="text-sm">{event.contactInfo}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Event Details Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -438,6 +508,78 @@ export default function EventManagePage() {
             </div>
           </div>
         </div>
+
+        {/* Admin-Only Information Section */}
+        {isAdmin && (
+          <div className="mt-8 bg-white rounded-lg shadow-md overflow-hidden border-2 border-dashed border-yellow-400">
+            <div className="bg-yellow-50 px-4 py-2 border-b border-yellow-200">
+              <div className="flex items-center">
+                <Database className="w-4 h-4 text-yellow-600 mr-2" />
+                <span className="text-sm font-medium text-yellow-800">Admin Information</span>
+                <span className="ml-2 text-xs text-yellow-600">(Admin Only)</span>
+              </div>
+            </div>
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Organizer Information */}
+                <div className="space-y-4">
+                  <h4 className="font-semibold text-gray-900">Organizer Details</h4>
+                  
+                  {event.organizerEmail && (
+                    <div className="flex items-center text-gray-600">
+                      <Mail className="w-4 h-4 mr-3" />
+                      <div>
+                        <p className="font-medium">Organizer Email</p>
+                        <p className="text-sm font-mono">{event.organizerEmail}</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {event.registrationDeadline && (
+                    <div className="flex items-center text-gray-600">
+                      <Clock className="w-4 h-4 mr-3" />
+                      <div>
+                        <p className="font-medium">Registration Deadline</p>
+                        <p className="text-sm">{formatDate(event.registrationDeadline)}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* System Information */}
+                <div className="space-y-4">
+                  <h4 className="font-semibold text-gray-900">System Metadata</h4>
+                  
+                  {event.createdAt && (
+                    <div className="flex items-center text-gray-600">
+                      <Calendar className="w-4 h-4 mr-3" />
+                      <div>
+                        <p className="font-medium">Created At</p>
+                        <p className="text-sm">{new Date(event.createdAt).toLocaleString()}</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {event.updatedAt && (
+                    <div className="flex items-center text-gray-600">
+                      <Calendar className="w-4 h-4 mr-3" />
+                      <div>
+                        <p className="font-medium">Last Updated</p>
+                        <p className="text-sm">{new Date(event.updatedAt).toLocaleString()}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <div className="mt-4 pt-4 border-t border-yellow-200">
+                <p className="text-xs text-gray-500">
+                  This information is only visible to administrators and contains sensitive organizer data and system metadata.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Admin Notes Section */}
         {isAdmin && (
