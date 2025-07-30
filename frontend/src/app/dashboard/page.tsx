@@ -1,12 +1,12 @@
 'use client';
 
 import { Dashboard } from '@/components/Dashboard';
-import { AuthProvider } from '@/hooks/useAuth';
+import { AuthGuard } from '@/components/AuthGuard';
 
 export default function DashboardPage() {
   return (
-    <AuthProvider>
+    <AuthGuard>
       <Dashboard />
-    </AuthProvider>
+    </AuthGuard>
   );
 }

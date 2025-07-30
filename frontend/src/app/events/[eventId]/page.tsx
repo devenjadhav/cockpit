@@ -2,10 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Calendar, MapPin, Users, Edit, Save, X, HelpCircle } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users, Edit, Save, X, HelpCircle, FileText } from 'lucide-react';
 import { apiClient } from '@/lib/api';
+import { AuthGuard } from '@/components/AuthGuard';
 import { CountryFlag } from '@/components/ui/CountryFlag';
 import { CapacityIndicator } from '@/components/ui/CapacityIndicator';
+import { RichTextEditor } from '@/components/ui/RichTextEditor';
+import { MarkdownRenderer } from '@/components/ui/MarkdownRenderer';
 
 interface EventData {
   id: string;
@@ -33,6 +36,7 @@ interface EventData {
   estimatedAttendeeCount?: number;
   triageStatus?: string;
   hasConfirmedVenue?: boolean;
+  notes?: string;
 }
 
 export default function EventManagePage() {
@@ -45,6 +49,8 @@ export default function EventManagePage() {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [adminLoading, setAdminLoading] = useState(true);
   
   // Edit form state
   const [editForm, setEditForm] = useState({
@@ -55,13 +61,37 @@ export default function EventManagePage() {
     state: '',
     zipcode: '',
     estimatedAttendeeCount: 0,
+    notes: '',
   });
 
   useEffect(() => {
     if (eventId) {
       fetchEvent();
+      checkAdminStatus();
     }
   }, [eventId]);
+
+  const checkAdminStatus = async () => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/status`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setIsAdmin(data.isAdmin);
+      } else {
+        setIsAdmin(false);
+      }
+    } catch (error) {
+      console.error('Failed to check admin status:', error);
+      setIsAdmin(false);
+    } finally {
+      setAdminLoading(false);
+    }
+  };
 
   const fetchEvent = async () => {
     try {
@@ -78,6 +108,7 @@ export default function EventManagePage() {
           state: response.data.state || '',
           zipcode: response.data.zipcode || '',
           estimatedAttendeeCount: response.data.estimatedAttendeeCount || 0,
+          notes: response.data.notes || '',
         });
       } else {
         setError('Failed to load event');
@@ -168,7 +199,8 @@ export default function EventManagePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <AuthGuard>
+      <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -210,6 +242,7 @@ export default function EventManagePage() {
                     state: event.state || '',
                     zipcode: event.zipcode || '',
                     estimatedAttendeeCount: event.estimatedAttendeeCount || 0,
+                    notes: event.notes || '',
                   });
                   }}
                   className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
@@ -406,6 +439,52 @@ export default function EventManagePage() {
           </div>
         </div>
 
+        {/* Admin Notes Section */}
+        {isAdmin && (
+          <div className="mt-8 bg-white rounded-lg shadow-md overflow-hidden border-2 border-dashed border-yellow-400">
+            <div className="bg-yellow-50 px-4 py-2 border-b border-yellow-200">
+              <div className="flex items-center">
+                <FileText className="w-4 h-4 text-yellow-600 mr-2" />
+                <span className="text-sm font-medium text-yellow-800">Admin Notes</span>
+                <span className="ml-2 text-xs text-yellow-600">(Admin Only)</span>
+              </div>
+            </div>
+            <div className="p-6">
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Internal Notes
+                </label>
+                {editing ? (
+                  <RichTextEditor
+                    value={editForm.notes}
+                    onChange={(value) => setEditForm({...editForm, notes: value})}
+                    placeholder="Add internal notes about this event..."
+                    className="focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                  />
+                ) : (
+                  <div className="min-h-[80px] p-3 bg-gray-50 border border-gray-200 rounded-md">
+                    {event?.notes ? (
+                      <MarkdownRenderer 
+                        content={event.notes}
+                        className="text-sm text-gray-700"
+                      />
+                    ) : (
+                      <div className="text-sm text-gray-500 italic">
+                        No notes added yet.
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+              {!editing && (
+                <p className="text-xs text-gray-500">
+                  These notes are only visible to administrators and are used for internal tracking.
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Additional Actions */}
         <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
           <button
@@ -448,6 +527,7 @@ export default function EventManagePage() {
           </button>
         </div>
       </div>
-    </div>
+      </div>
+    </AuthGuard>
   );
 }

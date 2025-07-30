@@ -67,8 +67,9 @@ router.get('/:eventId', async (req: AuthenticatedRequest, res) => {
       } as ApiResponse);
     }
 
-    // Check if user is the organizer
-    if (event.email !== req.user.email) {
+    // Check if user is an admin or the organizer
+    const isAdmin = await airtableService.isAdmin(req.user.email);
+    if (!isAdmin && event.email !== req.user.email) {
       return res.status(403).json({
         success: false,
         message: 'Access denied. You can only view your own events.',
@@ -121,7 +122,9 @@ router.put('/:eventId', async (req: AuthenticatedRequest, res) => {
       } as ApiResponse);
     }
 
-    if (existingEvent.email !== req.user.email) {
+    // Check if user is an admin or the organizer
+    const isAdmin = await airtableService.isAdmin(req.user.email);
+    if (!isAdmin && existingEvent.email !== req.user.email) {
       return res.status(403).json({
         success: false,
         message: 'Access denied. You can only update your own events.',
@@ -192,7 +195,9 @@ router.get('/:eventId/stats', async (req: AuthenticatedRequest, res) => {
       } as ApiResponse);
     }
 
-    if (event.email !== req.user.email) {
+    // Check if user is an admin or the organizer
+    const isAdmin = await airtableService.isAdmin(req.user.email);
+    if (!isAdmin && event.email !== req.user.email) {
       return res.status(403).json({
         success: false,
         message: 'Access denied. You can only view statistics for your own events.',
@@ -255,7 +260,9 @@ router.post('/:eventId/notify', async (req: AuthenticatedRequest, res) => {
       } as ApiResponse);
     }
 
-    if (event.email !== req.user.email) {
+    // Check if user is an admin or the organizer
+    const isAdmin = await airtableService.isAdmin(req.user.email);
+    if (!isAdmin && event.email !== req.user.email) {
       return res.status(403).json({
         success: false,
         message: 'Access denied. You can only send updates for your own events.',

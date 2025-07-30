@@ -3,6 +3,7 @@ import { DashboardService } from '../services/dashboardService';
 import { authenticateToken } from '../middleware/auth';
 import { AuthenticatedRequest } from '../types/auth';
 import { ApiResponse } from '../types/api';
+import { airtableService } from '../services/airtableService';
 
 const router = express.Router();
 
@@ -10,7 +11,9 @@ const router = express.Router();
 router.get('/test', async (req, res) => {
   try {
     console.log('Testing dashboard for dev@hackclub.com');
-    const dashboardData = await DashboardService.getDashboardData('dev@hackclub.com');
+    const isAdmin = await airtableService.isAdmin('dev@hackclub.com');
+    console.log('Testing dashboard with admin status:', isAdmin);
+    const dashboardData = await DashboardService.getDashboardData('dev@hackclub.com', isAdmin);
     console.log('Dashboard data retrieved:', JSON.stringify(dashboardData, null, 2));
     res.json({
       success: true,
@@ -29,7 +32,7 @@ router.get('/test', async (req, res) => {
 // Apply authentication middleware to all other routes
 router.use(authenticateToken);
 
-// GET /api/dashboard - overview of all organizer's events
+// GET /api/dashboard - overview of organizer's events (or all events if admin)
 router.get('/', async (req: AuthenticatedRequest, res) => {
   try {
     if (!req.user?.email) {
@@ -39,7 +42,11 @@ router.get('/', async (req: AuthenticatedRequest, res) => {
       } as ApiResponse);
     }
 
-    const dashboardData = await DashboardService.getDashboardData(req.user.email);
+    // Check if user is an admin
+    const isAdmin = await airtableService.isAdmin(req.user.email);
+    console.log(`Dashboard request from ${req.user.email} - isAdmin: ${isAdmin}`);
+
+    const dashboardData = await DashboardService.getDashboardData(req.user.email, isAdmin);
 
     res.json({
       success: true,

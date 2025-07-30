@@ -3,10 +3,18 @@ import { DashboardData, DashboardStats, EventCardData } from '../types/dashboard
 import { Event } from '../types/event';
 
 export class DashboardService {
-  static async getDashboardData(organizerEmail: string): Promise<DashboardData> {
-    // Get all events for organizer
-    const events = await airtableService.getEventsByOrganizer(organizerEmail);
-    console.log(`Found ${events.length} events for ${organizerEmail}:`, events.map(e => ({ name: e.eventName, format: e.eventFormat })));
+  static async getDashboardData(organizerEmail: string, isAdmin: boolean = false): Promise<DashboardData> {
+    let events: Event[];
+    
+    if (isAdmin) {
+      // Get all events for admin users
+      events = await airtableService.getAllEvents();
+      console.log(`Found ${events.length} events for admin ${organizerEmail}`);
+    } else {
+      // Get only organizer's events for regular users
+      events = await airtableService.getEventsByOrganizer(organizerEmail);
+      console.log(`Found ${events.length} events for ${organizerEmail}:`, events.map(e => ({ name: e.eventName, format: e.eventFormat })));
+    }
     
     // Create event cards without attendee data
     const eventCards = events.map(event => this.createEventCard(event));
@@ -50,12 +58,37 @@ export class DashboardService {
       maxAttendees: event.estimatedAttendeeCount,
       capacityPercentage,
       capacityStatus,
-      status: event.triageStatus.toLowerCase() as any, // 'approved', 'pending', etc.
+      status: DashboardService.mapTriageStatusToEventStatus(event.triageStatus), // 'draft', 'published', etc.
       isUpcoming,
       daysUntilEvent,
       eventFormat: event.eventFormat,
       hasConfirmedVenue: event.hasConfirmedVenue,
     };
+  }
+
+  private static mapTriageStatusToEventStatus(triageStatus?: string): 'draft' | 'published' | 'cancelled' | 'completed' {
+    if (!triageStatus) return 'draft';
+    
+    const status = triageStatus.toLowerCase();
+    switch (status) {
+      case 'approved':
+      case 'live':
+      case 'published':
+        return 'published';
+      case 'completed':
+      case 'finished':
+      case 'ended':
+        return 'completed';
+      case 'cancelled':
+      case 'canceled':
+      case 'rejected':
+        return 'cancelled';
+      case 'pending':
+      case 'draft':
+      case 'awaiting approval':
+      default:
+        return 'draft';
+    }
   }
 
   private static calculateDashboardStats(events: Event[], eventCards: EventCardData[]): DashboardStats {

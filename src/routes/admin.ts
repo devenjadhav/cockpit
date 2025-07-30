@@ -13,7 +13,9 @@ const router = express.Router();
 // Get all events (admin only)
 router.get('/events', adminAuth, async (req, res) => {
   try {
+    console.log('Admin events endpoint called');
     const events = await airtableService.getAllEvents();
+    console.log(`Found ${events.length} events for admin view`);
     
     const response: ApiResponse<Event[]> = {
       success: true,
@@ -36,6 +38,8 @@ router.get('/events', adminAuth, async (req, res) => {
 // Check admin status
 router.get('/status', adminAuth, async (req: AuthenticatedRequest, res) => {
   try {
+    console.log('Admin status endpoint called for user:', req.user?.email);
+    
     if (!req.user?.email) {
       return res.status(401).json({
         success: false,
@@ -44,6 +48,7 @@ router.get('/status', adminAuth, async (req: AuthenticatedRequest, res) => {
     }
 
     const admin = await airtableService.getAdminByEmail(req.user.email);
+    console.log('Admin data found:', admin);
     
     const response: ApiResponse<{ isAdmin: boolean; admin: any }> = {
       success: true,
@@ -60,6 +65,30 @@ router.get('/status', adminAuth, async (req: AuthenticatedRequest, res) => {
     const response: ApiResponse<null> = {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to check admin status'
+    };
+    
+    res.status(500).json(response);
+  }
+});
+
+// Clear cache (admin only)
+router.post('/clear-cache', adminAuth, async (req, res) => {
+  try {
+    const { cacheService } = await import('../services/cacheService');
+    cacheService.clear();
+    
+    const response: ApiResponse<{ message: string }> = {
+      success: true,
+      data: { message: 'Cache cleared successfully' }
+    };
+    
+    res.json(response);
+  } catch (error) {
+    console.error('Error clearing cache:', error);
+    
+    const response: ApiResponse<null> = {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to clear cache'
     };
     
     res.status(500).json(response);

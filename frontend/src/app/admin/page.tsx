@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { AuthGuard } from '@/components/AuthGuard';
 import { useRouter } from 'next/navigation';
 
 interface Event {
@@ -22,7 +23,7 @@ interface Event {
 }
 
 export default function AdminPage() {
-  const { token, user, logout } = useAuth();
+  const { token, user, logout, loading: authLoading } = useAuth();
   const router = useRouter();
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,64 +31,108 @@ export default function AdminPage() {
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
+    // Wait for auth to finish loading
+    if (authLoading) {
+      return;
+    }
+
+    // If not authenticated after loading is complete, redirect to login
     if (!token) {
       router.push('/login');
       return;
     }
 
     checkAdminStatus();
-    fetchAllEvents();
-  }, [token, router]);
+  }, [token, authLoading, router]);
+
+  // Separate effect to fetch events only after admin status is confirmed
+  useEffect(() => {
+    if (isAdmin && token) {
+      fetchAllEvents();
+    }
+  }, [isAdmin, token]);
 
   const checkAdminStatus = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/status`, {
+      console.log('Checking admin status with token:', token ? 'present' : 'missing');
+      console.log('API URL:', process.env.NEXT_PUBLIC_API_URL);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/status`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
 
+      console.log('Admin status response:', response.status, response.statusText);
+
       if (!response.ok) {
+        if (response.status === 401) {
+          console.log('Unauthorized - redirecting to login');
+          setLoading(false);
+          router.push('/login');
+          return;
+        }
         if (response.status === 403) {
           setError('Access denied. Admin privileges required.');
+          setLoading(false);
           return;
         }
         throw new Error('Failed to check admin status');
       }
 
       const data = await response.json();
+      console.log('Admin status data:', data);
       setIsAdmin(data.success);
+      
+      // If not admin, stop loading here
+      if (!data.success) {
+        setError('Access denied. Admin privileges required.');
+        setLoading(false);
+      }
     } catch (err) {
       console.error('Admin status check error:', err);
       setError('Failed to verify admin access');
+      setLoading(false);
     }
   };
 
   const fetchAllEvents = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/events`, {
+      console.log('Fetching admin events with token:', token ? 'present' : 'missing');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/events`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
 
+      console.log('Admin events response status:', response.status);
+
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Admin events error response:', errorText);
+        
         if (response.status === 403) {
           setError('Access denied. Admin privileges required.');
           return;
         }
-        throw new Error('Failed to fetch events');
+        if (response.status === 401) {
+          setError('Authentication failed. Please login again.');
+          router.push('/login');
+          return;
+        }
+        throw new Error(`Failed to fetch events: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
+      console.log('Admin events data received:', data.success, data.data?.length || 0, 'events');
+      
       if (data.success) {
-        setEvents(data.data);
+        setEvents(data.data || []);
       } else {
         setError(data.error || 'Failed to fetch events');
       }
     } catch (err) {
       console.error('Fetch events error:', err);
-      setError('Failed to load events');
+      setError(`Failed to load events: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setLoading(false);
     }
@@ -107,8 +152,22 @@ export default function AdminPage() {
     }
   };
 
+  // Show loading while auth is loading
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Loading...</div>
+      </div>
+    );
+  }
+
+  // If not authenticated, redirect will happen in useEffect
   if (!token) {
-    return <div>Redirecting to login...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Redirecting to login...</div>
+      </div>
+    );
   }
 
   if (loading) {
@@ -136,7 +195,8 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <AuthGuard>
+      <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
@@ -222,6 +282,7 @@ export default function AdminPage() {
           )}
         </div>
       </main>
-    </div>
+      </div>
+    </AuthGuard>
   );
 }

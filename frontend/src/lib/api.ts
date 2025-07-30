@@ -109,7 +109,7 @@ class ApiClient {
 
   logout(): void {
     this.clearToken();
-    window.location.href = '/auth/login';
+    window.location.href = '/login';
   }
 }
 

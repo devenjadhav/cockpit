@@ -248,7 +248,7 @@ export class AirtableService {
         })
         .all();
 
-      const isAdmin = records.length > 0 && records[0].fields.user_status === 'active';
+      const isAdmin = records.length > 0 && (records[0].fields.user_status === 'active' || records[0].fields.user_status === 'admin');
       
       // Cache the result for 10 minutes
       cacheService.set(cacheKey, isAdmin, 10 * 60 * 1000);
