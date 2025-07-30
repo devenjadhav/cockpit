@@ -1,8 +1,8 @@
 import React from 'react';
-import { Calendar, MapPin, Users, Settings, Clock } from 'lucide-react';
+import { Calendar, MapPin, Users, Settings, MapPin as Venue } from 'lucide-react';
 import { EventCardData } from '@/types/api';
 import { CountryFlag } from './ui/CountryFlag';
-import { CapacityIndicator, CapacityBadge } from './ui/CapacityIndicator';
+import { CapacityIndicator } from './ui/CapacityIndicator';
 import { clsx } from 'clsx';
 
 interface EventCardProps {
@@ -65,6 +65,7 @@ export function EventCard({ event, onManage }: EventCardProps) {
     isUpcoming: event?.isUpcoming || false,
     daysUntilEvent: event?.daysUntilEvent || 0,
     eventFormat: event?.eventFormat || '',
+    hasConfirmedVenue: event?.hasConfirmedVenue,
   };
   
   const statusStyle = statusConfig[safeEvent.status as keyof typeof statusConfig] || statusConfig.draft;
@@ -120,12 +121,21 @@ export function EventCard({ event, onManage }: EventCardProps) {
             )}
           </div>
 
-          {safeEvent.isUpcoming && (
-            <div className="flex items-center text-sm text-gray-600">
-              <Clock className="w-4 h-4 mr-2" />
-              <span>{formatDaysUntil(safeEvent.daysUntilEvent || 0)}</span>
-            </div>
-          )}
+          {/* Venue Status */}
+          <div className="flex items-center text-sm">
+            <Venue className="w-4 h-4 mr-2" />
+            <span
+              className={clsx(
+                'px-2 py-1 rounded-full text-xs font-medium',
+                safeEvent.hasConfirmedVenue
+                  ? 'bg-success-100 text-success-800'
+                  : 'bg-warning-100 text-warning-800'
+              )}
+            >
+              {safeEvent.hasConfirmedVenue ? 'Venue Confirmed' : 'Venue Pending'}
+            </span>
+          </div>
+
         </div>
       </div>
 
@@ -141,8 +151,7 @@ export function EventCard({ event, onManage }: EventCardProps) {
 
       {/* Footer */}
       <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
-        <div className="flex items-center justify-between">
-          <CapacityBadge status={safeEvent.capacityStatus} />
+        <div className="flex items-center justify-end">
           <button
             onClick={() => onManage(safeEvent.id)}
             className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-primary-700 bg-primary-100 hover:bg-primary-200 transition-colors"

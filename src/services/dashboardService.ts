@@ -54,6 +54,7 @@ export class DashboardService {
       isUpcoming,
       daysUntilEvent,
       eventFormat: event.eventFormat,
+      hasConfirmedVenue: event.hasConfirmedVenue,
     };
   }
 
