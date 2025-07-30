@@ -1,0 +1,175 @@
+import { airtableService } from './airtableService';
+import { DashboardData, DashboardStats, EventCardData } from '../types/dashboard';
+import { Event } from '../types/event';
+
+export class DashboardService {
+  static async getDashboardData(organizerEmail: string): Promise<DashboardData> {
+    // Get all events for organizer
+    const events = await airtableService.getEventsByOrganizer(organizerEmail);
+    console.log(`Found ${events.length} events for ${organizerEmail}:`, events.map(e => ({ name: e.eventName, format: e.eventFormat })));
+    
+    // Create event cards without attendee data
+    const eventCards = events.map(event => this.createEventCard(event));
+    
+    // Calculate overall stats
+    const stats = this.calculateDashboardStats(events, eventCards);
+
+    return {
+      organizerEmail,
+      stats,
+      events: eventCards,
+      recentActivity: [], // TODO: Implement activity tracking
+    };
+  }
+
+  private static createEventCard(event: Event): EventCardData {
+    const attendeeCount = 0; // No attendee tracking
+    const estimatedCount = event.estimatedAttendeeCount || 0;
+    const capacityPercentage = 0; // No capacity tracking without attendees
+    
+    const capacityStatus = this.getCapacityStatus(capacityPercentage);
+    
+    // For Daydream events, they're mostly one-time hackathons, so we'll consider them upcoming if approved
+    const isUpcoming = event.triageStatus === 'Approved';
+    const daysUntilEvent = 0; // Since these are planned events without specific dates yet
+    
+    // Use the country field directly from your data
+    const countryCode = this.getCountryCode(event.country);
+
+    console.log(`Event ${event.eventName} eventFormat:`, event.eventFormat);
+    
+    return {
+      id: event.id,
+      name: event.eventName,
+      startDate: new Date().toISOString(), // Placeholder
+      endDate: new Date().toISOString(), // Placeholder
+      location: event.location,
+      country: event.country,
+      countryCode,
+      attendeeCount,
+      maxAttendees: event.estimatedAttendeeCount,
+      capacityPercentage,
+      capacityStatus,
+      status: event.triageStatus.toLowerCase() as any, // 'approved', 'pending', etc.
+      isUpcoming,
+      daysUntilEvent,
+      eventFormat: event.eventFormat,
+    };
+  }
+
+  private static calculateDashboardStats(events: Event[], eventCards: EventCardData[]): DashboardStats {
+    const totalEvents = events.length;
+    const totalAttendees = eventCards.reduce((sum, event) => sum + event.attendeeCount, 0);
+    const upcomingEvents = eventCards.filter(event => event.isUpcoming).length;
+    const totalCapacity = eventCards.reduce((sum, event) => sum + (event.maxAttendees || 0), 0);
+    
+    const uniqueCountries = new Set(
+      eventCards
+        .map(event => event.country)
+        .filter(country => country)
+    ).size;
+
+    const avgCapacityUtilization = totalCapacity > 0 
+      ? Math.round((totalAttendees / totalCapacity) * 100)
+      : 0;
+
+    return {
+      totalEvents,
+      totalAttendees,
+      upcomingEvents,
+      uniqueCountries,
+      totalCapacity,
+      avgCapacityUtilization,
+    };
+  }
+
+  private static getCapacityStatus(percentage: number): 'low' | 'medium' | 'high' | 'full' {
+    if (percentage >= 100) return 'full';
+    if (percentage >= 80) return 'high';
+    if (percentage >= 50) return 'medium';
+    return 'low';
+  }
+
+  private static calculateDaysUntilEvent(startDate: string): number {
+    const eventDate = new Date(startDate);
+    const now = new Date();
+    const timeDiff = eventDate.getTime() - now.getTime();
+    return Math.ceil(timeDiff / (1000 * 3600 * 24));
+  }
+
+  private static getCountryCode(country: string): string {
+    // Map country names to country codes for flags
+    const countryMappings: Record<string, string> = {
+      'United States': 'US',
+      'United Kingdom': 'GB',
+      'Canada': 'CA',
+      'Germany': 'DE',
+      'France': 'FR',
+      'Japan': 'JP',
+      'Australia': 'AU',
+      'India': 'IN',
+      'Singapore': 'SG',
+      'Netherlands': 'NL',
+      'Sweden': 'SE',
+      'Brazil': 'BR',
+      'China': 'CN',
+      'Poland': 'PL',
+      'Spain': 'ES',
+      'Italy': 'IT',
+      'Switzerland': 'CH',
+      'Belgium': 'BE',
+      'Norway': 'NO',
+      'Finland': 'FI',
+      'Denmark': 'DK',
+      'South Korea': 'KR',
+      'Mexico': 'MX',
+      'Pakistan': 'PK',
+      'Bangladesh': 'BD',
+      'Nepal': 'NP',
+      'Egypt': 'EG',
+      'Turkey': 'TR',
+      'Morocco': 'MA',
+      'Nigeria': 'NG',
+      'South Africa': 'ZA',
+      'Thailand': 'TH',
+      'Vietnam': 'VN',
+      'Malaysia': 'MY',
+      'Philippines': 'PH',
+      'Indonesia': 'ID',
+      'New Zealand': 'NZ',
+      'Chile': 'CL',
+      'Argentina': 'AR',
+      'Colombia': 'CO',
+      'Peru': 'PE',
+      'Venezuela': 'VE',
+      'Czech Republic': 'CZ',
+      'Hungary': 'HU',
+      'Romania': 'RO',
+      'Bulgaria': 'BG',
+      'Croatia': 'HR',
+      'Serbia': 'RS',
+      'Ukraine': 'UA',
+      'Russia': 'RU',
+      'Israel': 'IL',
+      'United Arab Emirates': 'AE',
+      'Saudi Arabia': 'SA',
+      'Qatar': 'QA',
+      'Kuwait': 'KW',
+      'Jordan': 'JO',
+      'Lebanon': 'LB',
+      'Iran': 'IR',
+      'Iraq': 'IQ',
+      'Afghanistan': 'AF',
+      'Sri Lanka': 'LK',
+      'Myanmar': 'MM',
+      'Cambodia': 'KH',
+      'Laos': 'LA',
+      'Mongolia': 'MN',
+      'Taiwan': 'TW',
+      'Hong Kong': 'HK',
+      'Macau': 'MO',
+    };
+
+    return countryMappings[country] || 'XX'; // XX for unknown countries
+  }
+}

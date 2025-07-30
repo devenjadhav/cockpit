@@ -1,0 +1,158 @@
+{
+  "base": {
+    "name": "Daydream Portal Events",
+    "description": "Event management for hackathon organizers"
+  },
+  "tables": [
+    {
+      "name": "Events",
+      "description": "Main events table for organizers",
+      "fields": [
+        {
+          "name": "Name",
+          "type": "singleLineText",
+          "required": true,
+          "description": "Event name/title"
+        },
+        {
+          "name": "Description", 
+          "type": "multilineText",
+          "required": false,
+          "description": "Detailed event description"
+        },
+        {
+          "name": "Email",
+          "type": "email",
+          "required": true,
+          "description": "Organizer email address - CRITICAL for authentication"
+        },
+        {
+          "name": "Start Date",
+          "type": "date",
+          "required": true,
+          "options": {
+            "dateFormat": "US",
+            "includeTime": true
+          }
+        },
+        {
+          "name": "End Date", 
+          "type": "date",
+          "required": true,
+          "options": {
+            "dateFormat": "US",
+            "includeTime": true
+          }
+        },
+        {
+          "name": "Location",
+          "type": "singleLineText",
+          "required": false,
+          "description": "Event location (include country for flag detection)"
+        },
+        {
+          "name": "Max Attendees",
+          "type": "number",
+          "required": false,
+          "options": {
+            "precision": 0
+          }
+        },
+        {
+          "name": "Registration Deadline",
+          "type": "date", 
+          "required": false,
+          "options": {
+            "dateFormat": "US",
+            "includeTime": true
+          }
+        },
+        {
+          "name": "Status",
+          "type": "singleSelect",
+          "required": true,
+          "options": {
+            "choices": [
+              {"name": "draft", "color": "gray"},
+              {"name": "published", "color": "green"},
+              {"name": "cancelled", "color": "red"},
+              {"name": "completed", "color": "blue"}
+            ]
+          }
+        },
+        {
+          "name": "Event Format",
+          "type": "singleLineText",
+          "required": false,
+          "description": "Event format duration (e.g., '24-hours', '48-hours', '1-day')"
+        },
+        {
+          "name": "Tags",
+          "type": "singleLineText",
+          "required": false,
+          "description": "Comma-separated tags"
+        },
+        {
+          "name": "Website",
+          "type": "url",
+          "required": false
+        },
+        {
+          "name": "Contact Info",
+          "type": "singleLineText", 
+          "required": false
+        },
+        {
+          "name": "Created At",
+          "type": "createdTime",
+          "required": true
+        },
+        {
+          "name": "Updated At",
+          "type": "lastModifiedTime",
+          "required": true
+        }
+      ],
+      "sampleData": [
+        {
+          "Name": "AI Hackathon 2024",
+          "Description": "48-hour hackathon focused on AI and machine learning solutions",
+          "Email": "organizer@example.com",
+          "Start Date": "2024-02-15T09:00:00.000Z",
+          "End Date": "2024-02-17T18:00:00.000Z", 
+          "Location": "San Francisco, CA, USA",
+          "Max Attendees": 100,
+          "Registration Deadline": "2024-02-10T23:59:00.000Z",
+          "Status": "published",
+          "Tags": "AI, Machine Learning, Hackathon",
+          "Website": "https://example.com/ai-hackathon",
+          "Contact Info": "help@example.com"
+        },
+        {
+          "Name": "Web3 Developer Summit",
+          "Description": "One-day summit for Web3 developers and blockchain enthusiasts",
+          "Email": "organizer@example.com",
+          "Start Date": "2024-03-01T10:00:00.000Z",
+          "End Date": "2024-03-01T17:00:00.000Z",
+          "Location": "Berlin, Germany", 
+          "Max Attendees": 150,
+          "Registration Deadline": "2024-02-25T23:59:00.000Z",
+          "Status": "draft",
+          "Tags": "Web3, Blockchain, Cryptocurrency",
+          "Website": "https://example.com/web3-summit"
+        },
+        {
+          "Name": "Mobile App Challenge",
+          "Description": "Weekend challenge to build innovative mobile applications",
+          "Email": "organizer@example.com", 
+          "Start Date": "2024-01-20T09:00:00.000Z",
+          "End Date": "2024-01-21T18:00:00.000Z",
+          "Location": "Toronto, Canada",
+          "Max Attendees": 80,
+          "Status": "completed",
+          "Tags": "Mobile, iOS, Android"
+        }
+      ]
+    }
+  ]
+}
