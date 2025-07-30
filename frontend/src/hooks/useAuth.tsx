@@ -9,6 +9,7 @@ interface AuthContextType {
   verifyToken: (data: VerifyTokenRequest) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
   isAuthenticated: boolean;
+  token: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -16,11 +17,15 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [token, setToken] = useState<string | null>(null);
 
   useEffect(() => {
     // Check if user is authenticated on mount
     const checkAuth = async () => {
       try {
+        const storedToken = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+        setToken(storedToken);
+        
         if (apiClient.isAuthenticated()) {
           // Try to get user data from dashboard to verify token
           const response = await apiClient.getDashboard();
@@ -28,11 +33,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser({ email: response.data.organizerEmail });
           } else {
             apiClient.logout();
+            setToken(null);
           }
         }
       } catch (error) {
         console.error('Auth check failed:', error);
         apiClient.logout();
+        setToken(null);
       } finally {
         setLoading(false);
       }
@@ -65,6 +72,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await apiClient.verifyToken(data);
       if (response.success) {
         setUser({ email: data.email });
+        const newToken = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+        setToken(newToken);
       }
       return {
         success: response.success,
@@ -80,6 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     setUser(null);
+    setToken(null);
     apiClient.logout();
   };
 
@@ -90,6 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     verifyToken,
     logout,
     isAuthenticated: !!user,
+    token,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

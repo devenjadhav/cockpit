@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import authRoutes from './routes/auth';
 import eventRoutes from './routes/events';
 import dashboardRoutes from './routes/dashboard';
+import adminRoutes from './routes/admin';
 
 dotenv.config();
 
@@ -55,6 +56,7 @@ app.get('/api/test-eventformat', async (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: 'Daydream Portal API' });

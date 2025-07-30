@@ -1,9 +1,12 @@
 import Airtable from 'airtable';
 import { Event, EventFields, UpdateEventData } from '../types/event';
+import { Admin, AdminFields } from '../types/admin';
+import { cacheService } from './cacheService';
 
 export class AirtableService {
   private base: Airtable.Base;
   private eventsTable: Airtable.Table<EventFields>;
+  private adminsTable: Airtable.Table<AdminFields>;
 
   constructor() {
     if (!process.env.AIRTABLE_API_KEY || !process.env.AIRTABLE_BASE_ID) {
@@ -16,9 +19,8 @@ export class AirtableService {
 
     this.base = Airtable.base(process.env.AIRTABLE_BASE_ID);
     
-    // For now, we'll use the CSV data which only has events
-    // If you have an attendees table, change the name here
     this.eventsTable = this.base<EventFields>('events');
+    this.adminsTable = this.base<AdminFields>('admins');
   }
 
   private mapEventRecord(record: Airtable.Record<EventFields>): Event {
@@ -66,10 +68,28 @@ export class AirtableService {
     };
   }
 
-
+  private mapAdminRecord(record: Airtable.Record<AdminFields>): Admin {
+    const fields = record.fields;
+    return {
+      id: record.id,
+      email: fields.email,
+      firstName: fields.first_name,
+      lastName: fields.last_name,
+      userStatus: fields.user_status,
+    };
+  }
 
   async getEventsByOrganizer(organizerEmail: string): Promise<Event[]> {
+    // Check cache first
+    const cacheKey = cacheService.getEventsCacheKey(organizerEmail);
+    const cachedEvents = cacheService.get<Event[]>(cacheKey);
+    if (cachedEvents) {
+      console.log(`Cache hit for events by organizer: ${organizerEmail}`);
+      return cachedEvents;
+    }
+
     try {
+      console.log(`Cache miss for events by organizer: ${organizerEmail}, fetching from Airtable`);
       const records = await this.eventsTable
         .select({
           filterByFormula: `{email} = "${organizerEmail}"`,
@@ -77,16 +97,35 @@ export class AirtableService {
         })
         .all();
 
-      return records.map(record => this.mapEventRecord(record));
+      const events = records.map(record => this.mapEventRecord(record));
+      
+      // Cache the results
+      cacheService.cacheEventsByOrganizer(organizerEmail, events);
+      
+      return events;
     } catch (error) {
       throw new Error(`Failed to fetch events for organizer ${organizerEmail}: ${error}`);
     }
   }
 
   async getEventById(eventId: string): Promise<Event | null> {
+    // Check cache first
+    const cacheKey = cacheService.getEventCacheKey(eventId);
+    const cachedEvent = cacheService.get<Event>(cacheKey);
+    if (cachedEvent) {
+      console.log(`Cache hit for event: ${eventId}`);
+      return cachedEvent;
+    }
+
     try {
+      console.log(`Cache miss for event: ${eventId}, fetching from Airtable`);
       const record = await this.eventsTable.find(eventId);
-      return this.mapEventRecord(record);
+      const event = this.mapEventRecord(record);
+      
+      // Cache the result
+      cacheService.cacheEvent(eventId, event);
+      
+      return event;
     } catch (error) {
       if (error instanceof Error && error.message.includes('Record not found')) {
         return null;
@@ -118,15 +157,28 @@ export class AirtableService {
       if (updateData.notes !== undefined) updateFields.notes = updateData.notes;
 
       const record = await this.eventsTable.update(eventId, updateFields);
-      return this.mapEventRecord(record);
+      const updatedEvent = this.mapEventRecord(record);
+      
+      // Invalidate related caches since the event was updated
+      cacheService.invalidateEventCaches(eventId, updatedEvent.email);
+      
+      return updatedEvent;
     } catch (error) {
       throw new Error(`Failed to update event ${eventId}: ${error}`);
     }
   }
 
   async getAllOrganizerEmails(): Promise<string[]> {
+    // Check cache first
+    const cacheKey = cacheService.getOrganizerEmailsCacheKey();
+    const cachedEmails = cacheService.get<string[]>(cacheKey);
+    if (cachedEmails) {
+      console.log('Cache hit for organizer emails');
+      return cachedEmails;
+    }
+
     try {
-      console.log('Attempting to fetch emails from Airtable...');
+      console.log('Cache miss for organizer emails, fetching from Airtable...');
       const records = await this.eventsTable
         .select({
           fields: ['email'],
@@ -139,6 +191,10 @@ export class AirtableService {
         .filter((email, index, self) => email && self.indexOf(email) === index);
 
       console.log('Unique emails found:', emails);
+      
+      // Cache the results
+      cacheService.cacheOrganizerEmails(emails);
+      
       return emails;
     } catch (error) {
       console.error('Airtable error details:', error);
@@ -146,6 +202,82 @@ export class AirtableService {
     }
   }
 
+  async getAllEvents(): Promise<Event[]> {
+    // Check cache first
+    const cacheKey = 'all-events';
+    const cachedEvents = cacheService.get<Event[]>(cacheKey);
+    if (cachedEvents) {
+      console.log('Cache hit for all events');
+      return cachedEvents;
+    }
+
+    try {
+      console.log('Cache miss for all events, fetching from Airtable');
+      const records = await this.eventsTable
+        .select({
+          sort: [{ field: 'event_name', direction: 'asc' }],
+        })
+        .all();
+
+      const events = records.map(record => this.mapEventRecord(record));
+      
+      // Cache the results for 2 minutes
+      cacheService.set(cacheKey, events, 2 * 60 * 1000);
+      
+      return events;
+    } catch (error) {
+      throw new Error(`Failed to fetch all events: ${error}`);
+    }
+  }
+
+  async isAdmin(email: string): Promise<boolean> {
+    // Check cache first
+    const cacheKey = `admin-check:${email}`;
+    const cachedResult = cacheService.get<boolean>(cacheKey);
+    if (cachedResult !== null) {
+      console.log(`Cache hit for admin check: ${email}`);
+      return cachedResult;
+    }
+
+    try {
+      console.log(`Cache miss for admin check: ${email}, checking Airtable`);
+      const records = await this.adminsTable
+        .select({
+          filterByFormula: `{email} = "${email}"`,
+          maxRecords: 1
+        })
+        .all();
+
+      const isAdmin = records.length > 0 && records[0].fields.user_status === 'active';
+      
+      // Cache the result for 10 minutes
+      cacheService.set(cacheKey, isAdmin, 10 * 60 * 1000);
+      
+      return isAdmin;
+    } catch (error) {
+      console.error('Admin check error:', error);
+      return false;
+    }
+  }
+
+  async getAdminByEmail(email: string): Promise<Admin | null> {
+    try {
+      const records = await this.adminsTable
+        .select({
+          filterByFormula: `{email} = "${email}"`,
+          maxRecords: 1
+        })
+        .all();
+
+      if (records.length === 0) {
+        return null;
+      }
+
+      return this.mapAdminRecord(records[0]);
+    } catch (error) {
+      throw new Error(`Failed to fetch admin ${email}: ${error}`);
+    }
+  }
 
 }
 
