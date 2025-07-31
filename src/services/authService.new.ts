@@ -4,31 +4,31 @@ import { tokenStore } from './tokenStore';
 import { loopsService } from './loopsService';
 import { airtableService } from './airtableService';
 import { AuthResponse, LoginRequest, VerifyTokenRequest } from '../types/auth';
-// import { MagicLinkManager } from '../security/magicLinkManager'; // Disabled due to memory persistence issues
 
-export class AuthService {
+export class NewAuthService {
   async requestLogin(data: LoginRequest, ipAddress?: string, userAgent?: string): Promise<AuthResponse> {
     try {
-      // Check if email exists in organizer emails
-      const organizerEmails = await airtableService.getAllOrganizerEmails();
-      const emailExists = organizerEmails.includes(data.email.toLowerCase());
-
-      if (!emailExists) {
+      const email = data.email.toLowerCase();
+      
+      // Check if email has access (exists in either events or admin table)
+      const accessCheck = await airtableService.checkEmailAccess(email);
+      
+      if (!accessCheck.hasAccess) {
         return {
           success: false,
           message: 'Email not found. Please contact support if you believe this is an error.',
         };
       }
 
-      // Generate simple token (bypassing secure magic link manager due to memory persistence issue)
+      // Generate token
       const token = TokenGenerator.generateMagicLinkToken();
-
-      // Store token in simple token store
-      tokenStore.storeToken(data.email.toLowerCase(), token, 'magic-link');
+      
+      // Store token
+      tokenStore.storeToken(email, token, 'magic-link');
 
       // Create magic link URL
       const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-      const loginUrl = `${baseUrl}/auth/verify?token=${token}&email=${encodeURIComponent(data.email)}`;
+      const loginUrl = `${baseUrl}/auth/verify?token=${token}&email=${encodeURIComponent(email)}`;
 
       // Send magic link email via Loops
       const emailResult = await loopsService.sendMagicLinkEmail({
@@ -44,8 +44,8 @@ export class AuthService {
         };
       }
 
-      // Log successful magic link generation for monitoring
-      console.log(`[Auth] Magic link generated for ${data.email} from IP ${ipAddress}`);
+      // Log successful magic link generation
+      console.log(`[New Auth] Magic link generated for ${email} from IP ${ipAddress} (Admin: ${accessCheck.isAdmin})`);
 
       return {
         success: true,
@@ -64,26 +64,38 @@ export class AuthService {
     try {
       const email = data.email.toLowerCase();
       
-      // Use simple token store for now (bypassing secure magic link manager due to memory persistence issue)
+      // Verify token exists and is valid
       const isValidToken = tokenStore.verifyToken(email, data.token);
       
       if (!isValidToken) {
+        console.log(`[New Auth] Invalid token for ${email}`);
         return {
           success: false,
           message: 'Invalid or expired token. Please request a new login link.',
         };
       }
 
-      // Generate JWT with IP tracking
-      const jwt = JWTUtils.generateToken(email, ipAddress);
+      // Re-check email access and admin status (in case it changed)
+      const accessCheck = await airtableService.checkEmailAccess(email);
+      
+      if (!accessCheck.hasAccess) {
+        return {
+          success: false,
+          message: 'Access denied. Please contact support.',
+        };
+      }
 
-      // Log successful login for monitoring
-      console.log(`[Auth] Successful login for ${email} from IP ${ipAddress}`);
+      // Generate JWT with admin status
+      const jwt = JWTUtils.generateToken(email, ipAddress, accessCheck.isAdmin);
+
+      // Log successful login
+      console.log(`[New Auth] Successful login for ${email} from IP ${ipAddress} (Admin: ${accessCheck.isAdmin})`);
 
       return {
         success: true,
         jwt,
         message: 'Login successful.',
+        isAdmin: accessCheck.isAdmin,
       };
     } catch (error) {
       console.error('Token verification error:', error);
@@ -95,4 +107,4 @@ export class AuthService {
   }
 }
 
-export const authService = new AuthService();
+export const newAuthService = new NewAuthService();

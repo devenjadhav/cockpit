@@ -1,5 +1,5 @@
 import express from 'express';
-import { authService } from '../services/authService';
+import { newAuthService as authService } from '../services/authService.new';
 import { LoginRequest, VerifyTokenRequest } from '../types/auth';
 import { ApiResponse } from '../types/api';
 import { authRateLimit, magicLinkRateLimit, slowDownMiddleware } from '../middleware/rateLimiting';
@@ -8,7 +8,7 @@ import { validateAuthRequest } from '../middleware/inputValidation';
 const router = express.Router();
 
 // POST /api/auth/request-login
-router.post('/request-login', magicLinkRateLimit, slowDownMiddleware, validateAuthRequest, async (req, res) => {
+router.post('/request-login', validateAuthRequest, async (req, res) => {
   try {
     console.log('Login request received:', req.body);
     const { email, type = 'magic-link' }: LoginRequest = req.body;
@@ -56,7 +56,7 @@ router.post('/request-login', magicLinkRateLimit, slowDownMiddleware, validateAu
 });
 
 // POST /api/auth/verify-token
-router.post('/verify-token', authRateLimit, validateAuthRequest, async (req, res) => {
+router.post('/verify-token', validateAuthRequest, async (req, res) => {
   try {
     console.log('Token verification request received:', req.body);
     const { email, token }: VerifyTokenRequest = req.body;

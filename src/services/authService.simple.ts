@@ -4,9 +4,8 @@ import { tokenStore } from './tokenStore';
 import { loopsService } from './loopsService';
 import { airtableService } from './airtableService';
 import { AuthResponse, LoginRequest, VerifyTokenRequest } from '../types/auth';
-// import { MagicLinkManager } from '../security/magicLinkManager'; // Disabled due to memory persistence issues
 
-export class AuthService {
+export class SimpleAuthService {
   async requestLogin(data: LoginRequest, ipAddress?: string, userAgent?: string): Promise<AuthResponse> {
     try {
       // Check if email exists in organizer emails
@@ -20,10 +19,10 @@ export class AuthService {
         };
       }
 
-      // Generate simple token (bypassing secure magic link manager due to memory persistence issue)
+      // Generate simple token
       const token = TokenGenerator.generateMagicLinkToken();
-
-      // Store token in simple token store
+      
+      // Store token
       tokenStore.storeToken(data.email.toLowerCase(), token, 'magic-link');
 
       // Create magic link URL
@@ -44,8 +43,7 @@ export class AuthService {
         };
       }
 
-      // Log successful magic link generation for monitoring
-      console.log(`[Auth] Magic link generated for ${data.email} from IP ${ipAddress}`);
+      console.log(`[Simple Auth] Magic link generated for ${data.email}`);
 
       return {
         success: true,
@@ -64,21 +62,21 @@ export class AuthService {
     try {
       const email = data.email.toLowerCase();
       
-      // Use simple token store for now (bypassing secure magic link manager due to memory persistence issue)
+      // Simple token verification
       const isValidToken = tokenStore.verifyToken(email, data.token);
       
       if (!isValidToken) {
+        console.log(`[Simple Auth] Invalid token for ${email}`);
         return {
           success: false,
           message: 'Invalid or expired token. Please request a new login link.',
         };
       }
 
-      // Generate JWT with IP tracking
-      const jwt = JWTUtils.generateToken(email, ipAddress);
+      // Generate JWT
+      const jwt = JWTUtils.legacyGenerateToken(email);
 
-      // Log successful login for monitoring
-      console.log(`[Auth] Successful login for ${email} from IP ${ipAddress}`);
+      console.log(`[Simple Auth] Successful login for ${email}`);
 
       return {
         success: true,
@@ -95,4 +93,4 @@ export class AuthService {
   }
 }
 
-export const authService = new AuthService();
+export const simpleAuthService = new SimpleAuthService();

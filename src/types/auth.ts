@@ -21,10 +21,12 @@ export interface AuthResponse {
   success: boolean;
   jwt?: string;
   message: string;
+  isAdmin?: boolean;
 }
 
 export interface JWTPayload {
   email: string;
+  isAdmin: boolean;
   iat: number;
   exp: number;
 }
@@ -32,5 +34,6 @@ export interface JWTPayload {
 export interface AuthenticatedRequest extends Request {
   user?: {
     email: string;
+    isAdmin: boolean;
   };
 }

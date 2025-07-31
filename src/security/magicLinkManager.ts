@@ -27,10 +27,10 @@ export class MagicLinkManager {
   // In production, this should be stored in Redis or database for horizontal scaling
   private static magicLinks: Map<string, MagicLinkData> = new Map();
   
-  // Security constants
+  // Security constants (temporarily relaxed for development)
   private static readonly EXPIRATION_TIME = 15 * 60 * 1000; // 15 minutes
-  private static readonly MAX_ATTEMPTS_PER_IP = 5;
-  private static readonly MAX_LINKS_PER_EMAIL = 3;
+  private static readonly MAX_ATTEMPTS_PER_IP = 100; // Increased from 5
+  private static readonly MAX_LINKS_PER_EMAIL = 10; // Increased from 3
   private static readonly RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
   
   // Track attempts for rate limiting

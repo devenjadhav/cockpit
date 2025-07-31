@@ -6,7 +6,8 @@
 - **Full stack**: `./run-local.sh` (starts both servers with logging)
 - **Database**: `./scripts/start-postgres.sh` (starts PostgreSQL with Docker)
 - **Setup**: `./setup.sh` (initial environment setup)
-- **Testing**: No automated tests configured - uses manual testing with test-data.sql
+- **Testing**: `npm test` (Jest), `npm run test:watch`, `npm run test:coverage`, `jest <filename>` (single test file)
+- **Security**: `npm run security-audit` (security audit script)
 
 ## Architecture
 - **Backend**: Express.js + TypeScript (src/), PostgreSQL cache + Airtable primary, JWT auth, magic link via Loops

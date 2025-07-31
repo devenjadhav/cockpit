@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useToastHelpers } from '@/hooks/useToast';
+import { apiClient } from '@/lib/api';
 
 export default function VerifyPage() {
   const [status, setStatus] = useState<'verifying' | 'success' | 'error'>('verifying');
@@ -40,12 +41,35 @@ export default function VerifyPage() {
         
         if (result.success) {
           setStatus('success');
-          setMessage('Successfully logged in! Redirecting to dashboard...');
+          setMessage('Successfully logged in! Redirecting...');
           success('Login successful!', 'Welcome to Daydream Portal');
           
-          // Redirect to dashboard after a short delay
-          setTimeout(() => {
-            router.push('/dashboard');
+          // Check user's events and redirect accordingly
+          setTimeout(async () => {
+            try {
+              const eventsResponse = await apiClient.getEvents();
+              if (eventsResponse.success && eventsResponse.data) {
+                const events = eventsResponse.data;
+                
+                if (events.length === 1) {
+                  // Single event - redirect to event page
+                  console.log('Single event found, redirecting to:', `/events/${events[0].id}`);
+                  router.push(`/events/${events[0].id}`);
+                } else {
+                  // Multiple events or no events - redirect to dashboard
+                  console.log(`${events.length} events found, redirecting to dashboard`);
+                  router.push('/dashboard');
+                }
+              } else {
+                // Fallback to dashboard if API call fails
+                console.log('Failed to fetch events, redirecting to dashboard');
+                router.push('/dashboard');
+              }
+            } catch (error) {
+              // Fallback to dashboard on error
+              console.error('Error checking events:', error);
+              router.push('/dashboard');
+            }
           }, 1500);
         } else {
           setStatus('error');

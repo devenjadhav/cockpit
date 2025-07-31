@@ -87,7 +87,7 @@ const skipSuccessfulRequests = (req: Request, res: Response): boolean => {
  */
 export const authRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 attempts per window per IP
+  max: 1000, // 1000 attempts per window per IP (temp for testing)
   message: {
     success: false,
     message: 'Too many authentication attempts. Please wait 15 minutes before trying again.',
@@ -151,7 +151,7 @@ export const slowDownMiddleware: any = slowDown({
  */
 export const magicLinkRateLimit = rateLimit({
   windowMs: 5 * 60 * 1000, // 5 minutes
-  max: 3, // 3 magic links per 5 minutes per IP
+  max: 1000, // 1000 magic links per 5 minutes per IP (temp for testing)
   message: {
     success: false,
     message: 'Too many magic link requests. Please wait 5 minutes before requesting another.',

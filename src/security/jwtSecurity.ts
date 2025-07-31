@@ -8,6 +8,7 @@ import crypto from 'crypto';
 
 export interface JwtPayload {
   email: string;
+  isAdmin: boolean;
   iat: number;
   exp: number;
   jti: string; // JWT ID for revocation
@@ -38,7 +39,7 @@ export class JwtSecurityManager {
   /**
    * Generate a secure JWT token with enhanced security features
    */
-  static generateToken(email: string, ipAddress?: string): string {
+  static generateToken(email: string, ipAddress?: string, isAdmin: boolean = false): string {
     if (!this.JWT_SECRET) {
       throw new Error('JWT_SECRET not configured');
     }
@@ -46,11 +47,10 @@ export class JwtSecurityManager {
     // Generate unique token ID for tracking and revocation
     const jti = crypto.randomBytes(16).toString('hex');
     
-    const payload: Omit<JwtPayload, 'iat' | 'exp'> = {
+    const payload = {
       email: email.toLowerCase(),
+      isAdmin,
       jti,
-      aud: this.AUDIENCE,
-      iss: this.ISSUER,
     };
 
     const options: jwt.SignOptions = {
@@ -65,7 +65,7 @@ export class JwtSecurityManager {
     // Track token creation
     this.trackTokenUsage(jti, ipAddress);
 
-    console.log(`[JWT] Token generated for ${email} with ID ${jti}`);
+    console.log(`[JWT] Token generated for ${email} with ID ${jti} (Admin: ${isAdmin})`);
     return token;
   }
 

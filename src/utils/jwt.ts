@@ -17,8 +17,8 @@ export class JWTUtils {
   /**
    * Generate a secure JWT token using enhanced security manager
    */
-  static generateToken(email: string, ipAddress?: string): string {
-    return JwtSecurityManager.generateToken(email, ipAddress);
+  static generateToken(email: string, ipAddress?: string, isAdmin: boolean = false): string {
+    return JwtSecurityManager.generateToken(email, ipAddress, isAdmin);
   }
 
   /**
@@ -45,6 +45,15 @@ export class JWTUtils {
       console.error('JWT verification error:', error);
       return null;
     }
+  }
+
+  /**
+   * Legacy method for simple token generation
+   * @deprecated Use generateToken instead
+   */
+  static legacyGenerateToken(email: string): string {
+    // Just use the new generateToken method with isAdmin=false
+    return this.generateToken(email, undefined, false);
   }
 
   static decodeToken(token: string): JWTPayload | null {

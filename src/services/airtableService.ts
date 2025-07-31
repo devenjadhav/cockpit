@@ -25,8 +25,6 @@ export class AirtableService {
 
   private mapEventRecord(record: Airtable.Record<EventFields>): Event {
     const fields = record.fields;
-    console.log(`Mapping event ${fields.event_name}, event_format field:`, fields.event_format);
-    console.log(`Mapping event ${fields.event_name}, has_confirmed_venue field:`, fields.has_confirmed_venue);
     return {
       id: record.id,
       name: fields.event_name, // Compatibility field
@@ -280,6 +278,52 @@ export class AirtableService {
       return this.mapAdminRecord(records[0]);
     } catch (error) {
       throw new Error(`Failed to fetch admin ${email}: ${error}`);
+    }
+  }
+
+  async checkEmailAccess(email: string): Promise<{ hasAccess: boolean; isAdmin: boolean; adminData?: Admin }> {
+    try {
+      const normalizedEmail = email.toLowerCase();
+      
+      // Check admin table first
+      const adminRecord = await this.getAdminByEmail(normalizedEmail);
+      if (adminRecord) {
+        console.log(`[Email Access Check] Admin record found for ${normalizedEmail}:`, {
+          id: adminRecord.id,
+          email: adminRecord.email,
+          userStatus: adminRecord.userStatus,
+          firstName: adminRecord.firstName,
+          lastName: adminRecord.lastName
+        });
+        const isAdmin = adminRecord.userStatus === 'admin';
+        console.log(`[Email Access Check] isAdmin result: ${isAdmin} (userStatus: "${adminRecord.userStatus}")`);
+        return {
+          hasAccess: true,
+          isAdmin,
+          adminData: adminRecord
+        };
+      }
+
+      // Check events table
+      const eventRecords = await this.eventsTable
+        .select({
+          filterByFormula: `{email} = "${normalizedEmail}"`,
+          maxRecords: 1
+        })
+        .all();
+
+      const hasEventAccess = eventRecords.length > 0;
+
+      return {
+        hasAccess: hasEventAccess,
+        isAdmin: false
+      };
+    } catch (error) {
+      console.error('Email access check error:', error);
+      return {
+        hasAccess: false,
+        isAdmin: false
+      };
     }
   }
 

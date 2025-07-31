@@ -36,6 +36,7 @@ export const authenticateToken = (req: AuthenticatedRequest, res: Response, next
 
   req.user = {
     email: payload.email,
+    isAdmin: payload.isAdmin || false,
   };
 
   next();
@@ -52,6 +53,7 @@ export const optionalAuth = (req: AuthenticatedRequest, res: Response, next: Nex
     if (validationResult.isValid && payload) {
       req.user = {
         email: payload.email,
+        isAdmin: payload.isAdmin || false,
       };
     } else if (validationResult.securityViolations.length > 0) {
       // Log security violations but don't block request for optional auth
