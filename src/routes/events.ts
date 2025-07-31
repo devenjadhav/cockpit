@@ -92,6 +92,12 @@ router.get('/:eventId', async (req: AuthenticatedRequest, res) => {
         tags: event.tags,
         website: event.website,
         contactInfo: event.contactInfo,
+        // POC (Point of Contact) fields
+        pocFirstName: event.pocFirstName,
+        pocLastName: event.pocLastName,
+        pocPreferredName: event.pocPreferredName,
+        pocSlackId: event.pocSlackId,
+        pocAge: event.pocAge,
       })
     };
 

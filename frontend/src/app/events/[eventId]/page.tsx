@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Calendar, MapPin, Users, Edit, Save, X, HelpCircle, FileText, Mail, Clock, Tag, Globe, Phone, Database } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users, Edit, Save, X, HelpCircle, FileText, Mail, Clock, Tag, Globe, Phone, Database, User, Copy, Check } from 'lucide-react';
 import { apiClient } from '@/lib/api';
 import { AuthGuard } from '@/components/AuthGuard';
 import { CountryFlag } from '@/components/ui/CountryFlag';
@@ -46,6 +46,12 @@ interface EventData {
   tags?: string;
   website?: string;
   contactInfo?: string;
+  // POC fields
+  pocFirstName?: string;
+  pocLastName?: string;
+  pocPreferredName?: string;
+  pocSlackId?: string;
+  pocAge?: number;
 }
 
 export default function EventManagePage() {
@@ -56,10 +62,13 @@ export default function EventManagePage() {
   const [event, setEvent] = useState<EventData | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
+  const [adminEditing, setAdminEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [adminSaving, setAdminSaving] = useState(false);
   const [error, setError] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminLoading, setAdminLoading] = useState(true);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
   
   // Edit form state
   const [editForm, setEditForm] = useState({
@@ -70,6 +79,15 @@ export default function EventManagePage() {
     state: '',
     zipcode: '',
     estimatedAttendeeCount: 0,
+    notes: '',
+  });
+
+  // Admin edit form state
+  const [adminEditForm, setAdminEditForm] = useState({
+    pocFirstName: '',
+    pocLastName: '',
+    pocPreferredName: '',
+    pocSlackId: '',
     notes: '',
   });
 
@@ -114,6 +132,13 @@ export default function EventManagePage() {
           estimatedAttendeeCount: response.data.estimatedAttendeeCount || 0,
           notes: response.data.notes || '',
         });
+        setAdminEditForm({
+          pocFirstName: response.data.pocFirstName || '',
+          pocLastName: response.data.pocLastName || '',
+          pocPreferredName: response.data.pocPreferredName || '',
+          pocSlackId: response.data.pocSlackId || '',
+          notes: response.data.notes || '',
+        });
       } else {
         setError('Failed to load event');
       }
@@ -147,12 +172,44 @@ export default function EventManagePage() {
     }
   };
 
+  const handleAdminSave = async () => {
+    try {
+      setAdminSaving(true);
+      console.log('Sending admin update data:', adminEditForm);
+      const response = await apiClient.updateEvent(eventId, adminEditForm);
+      if (response.success) {
+        setEvent(response.data);
+        setAdminEditing(false);
+        setError(''); // Clear any previous errors
+      } else {
+        console.error('Admin update failed:', response);
+        setError(response.message || 'Failed to update admin information');
+      }
+    } catch (err: any) {
+      console.error('Error updating admin information:', err);
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to update admin information';
+      setError(errorMessage);
+    } finally {
+      setAdminSaving(false);
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'long',
       day: 'numeric',
       year: 'numeric',
     });
+  };
+
+  const copyToClipboard = async (text: string, fieldName: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedField(fieldName);
+      setTimeout(() => setCopiedField(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
   };
 
   if (loading || adminLoading) {
@@ -424,13 +481,6 @@ export default function EventManagePage() {
                         className="text-sm border border-gray-300 rounded px-2 py-1 w-32"
                         placeholder="ZIP/Postal Code"
                       />
-                      <input
-                        type="text"
-                        value={editForm.location}
-                        onChange={(e) => setEditForm({...editForm, location: e.target.value})}
-                        className="text-sm border border-gray-300 rounded px-2 py-1 w-full"
-                        placeholder="General Location/Venue Name"
-                      />
                     </div>
                   ) : (
                     <div className="ml-8 text-sm space-y-1">
@@ -442,8 +492,8 @@ export default function EventManagePage() {
                         {event.zipcode && ` ${event.zipcode}`}
                       </p>
                       {event.country && <p>{event.country}</p>}
-                      {event.location && (
-                        <p className="mt-2 text-gray-500 italic">Venue: {event.location}</p>
+                      {event.name && (
+                        <p className="mt-2 text-gray-500 italic">Event name: {event.name}</p>
                       )}
                     </div>
                   )}
@@ -513,10 +563,50 @@ export default function EventManagePage() {
         {isAdmin && (
           <div className="mt-8 bg-white rounded-lg shadow-md overflow-hidden border-2 border-dashed border-yellow-400">
             <div className="bg-yellow-50 px-4 py-2 border-b border-yellow-200">
-              <div className="flex items-center">
-                <Database className="w-4 h-4 text-yellow-600 mr-2" />
-                <span className="text-sm font-medium text-yellow-800">Admin Information</span>
-                <span className="ml-2 text-xs text-yellow-600">(Admin Only)</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <Database className="w-4 h-4 text-yellow-600 mr-2" />
+                  <span className="text-sm font-medium text-yellow-800">Admin Information</span>
+                  <span className="ml-2 text-xs text-yellow-600">(Admin Only)</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  {!adminEditing ? (
+                    <button
+                      onClick={() => setAdminEditing(true)}
+                      className="inline-flex items-center px-3 py-1 border border-yellow-300 text-xs font-medium rounded-md text-yellow-700 bg-yellow-100 hover:bg-yellow-200"
+                    >
+                      <Edit className="w-3 h-3 mr-1" />
+                      Edit Admin Info
+                    </button>
+                  ) : (
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={handleAdminSave}
+                        disabled={adminSaving}
+                        className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:opacity-50"
+                      >
+                        <Save className="w-3 h-3 mr-1" />
+                        {adminSaving ? 'Saving...' : 'Save'}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setAdminEditing(false);
+                          setAdminEditForm({
+                            pocFirstName: event?.pocFirstName || '',
+                            pocLastName: event?.pocLastName || '',
+                            pocPreferredName: event?.pocPreferredName || '',
+                            pocSlackId: event?.pocSlackId || '',
+                            notes: event?.notes || '',
+                          });
+                        }}
+                        className="inline-flex items-center px-3 py-1 border border-yellow-300 text-xs font-medium rounded-md text-yellow-700 bg-yellow-100 hover:bg-yellow-200"
+                      >
+                        <X className="w-3 h-3 mr-1" />
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
             <div className="p-6">
@@ -528,10 +618,21 @@ export default function EventManagePage() {
                   {event.organizerEmail && (
                     <div className="flex items-center text-gray-600">
                       <Mail className="w-4 h-4 mr-3" />
-                      <div>
+                      <div className="flex-1">
                         <p className="font-medium">Organizer Email</p>
                         <p className="text-sm font-mono">{event.organizerEmail}</p>
                       </div>
+                      <button
+                        onClick={() => copyToClipboard(event.organizerEmail!, 'organizerEmail')}
+                        className="ml-2 p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                        title="Copy email to clipboard"
+                      >
+                        {copiedField === 'organizerEmail' ? (
+                          <Check className="w-4 h-4 text-green-600" />
+                        ) : (
+                          <Copy className="w-4 h-4" />
+                        )}
+                      </button>
                     </div>
                   )}
                   
@@ -571,6 +672,121 @@ export default function EventManagePage() {
                   )}
                 </div>
               </div>
+
+              {/* Point of Contact Information */}
+              {(event.pocFirstName || event.pocLastName || event.pocPreferredName || event.pocSlackId) && (
+                <div className="mt-6 pt-6 border-t border-yellow-200">
+                  <h4 className="font-semibold text-gray-900 mb-4">Point of Contact (POC) Details</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      {(event.pocFirstName || event.pocLastName || adminEditing) && (
+                        <div className="flex items-center text-gray-600">
+                          <User className="w-4 h-4 mr-3" />
+                          <div className="flex-1">
+                            <p className="font-medium">Full Name</p>
+                            {adminEditing ? (
+                              <div className="grid grid-cols-2 gap-2 mt-1">
+                                <input
+                                  type="text"
+                                  value={adminEditForm.pocFirstName}
+                                  onChange={(e) => setAdminEditForm({...adminEditForm, pocFirstName: e.target.value})}
+                                  className="text-sm border border-gray-300 rounded px-2 py-1 w-full"
+                                  placeholder="First Name"
+                                />
+                                <input
+                                  type="text"
+                                  value={adminEditForm.pocLastName}
+                                  onChange={(e) => setAdminEditForm({...adminEditForm, pocLastName: e.target.value})}
+                                  className="text-sm border border-gray-300 rounded px-2 py-1 w-full"
+                                  placeholder="Last Name"
+                                />
+                              </div>
+                            ) : (
+                              <p className="text-sm">
+                                {[String(event.pocFirstName || ''), String(event.pocLastName || '')].filter(Boolean).join(' ') || 'Not specified'}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {(event.pocPreferredName || adminEditing) && (
+                        <div className="flex items-center text-gray-600">
+                          <User className="w-4 h-4 mr-3" />
+                          <div className="flex-1">
+                            <p className="font-medium">Preferred Name</p>
+                            {adminEditing ? (
+                              <input
+                                type="text"
+                                value={adminEditForm.pocPreferredName}
+                                onChange={(e) => setAdminEditForm({...adminEditForm, pocPreferredName: e.target.value})}
+                                className="text-sm border border-gray-300 rounded px-2 py-1 w-full mt-1"
+                                placeholder="Preferred Name"
+                              />
+                            ) : (
+                              <p className="text-sm">{String(event.pocPreferredName) || 'Not specified'}</p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-4">
+                      {(event.pocSlackId || adminEditing) && (
+                        <div className="flex items-center text-gray-600">
+                          <Database className="w-4 h-4 mr-3" />
+                          <div className="flex-1">
+                            <p className="font-medium">Slack ID</p>
+                            {adminEditing ? (
+                              <input
+                                type="text"
+                                value={adminEditForm.pocSlackId}
+                                onChange={(e) => setAdminEditForm({...adminEditForm, pocSlackId: e.target.value})}
+                                className="text-sm border border-gray-300 rounded px-2 py-1 w-full mt-1 font-mono"
+                                placeholder="Slack ID"
+                              />
+                            ) : (
+                              <p className="text-sm font-mono">{String(event.pocSlackId) || 'Not specified'}</p>
+                            )}
+                          </div>
+                          {!adminEditing && event.pocSlackId && (
+                            <button
+                              onClick={() => copyToClipboard(String(event.pocSlackId), 'pocSlackId')}
+                              className="ml-2 p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                              title="Copy Slack ID to clipboard"
+                            >
+                              {copiedField === 'pocSlackId' ? (
+                                <Check className="w-4 h-4 text-green-600" />
+                              ) : (
+                                <Copy className="w-4 h-4" />
+                              )}
+                            </button>
+                          )}
+                        </div>
+                      )}
+                      
+                      {/* Age is computed from DOB in Airtable, display only */}
+                      {event.pocAge && (
+                        <div className="flex items-center text-gray-600">
+                          <User className="w-4 h-4 mr-3" />
+                          <div className="flex-1">
+                            <p className="font-medium">Age</p>
+                            <p className="text-sm">
+                              {(() => {
+                                // Handle if pocAge is an object or primitive
+                                const age = typeof event.pocAge === 'object' && event.pocAge !== null 
+                                  ? event.pocAge.specialValue || event.pocAge.value || event.pocAge
+                                  : event.pocAge;
+                                return `${age} years old`;
+                              })()}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
               
               <div className="mt-4 pt-4 border-t border-yellow-200">
                 <p className="text-xs text-gray-500">
@@ -585,10 +801,50 @@ export default function EventManagePage() {
         {isAdmin && (
           <div className="mt-8 bg-white rounded-lg shadow-md overflow-hidden border-2 border-dashed border-yellow-400">
             <div className="bg-yellow-50 px-4 py-2 border-b border-yellow-200">
-              <div className="flex items-center">
-                <FileText className="w-4 h-4 text-yellow-600 mr-2" />
-                <span className="text-sm font-medium text-yellow-800">Admin Notes</span>
-                <span className="ml-2 text-xs text-yellow-600">(Admin Only)</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <FileText className="w-4 h-4 text-yellow-600 mr-2" />
+                  <span className="text-sm font-medium text-yellow-800">Admin Notes</span>
+                  <span className="ml-2 text-xs text-yellow-600">(Admin Only)</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  {!adminEditing ? (
+                    <button
+                      onClick={() => setAdminEditing(true)}
+                      className="inline-flex items-center px-3 py-1 border border-yellow-300 text-xs font-medium rounded-md text-yellow-700 bg-yellow-100 hover:bg-yellow-200"
+                    >
+                      <Edit className="w-3 h-3 mr-1" />
+                      Edit Notes
+                    </button>
+                  ) : (
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={handleAdminSave}
+                        disabled={adminSaving}
+                        className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:opacity-50"
+                      >
+                        <Save className="w-3 h-3 mr-1" />
+                        {adminSaving ? 'Saving...' : 'Save'}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setAdminEditing(false);
+                          setAdminEditForm({
+                            pocFirstName: event?.pocFirstName || '',
+                            pocLastName: event?.pocLastName || '',
+                            pocPreferredName: event?.pocPreferredName || '',
+                            pocSlackId: event?.pocSlackId || '',
+                            notes: event?.notes || '',
+                          });
+                        }}
+                        className="inline-flex items-center px-3 py-1 border border-yellow-300 text-xs font-medium rounded-md text-yellow-700 bg-yellow-100 hover:bg-yellow-200"
+                      >
+                        <X className="w-3 h-3 mr-1" />
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
             <div className="p-6">
@@ -596,10 +852,10 @@ export default function EventManagePage() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Internal Notes
                 </label>
-                {editing ? (
+                {adminEditing ? (
                   <RichTextEditor
-                    value={editForm.notes}
-                    onChange={(value) => setEditForm({...editForm, notes: value})}
+                    value={adminEditForm.notes}
+                    onChange={(value) => setAdminEditForm({...adminEditForm, notes: value})}
                     placeholder="Add internal notes about this event..."
                     className="focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
                   />
@@ -618,7 +874,7 @@ export default function EventManagePage() {
                   </div>
                 )}
               </div>
-              {!editing && (
+              {!adminEditing && (
                 <p className="text-xs text-gray-500">
                   These notes are only visible to administrators and are used for internal tracking.
                 </p>

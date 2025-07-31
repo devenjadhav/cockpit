@@ -86,6 +86,9 @@ export interface UpdateEventData {
   eventName?: string;
   pocFirstName?: string;
   pocLastName?: string;
+  pocPreferredName?: string;
+  pocSlackId?: string;
+  // pocAge is computed from pocDob, not directly editable
   location?: string;
   streetAddress?: string;
   streetAddress2?: string;

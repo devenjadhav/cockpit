@@ -142,6 +142,10 @@ export class AirtableService {
       // if (updateData.eventName !== undefined) updateFields.event_name = updateData.eventName;
       if (updateData.pocFirstName !== undefined) updateFields.poc_first_name = updateData.pocFirstName;
       if (updateData.pocLastName !== undefined) updateFields.poc_last_name = updateData.pocLastName;
+      if (updateData.pocPreferredName !== undefined) updateFields.poc_preferred_name = updateData.pocPreferredName;
+      if (updateData.pocSlackId !== undefined) updateFields.poc_slack_id = updateData.pocSlackId;
+      // poc_age is computed from poc_dob, so we don't update it directly
+      // if (updateData.pocAge !== undefined) updateFields.poc_age = updateData.pocAge;
       if (updateData.location !== undefined) updateFields.location = updateData.location;
       if (updateData.streetAddress !== undefined) updateFields.street_address = updateData.streetAddress;
       if (updateData.streetAddress2 !== undefined) updateFields.street_address_2 = updateData.streetAddress2;

@@ -27,8 +27,8 @@ export class DashboardService {
       console.log(`After filtering: ${events.length} events remaining`);
     }
     
-    // Create event cards without attendee data
-    const eventCards = events.map(event => this.createEventCard(event));
+    // Create event cards without attendee data, including POC fields for admins
+    const eventCards = events.map(event => this.createEventCard(event, isAdmin));
     
     // Calculate overall stats
     const stats = this.calculateDashboardStats(events, eventCards);
@@ -41,7 +41,7 @@ export class DashboardService {
     };
   }
 
-  private static createEventCard(event: Event): EventCardData {
+  private static createEventCard(event: Event, isAdmin: boolean = false): EventCardData {
     const attendeeCount = 0; // No attendee tracking
     const estimatedCount = event.estimatedAttendeeCount || 0;
     const capacityPercentage = 0; // No capacity tracking without attendees
@@ -57,7 +57,7 @@ export class DashboardService {
 
     console.log(`Event ${event.eventName} eventFormat:`, event.eventFormat);
     
-    return {
+    const eventCard: EventCardData = {
       id: event.id,
       name: event.eventName,
       startDate: new Date().toISOString(), // Placeholder
@@ -75,6 +75,28 @@ export class DashboardService {
       eventFormat: event.eventFormat,
       hasConfirmedVenue: event.hasConfirmedVenue,
     };
+
+    // Include POC fields for admin users
+    if (isAdmin) {
+      (eventCard as any).pocFirstName = event.pocFirstName;
+      (eventCard as any).pocLastName = event.pocLastName;
+      (eventCard as any).pocPreferredName = event.pocPreferredName;
+      (eventCard as any).pocSlackId = event.pocSlackId;
+      (eventCard as any).pocAge = event.pocAge;
+      (eventCard as any).organizerEmail = event.email;
+      (eventCard as any).description = event.description;
+      (eventCard as any).tags = event.tags;
+      (eventCard as any).website = event.website;
+      (eventCard as any).contactInfo = event.contactInfo;
+      (eventCard as any).streetAddress = event.streetAddress;
+      (eventCard as any).streetAddress2 = event.streetAddress2;
+      (eventCard as any).city = event.city;
+      (eventCard as any).state = event.state;
+      (eventCard as any).zipcode = event.zipcode;
+      (eventCard as any).triageStatus = event.triageStatus;
+    }
+
+    return eventCard;
   }
 
   private static mapTriageStatusToEventStatus(triageStatus?: string): 'draft' | 'published' | 'cancelled' | 'completed' {
