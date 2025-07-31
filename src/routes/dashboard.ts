@@ -5,6 +5,7 @@ import { AuthenticatedRequest } from '../types/auth';
 import { ApiResponse } from '../types/api';
 import { airtableService } from '../services/airtableService';
 import { Event } from '../types/event';
+import { dashboardRateLimit } from '../middleware/rateLimiting';
 
 const router = express.Router();
 
@@ -34,7 +35,7 @@ router.get('/test', async (req, res) => {
 router.use(authenticateToken);
 
 // GET /api/dashboard - overview of organizer's events (or all events if admin)
-router.get('/', async (req: AuthenticatedRequest, res) => {
+router.get('/', dashboardRateLimit, async (req: AuthenticatedRequest, res) => {
   try {
     if (!req.user?.email) {
       return res.status(401).json({

@@ -11,13 +11,16 @@ import { apiClient } from '@/lib/api';
 
 export function Dashboard() {
   const { user, logout, token } = useAuth();
-  const [selectedTriageStatus, setSelectedTriageStatus] = useState<string>('');
+  const [selectedTriageStatus, setSelectedTriageStatus] = useState<string>('Approved');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [fuzzySearchEnabled, setFuzzySearchEnabled] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminLoading, setAdminLoading] = useState(true);
+  const [adminConsoleActive, setAdminConsoleActive] = useState(false);
   const { data, loading, error, refresh } = useDashboard({ 
-    triageStatus: selectedTriageStatus || undefined 
+    filters: { triageStatus: selectedTriageStatus || undefined },
+    enablePolling: !adminConsoleActive, // Disable polling when admin console is active
+    pollingInterval: 300000 // 5 minutes - much less aggressive
   });
   const { statuses: triageStatuses, loading: statusesLoading } = useTriageStatuses();
 
@@ -402,7 +405,7 @@ export function Dashboard() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Admin Search Bar */}
+        {/* Admin Tools */}
         {isAdmin && (
           <div className="mb-8 bg-white rounded-lg shadow-md overflow-hidden border-2 border-dashed border-yellow-400">
             <div className="bg-yellow-50 px-4 py-2 border-b border-yellow-200">
@@ -410,7 +413,7 @@ export function Dashboard() {
                 <div className="flex items-center">
                   <Search className="w-4 h-4 text-yellow-600 mr-2" />
                   <span className="text-sm font-medium text-yellow-800">
-                    Admin Event Search
+                    Admin Tools
                   </span>
                   <span className="ml-2 text-xs text-yellow-600">(Admin Only)</span>
                 </div>
@@ -442,54 +445,62 @@ export function Dashboard() {
                 </div>
               </div>
             </div>
-            <div className="p-6">
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search className="h-5 w-5 text-gray-400" />
+            <div className="p-6 space-y-6">
+              {/* Event Search */}
+              <div>
+                <h3 className="text-sm font-medium text-gray-900 mb-3">Event Search</h3>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Search className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                    placeholder={
+                      fuzzySearchEnabled
+                        ? "Fuzzy search across all event fields: name, location, organizer, status, format, tags, etc..."
+                        : "Simple search by event name only..."
+                    }
+                  />
+                  {searchQuery && (
+                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                      <button
+                        onClick={clearSearch}
+                        className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                        title="Clear search"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
                 </div>
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                  placeholder={
-                    fuzzySearchEnabled
-                      ? "Fuzzy search across all event fields: name, location, organizer, status, format, tags, etc..."
-                      : "Simple search by event name only..."
-                  }
-                />
                 {searchQuery && (
-                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                    <button
-                      onClick={clearSearch}
-                      className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
-                      title="Clear search"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
+                  <div className="mt-3 flex items-center justify-between text-sm">
+                    <p className="text-gray-600">
+                      {fuzzySearchEnabled 
+                        ? "Searching across all event fields with intelligent relevance ranking"
+                        : "Searching event names only (simple text matching)"
+                      }
+                    </p>
+                    <p className="text-gray-500">
+                      {filteredEvents.length} result{filteredEvents.length !== 1 ? 's' : ''}
+                    </p>
                   </div>
                 )}
               </div>
-              {searchQuery && (
-                <div className="mt-3 flex items-center justify-between text-sm">
-                  <p className="text-gray-600">
-                    {fuzzySearchEnabled 
-                      ? "Searching across all event fields with intelligent relevance ranking"
-                      : "Searching event names only (simple text matching)"
-                    }
-                  </p>
-                  <p className="text-gray-500">
-                    {filteredEvents.length} result{filteredEvents.length !== 1 ? 's' : ''}
-                  </p>
-                </div>
-              )}
+
+              {/* Admin Console */}
+              <div>
+                <h3 className="text-sm font-medium text-gray-900 mb-3">Database Console</h3>
+                <AdminConsole 
+                  authToken={token || ''} 
+                  onActiveChange={setAdminConsoleActive}
+                />
+              </div>
             </div>
           </div>
-        )}
-
-        {/* Admin Console */}
-        {isAdmin && (
-          <AdminConsole authToken={token || ''} />
         )}
 
         {/* Map Section - Temporarily disabled */}
@@ -524,7 +535,7 @@ export function Dashboard() {
               </span>
             </div>
             <span className="text-sm text-gray-500">
-              Updates every 30 seconds
+              Updates every 5 minutes
             </span>
           </div>
 

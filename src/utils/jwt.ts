@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { JWTPayload } from '../types/auth';
+import { JwtSecurityManager, TokenValidationResult } from '../security/jwtSecurity';
 
 export class JWTUtils {
   private static getSecret(): string {
@@ -13,17 +14,30 @@ export class JWTUtils {
     return process.env.JWT_EXPIRES_IN || '24h';
   }
 
-  static generateToken(email: string): string {
-    const payload: Omit<JWTPayload, 'iat' | 'exp'> = {
-      email,
-    };
-
-    return jwt.sign(payload, this.getSecret(), {
-      expiresIn: this.getExpiresIn(),
-    } as jwt.SignOptions);
+  /**
+   * Generate a secure JWT token using enhanced security manager
+   */
+  static generateToken(email: string, ipAddress?: string): string {
+    return JwtSecurityManager.generateToken(email, ipAddress);
   }
 
-  static verifyToken(token: string): JWTPayload | null {
+  /**
+   * Verify JWT token with enhanced security validation
+   */
+  static verifyToken(token: string, ipAddress?: string): { payload: JWTPayload | null; validationResult: TokenValidationResult } {
+    const validationResult = JwtSecurityManager.validateToken(token, ipAddress);
+    
+    return {
+      payload: validationResult.payload || null,
+      validationResult
+    };
+  }
+
+  /**
+   * Legacy method for backward compatibility - use verifyToken instead
+   * @deprecated Use verifyToken for enhanced security
+   */
+  static legacyVerifyToken(token: string): JWTPayload | null {
     try {
       const decoded = jwt.verify(token, this.getSecret()) as JWTPayload;
       return decoded;
@@ -41,5 +55,33 @@ export class JWTUtils {
       console.error('JWT decode error:', error);
       return null;
     }
+  }
+
+  /**
+   * Revoke a token by its ID
+   */
+  static revokeToken(jti: string): void {
+    JwtSecurityManager.revokeToken(jti);
+  }
+
+  /**
+   * Revoke all tokens for a user
+   */
+  static revokeAllUserTokens(email: string): number {
+    return JwtSecurityManager.revokeAllUserTokens(email);
+  }
+
+  /**
+   * Get token statistics for monitoring
+   */
+  static getTokenStats() {
+    return JwtSecurityManager.getTokenStats();
+  }
+
+  /**
+   * Validate JWT secret configuration
+   */
+  static validateConfiguration() {
+    return JwtSecurityManager.validateJwtSecret();
   }
 }

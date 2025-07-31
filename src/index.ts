@@ -7,34 +7,52 @@ import eventRoutes from './routes/events';
 import dashboardRoutes from './routes/dashboard';
 import adminRoutes from './routes/admin';
 import adminConsoleRoutes from './routes/adminConsole';
+import securityRoutes from './routes/security';
 import { databaseService } from './services/databaseService';
 import { syncService } from './services/syncService';
+import { apiRateLimit, securityMonitoringMiddleware } from './middleware/rateLimiting';
+import { sanitizeQueryParams } from './middleware/inputValidation';
+import { securityHeaders, apiSecurityHeaders, corsOptions, securityAuditMiddleware, requestTimeoutMiddleware } from './middleware/securityHeaders';
+import { globalErrorHandler, notFoundHandler, uncaughtExceptionHandler, unhandledRejectionHandler } from './middleware/errorHandling';
 
 // Load .env file from project root
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
+// Set up global error handlers
+process.on('uncaughtException', uncaughtExceptionHandler);
+process.on('unhandledRejection', unhandledRejectionHandler);
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    
-    // Allow any localhost origin for development
-    if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
-      return callback(null, true);
-    }
-    
-    // Block other origins
-    callback(new Error('Not allowed by CORS'));
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-access-token'],
-}));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Trust proxy for accurate IP addresses behind reverse proxies
+app.set('trust proxy', 1);
+
+// Security headers (must come first)
+app.use(securityHeaders);
+
+// Request timeout protection
+app.use(requestTimeoutMiddleware(30000));
+
+// Enhanced CORS with production security
+app.use(cors(corsOptions));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Security audit middleware
+app.use(securityAuditMiddleware);
+
+// Security monitoring middleware (must come before rate limiting)
+app.use(securityMonitoringMiddleware);
+
+// Input sanitization
+app.use(sanitizeQueryParams);
+
+// Global rate limiting
+app.use('/api/', apiRateLimit);
+
+// API-specific security headers
+app.use('/api/', apiSecurityHeaders);
 
 // Test route to debug event format issue
 app.get('/api/test-eventformat', async (req, res) => {
@@ -63,6 +81,13 @@ app.use('/api/events', eventRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/admin-console', adminConsoleRoutes);
+app.use('/api/security', securityRoutes);
+
+// 404 handler for undefined routes
+app.use(notFoundHandler);
+
+// Global error handling middleware (must be last)
+app.use(globalErrorHandler);
 
 app.get('/', (req, res) => {
   res.json({ message: 'Daydream Portal API' });

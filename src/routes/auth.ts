@@ -2,11 +2,13 @@ import express from 'express';
 import { authService } from '../services/authService';
 import { LoginRequest, VerifyTokenRequest } from '../types/auth';
 import { ApiResponse } from '../types/api';
+import { authRateLimit, magicLinkRateLimit, slowDownMiddleware } from '../middleware/rateLimiting';
+import { validateAuthRequest } from '../middleware/inputValidation';
 
 const router = express.Router();
 
 // POST /api/auth/request-login
-router.post('/request-login', async (req, res) => {
+router.post('/request-login', magicLinkRateLimit, slowDownMiddleware, validateAuthRequest, async (req, res) => {
   try {
     console.log('Login request received:', req.body);
     const { email, type = 'magic-link' }: LoginRequest = req.body;
@@ -29,8 +31,12 @@ router.post('/request-login', async (req, res) => {
       } as ApiResponse);
     }
 
-    console.log('Processing login for:', email);
-    const result = await authService.requestLogin({ email, type });
+    // Extract IP address and user agent for security tracking
+    const ipAddress = req.ip || req.connection.remoteAddress || req.headers['x-forwarded-for'] as string;
+    const userAgent = req.headers['user-agent'];
+
+    console.log('Processing login for:', email, 'from IP:', ipAddress);
+    const result = await authService.requestLogin({ email, type }, ipAddress, userAgent);
     console.log('Login result:', result);
 
     if (!result.success) {
@@ -50,7 +56,7 @@ router.post('/request-login', async (req, res) => {
 });
 
 // POST /api/auth/verify-token
-router.post('/verify-token', async (req, res) => {
+router.post('/verify-token', authRateLimit, validateAuthRequest, async (req, res) => {
   try {
     console.log('Token verification request received:', req.body);
     const { email, token }: VerifyTokenRequest = req.body;
@@ -63,8 +69,12 @@ router.post('/verify-token', async (req, res) => {
       } as ApiResponse);
     }
 
-    console.log('Verifying token for email:', email);
-    const result = await authService.verifyToken({ email, token });
+    // Extract IP address and user agent for security tracking
+    const ipAddress = req.ip || req.connection.remoteAddress || req.headers['x-forwarded-for'] as string;
+    const userAgent = req.headers['user-agent'];
+
+    console.log('Verifying token for email:', email, 'from IP:', ipAddress);
+    const result = await authService.verifyToken({ email, token }, ipAddress, userAgent);
     console.log('Verification result:', result);
 
     if (!result.success) {

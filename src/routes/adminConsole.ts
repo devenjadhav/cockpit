@@ -2,6 +2,8 @@ import express from 'express';
 import { adminAuth } from '../middleware/adminAuth';
 import { claudeService } from '../services/claudeService';
 import { ApiResponse } from '../types/api';
+import { adminConsoleRateLimit } from '../middleware/rateLimiting';
+import { validateAdminConsoleRequest } from '../middleware/inputValidation';
 
 interface AuthenticatedRequest extends express.Request {
   user?: { email: string };
@@ -11,6 +13,11 @@ const router = express.Router();
 
 interface ConsoleQueryRequest {
   query: string;
+  conversationHistory?: Array<{
+    role: 'user' | 'assistant';
+    content: string;
+    timestamp: string;
+  }>;
 }
 
 interface ConsoleQueryResponse {
@@ -22,9 +29,9 @@ interface ConsoleQueryResponse {
 }
 
 // POST /api/admin-console/query
-router.post('/query', adminAuth, async (req: AuthenticatedRequest, res) => {
+router.post('/query', adminConsoleRateLimit, adminAuth, validateAdminConsoleRequest, async (req: AuthenticatedRequest, res) => {
   try {
-    const { query }: ConsoleQueryRequest = req.body;
+    const { query, conversationHistory }: ConsoleQueryRequest = req.body;
 
     if (!query || typeof query !== 'string' || query.trim().length === 0) {
       return res.status(400).json({
@@ -44,11 +51,14 @@ router.post('/query', adminAuth, async (req: AuthenticatedRequest, res) => {
       } as ApiResponse<null>);
     }
 
+    // Validate conversation history if provided
+    const sanitizedHistory = conversationHistory?.slice(-10) || []; // Keep last 10 messages
+
     // Log the query for audit purposes
     console.log(`[Admin Console] Query by ${req.user?.email}: ${sanitizedQuery}`);
 
     // Process the query with Claude service
-    const result = await claudeService.processQuery(sanitizedQuery);
+    const result = await claudeService.processQuery(sanitizedQuery, sanitizedHistory);
 
     const response: ConsoleQueryResponse = {
       ...result,

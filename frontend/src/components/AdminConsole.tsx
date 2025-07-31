@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Terminal, Send, Loader2, AlertCircle, CheckCircle, X } from 'lucide-react';
+import { Terminal, Send, Loader2, AlertCircle, CheckCircle, X, Maximize2, Minimize2 } from 'lucide-react';
 
 interface ConsoleMessage {
   id: string;
@@ -12,6 +12,7 @@ interface ConsoleMessage {
 
 interface AdminConsoleProps {
   authToken: string;
+  onActiveChange?: (active: boolean) => void;
 }
 
 interface QueryResponse {
@@ -22,8 +23,9 @@ interface QueryResponse {
   timestamp: string;
 }
 
-export const AdminConsole: React.FC<AdminConsoleProps> = ({ authToken }) => {
+export const AdminConsole: React.FC<AdminConsoleProps> = ({ authToken, onActiveChange }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [messages, setMessages] = useState<ConsoleMessage[]>([]);
   const [currentInput, setCurrentInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -37,11 +39,27 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ authToken }) => {
       checkConsoleStatus();
       inputRef.current?.focus();
     }
-  }, [isExpanded]);
+    // Notify parent about active state change
+    onActiveChange?.(isExpanded || isFullscreen);
+  }, [isExpanded, isFullscreen, onActiveChange]);
 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Handle escape key for fullscreen mode
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isFullscreen) {
+        setIsFullscreen(false);
+      }
+    };
+
+    if (isFullscreen) {
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
+    }
+  }, [isFullscreen]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -106,6 +124,13 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ authToken }) => {
     addMessage('input', query);
 
     try {
+      // Build conversation history from recent messages (last 20 messages)
+      const conversationHistory = messages.slice(-20).map(msg => ({
+        role: msg.type === 'input' ? 'user' as const : 'assistant' as const,
+        content: msg.content,
+        timestamp: msg.timestamp.toISOString()
+      })).filter(msg => msg.role === 'user' || msg.role === 'assistant');
+
       const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
       const response = await fetch(`${apiBaseUrl}/admin-console/query`, {
         method: 'POST',
@@ -113,7 +138,10 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ authToken }) => {
           'Authorization': `Bearer ${authToken}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ query }),
+        body: JSON.stringify({ 
+          query,
+          conversationHistory 
+        }),
       });
 
       const data = await response.json();
@@ -141,6 +169,18 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ authToken }) => {
     addSystemMessage('Console cleared');
   };
 
+  const toggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen);
+    if (!isFullscreen) {
+      setIsExpanded(false); // Close expanded mode when going fullscreen
+    }
+  };
+
+  const closeConsole = () => {
+    setIsExpanded(false);
+    setIsFullscreen(false);
+  };
+
   const formatTimestamp = (timestamp: Date) => {
     return timestamp.toLocaleTimeString('en-US', { 
       hour12: false, 
@@ -150,23 +190,45 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ authToken }) => {
     });
   };
 
-  if (!isExpanded) {
+  const renderFormattedContent = (content: string) => {
+    // Split content by color markers and render with appropriate styling
+    const parts = content.split(/(\[GREEN\].*?\[\/GREEN\])/g);
+    
+    return parts.map((part, index) => {
+      if (part.startsWith('[GREEN]') && part.endsWith('[/GREEN]')) {
+        // Extract the text between the markers
+        const text = part.slice(7, -8); // Remove [GREEN] and [/GREEN]
+        return (
+          <span key={index} className="text-green-400 font-semibold">
+            {text}
+          </span>
+        );
+      }
+      return part;
+    });
+  };
+
+  if (!isExpanded && !isFullscreen) {
     return (
-      <div className="mb-6">
-        <button
-          onClick={() => setIsExpanded(true)}
-          className="flex items-center px-4 py-3 bg-gray-900 text-green-400 rounded-lg border border-gray-700 hover:bg-gray-800 transition-colors font-mono text-sm"
-        >
-          <Terminal className="w-4 h-4 mr-2" />
-          <span>Open Admin Console</span>
-          <span className="ml-2 text-xs text-gray-500">(Claude-powered queries)</span>
-        </button>
-      </div>
+      <button
+        onClick={() => setIsExpanded(true)}
+        className="flex items-center px-4 py-3 bg-gray-900 text-green-400 rounded-lg border border-gray-700 hover:bg-gray-800 transition-colors font-mono text-sm"
+      >
+        <Terminal className="w-4 h-4 mr-2" />
+        <span>Open Admin Console</span>
+        <span className="ml-2 text-xs text-gray-500">(Claude-powered queries)</span>
+      </button>
     );
   }
 
   return (
-    <div className="mb-6 bg-gray-900 rounded-lg border border-gray-700 overflow-hidden">
+    <div className={`
+      bg-gray-900 border border-gray-700 overflow-hidden
+      ${isFullscreen 
+        ? 'fixed inset-0 z-50 rounded-none' 
+        : 'rounded-lg'
+      }
+    `}>
       {/* Console Header */}
       <div className="bg-gray-800 px-4 py-2 border-b border-gray-700">
         <div className="flex items-center justify-between">
@@ -205,7 +267,14 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ authToken }) => {
               Clear
             </button>
             <button
-              onClick={() => setIsExpanded(false)}
+              onClick={toggleFullscreen}
+              className="text-gray-400 hover:text-gray-300 transition-colors"
+              title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+            >
+              {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+            </button>
+            <button
+              onClick={closeConsole}
               className="text-gray-400 hover:text-gray-300 transition-colors"
               title="Close console"
             >
@@ -216,16 +285,24 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ authToken }) => {
       </div>
 
       {/* Console Body */}
-      <div className="h-80 flex flex-col">
+      <div className={`flex flex-col ${isFullscreen ? 'h-screen' : 'h-80'}`}>
         {/* Messages Area */}
         <div className="flex-1 p-4 overflow-y-auto font-mono text-sm">
           {messages.length === 0 && (
             <div className="text-gray-500 text-xs">
-              <p>Welcome to the Admin Console!</p>
-              <p className="mt-1">Ask questions about your Airtable data, like:</p>
-              <p className="text-green-400 ml-2">• "How many events have more than 15 estimated attendees?"</p>
-              <p className="text-green-400 ml-2">• "Show me all events in California"</p>
-              <p className="text-green-400 ml-2">• "What's the average attendee count?"</p>
+              <p className="text-green-400 font-semibold">🚀 Welcome to the Admin Console!</p>
+              <p className="mt-2">I'm your AI database analyst. Ask me questions about your hackathon events data and I'll run SQL queries to get the answers.</p>
+              
+              <p className="mt-3 text-gray-400">📊 Try these example queries:</p>
+              <p className="text-green-400 ml-2">• "How many events are approved?"</p>
+              <p className="text-green-400 ml-2">• "Show me California events with confirmed venues"</p>
+              <p className="text-green-400 ml-2">• "What's the average attendee count by event format?"</p>
+              <p className="text-green-400 ml-2">• "Which cities have the most events?"</p>
+              
+              <p className="mt-3 text-gray-400">💬 I understand follow-up questions too:</p>
+              <p className="text-blue-300 ml-2">• "Show me more details about those"</p>
+              <p className="text-blue-300 ml-2">• "What about the rejected ones?"</p>
+              <p className="text-blue-300 ml-2">• "Group those results by state"</p>
             </div>
           )}
           
@@ -244,7 +321,7 @@ export const AdminConsole: React.FC<AdminConsoleProps> = ({ authToken }) => {
                   )}
                   {message.type === 'output' && (
                     <div className="text-blue-300 whitespace-pre-wrap break-words">
-                      {message.content}
+                      {renderFormattedContent(message.content)}
                     </div>
                   )}
                   {message.type === 'error' && (

@@ -13,12 +13,24 @@ export const authenticateToken = (req: AuthenticatedRequest, res: Response, next
     });
   }
 
-  const payload = JWTUtils.verifyToken(token);
+  // Extract IP address for security validation
+  const ipAddress = req.ip || req.connection.remoteAddress || req.headers['x-forwarded-for'] as string;
   
-  if (!payload) {
+  const { payload, validationResult } = JWTUtils.verifyToken(token, ipAddress);
+  
+  if (!validationResult.isValid || !payload) {
+    // Log security violations for monitoring
+    if (validationResult.securityViolations.length > 0) {
+      console.warn(`[Auth Security] Token validation failed from ${ipAddress}: ${validationResult.securityViolations.join(', ')}`);
+    }
+    
+    const message = validationResult.errors.length > 0 
+      ? validationResult.errors[0] 
+      : 'Invalid or expired token';
+    
     return res.status(403).json({
       success: false,
-      message: 'Invalid or expired token',
+      message,
     });
   }
 
@@ -34,11 +46,16 @@ export const optionalAuth = (req: AuthenticatedRequest, res: Response, next: Nex
   const token = authHeader && authHeader.split(' ')[1];
 
   if (token) {
-    const payload = JWTUtils.verifyToken(token);
-    if (payload) {
+    const ipAddress = req.ip || req.connection.remoteAddress || req.headers['x-forwarded-for'] as string;
+    const { payload, validationResult } = JWTUtils.verifyToken(token, ipAddress);
+    
+    if (validationResult.isValid && payload) {
       req.user = {
         email: payload.email,
       };
+    } else if (validationResult.securityViolations.length > 0) {
+      // Log security violations but don't block request for optional auth
+      console.warn(`[Auth Security] Optional auth validation failed from ${ipAddress}: ${validationResult.securityViolations.join(', ')}`);
     }
   }
 
