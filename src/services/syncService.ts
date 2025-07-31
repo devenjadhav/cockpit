@@ -278,7 +278,7 @@ class SyncService {
         this.sanitizeString(event.projectDescription),
         event.lat || null,
         event.long || null,
-        event.triageStatus || 'pending',
+        this.normalizeTriageStatus(event.triageStatus),
         event.startDate || null,
         event.endDate || null,
         event.registrationDeadline || null,
@@ -389,6 +389,31 @@ class SyncService {
     
     const str = String(value).trim();
     return str.length > 0 ? str : null;
+  }
+
+  private normalizeTriageStatus(status: string | null | undefined): string {
+    if (!status) return 'pending';
+    
+    const normalized = status.toLowerCase().trim();
+    
+    // Map Airtable values to database enum values
+    switch (normalized) {
+      case 'approved':
+        return 'approved';
+      case 'denied':
+      case 'rejected':
+        return 'rejected';
+      case 'hold':
+        return 'hold';
+      case 'ask':
+        return 'ask';
+      case 'merge confirmed':
+      case 'merge_confirmed':
+        return 'merge_confirmed';
+      case 'pending':
+      default:
+        return 'pending';
+    }
   }
 
   async getSyncStatus(): Promise<SyncMetadata[]> {

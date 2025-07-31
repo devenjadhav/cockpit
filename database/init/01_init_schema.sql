@@ -7,7 +7,7 @@ CREATE EXTENSION IF NOT EXISTS "pg_stat_statements";
 
 -- Create enum types
 CREATE TYPE event_format_type AS ENUM ('12-hours', '24-hours');
-CREATE TYPE triage_status_type AS ENUM ('approved', 'rejected', 'hold', 'ask', 'pending');
+CREATE TYPE triage_status_type AS ENUM ('approved', 'rejected', 'hold', 'ask', 'pending', 'denied', 'merge_confirmed');
 CREATE TYPE user_status_type AS ENUM ('active', 'admin', 'inactive');
 
 -- Events table (mirrors Airtable events)
@@ -20,13 +20,7 @@ CREATE TABLE events (
     poc_preferred_name VARCHAR(255),
     poc_slack_id VARCHAR(255),
     poc_dob DATE,
-    poc_age INTEGER GENERATED ALWAYS AS (
-        CASE 
-            WHEN poc_dob IS NOT NULL 
-            THEN EXTRACT(YEAR FROM AGE(poc_dob))::INTEGER 
-            ELSE NULL 
-        END
-    ) STORED,
+    poc_age INTEGER,
     email VARCHAR(500) NOT NULL,
     location VARCHAR(500),
     slug VARCHAR(255),
