@@ -17,18 +17,28 @@ if [ ! -f ".env" ]; then
     exit 1
 fi
 
-# Check if node_modules exist
+# Check if node_modules exist - if not, install them
 if [ ! -d "node_modules" ]; then
-    echo -e "${RED}❌ Backend dependencies not installed${NC}"
-    echo "Please run './setup.sh' first"
-    exit 1
+    echo -e "${YELLOW}📦 Installing backend dependencies...${NC}"
+    npm install
 fi
 
 if [ ! -d "frontend/node_modules" ]; then
-    echo -e "${RED}❌ Frontend dependencies not installed${NC}"
-    echo "Please run './setup.sh' first"
-    exit 1
+    echo -e "${YELLOW}📦 Installing frontend dependencies...${NC}"
+    cd frontend && npm install && cd ..
 fi
+
+# Start PostgreSQL
+echo -e "${YELLOW}🐘 Starting PostgreSQL...${NC}"
+./scripts/start-postgres.sh
+
+# Build backend
+echo -e "${YELLOW}🔨 Building backend...${NC}"
+npm run build
+
+# Build frontend
+echo -e "${YELLOW}🔨 Building frontend...${NC}"
+cd frontend && npm run build && cd ..
 
 # Create logs directory
 mkdir -p logs
@@ -42,6 +52,8 @@ cleanup() {
     if [ ! -z "$FRONTEND_PID" ]; then
         kill $FRONTEND_PID 2>/dev/null
     fi
+    echo -e "${YELLOW}🐘 Stopping PostgreSQL...${NC}"
+    docker-compose down
     exit 0
 }
 
@@ -67,7 +79,7 @@ if command -v tmux &> /dev/null; then
     # Attach to session
     echo -e "${GREEN}🎉 Servers starting in tmux session${NC}"
     echo -e "${BLUE}📱 Frontend: http://localhost:3000${NC}"
-    echo -e "${BLUE}🔧 Backend: http://localhost:5000${NC}"
+    echo -e "${BLUE}🔧 Backend: http://localhost:3001${NC}"
     echo -e "${YELLOW}💡 Use 'Ctrl+B, then D' to detach from tmux${NC}"
     echo -e "${YELLOW}💡 Use 'tmux attach -t daydream-portal' to reattach${NC}"
     echo -e "${YELLOW}💡 Use 'tmux kill-session -t daydream-portal' to stop servers${NC}"
@@ -97,8 +109,8 @@ else
     
     echo -e "\n${GREEN}🎉 Servers started successfully!${NC}"
     echo -e "${BLUE}📱 Frontend: http://localhost:3000${NC}"
-    echo -e "${BLUE}🔧 Backend: http://localhost:5000${NC}"
-    echo -e "${BLUE}📋 Backend API docs: http://localhost:5000${NC}"
+    echo -e "${BLUE}🔧 Backend: http://localhost:3001${NC}"
+    echo -e "${BLUE}📋 Backend API docs: http://localhost:3001${NC}"
     
     echo -e "\n${YELLOW}📝 Logs:${NC}"
     echo "Backend: tail -f logs/backend.log"

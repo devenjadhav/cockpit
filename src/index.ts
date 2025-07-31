@@ -1,12 +1,17 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
 import authRoutes from './routes/auth';
 import eventRoutes from './routes/events';
 import dashboardRoutes from './routes/dashboard';
 import adminRoutes from './routes/admin';
+import adminConsoleRoutes from './routes/adminConsole';
+import { databaseService } from './services/databaseService';
+import { syncService } from './services/syncService';
 
-dotenv.config();
+// Load .env file from project root
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -57,6 +62,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/admin-console', adminConsoleRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: 'Daydream Portal API' });
@@ -71,6 +77,64 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+// Initialize services and start server
+async function startServer() {
+  try {
+    // Wait for database service to be ready
+    console.log('Initializing database service...');
+    let retries = 0;
+    const maxRetries = 10;
+    
+    while (!databaseService.isInitialized() && retries < maxRetries) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      retries++;
+    }
+    
+    if (!databaseService.isInitialized()) {
+      console.warn('Database service not initialized, continuing without it...');
+    } else {
+      console.log('Database service initialized successfully');
+      
+      // Start sync service
+      console.log('Starting sync service...');
+      // syncService is already started in its constructor
+    }
+
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+      console.log(`Environment: ${process.env.NODE_ENV}`);
+      console.log(`Database: ${databaseService.isInitialized() ? 'Connected' : 'Not connected'}`);
+    });
+
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+}
+
+// Graceful shutdown
+process.on('SIGTERM', async () => {
+  console.log('SIGTERM received, shutting down gracefully...');
+  try {
+    syncService.stopPeriodicSync();
+    await databaseService.close();
+    process.exit(0);
+  } catch (error) {
+    console.error('Error during shutdown:', error);
+    process.exit(1);
+  }
 });
+
+process.on('SIGINT', async () => {
+  console.log('SIGINT received, shutting down gracefully...');
+  try {
+    syncService.stopPeriodicSync();
+    await databaseService.close();
+    process.exit(0);
+  } catch (error) {
+    console.error('Error during shutdown:', error);
+    process.exit(1);
+  }
+});
+
+startServer();

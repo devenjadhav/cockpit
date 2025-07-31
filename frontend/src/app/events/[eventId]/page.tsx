@@ -775,9 +775,9 @@ export default function EventManagePage() {
                               {(() => {
                                 // Handle if pocAge is an object or primitive
                                 const age = typeof event.pocAge === 'object' && event.pocAge !== null 
-                                  ? event.pocAge.specialValue || event.pocAge.value || event.pocAge
+                                  ? (event.pocAge as any).specialValue || (event.pocAge as any).value || event.pocAge
                                   : event.pocAge;
-                                return `${age} years old`;
+                                return `${age || 'Unknown'} years old`;
                               })()}
                             </p>
                           </div>

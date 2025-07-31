@@ -6,10 +6,11 @@ import { useTriageStatuses } from '@/hooks/useTriageStatuses';
 import { EventCard } from './EventCard';
 import { StatsCard } from './StatsCard';
 import { EventMap } from './EventMap';
+import { AdminConsole } from './AdminConsole';
 import { apiClient } from '@/lib/api';
 
 export function Dashboard() {
-  const { user, logout } = useAuth();
+  const { user, logout, token } = useAuth();
   const [selectedTriageStatus, setSelectedTriageStatus] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [fuzzySearchEnabled, setFuzzySearchEnabled] = useState(false);
@@ -144,7 +145,7 @@ export function Dashboard() {
   const getSearchableFields = (event: any): Array<{text: string, weight: number}> => {
     const fields = [
       // High priority fields (weight 3)
-      { text: event.name || event.eventName || '', weight: 3 },
+      { text: event.name || '', weight: 3 },
       { text: event.organizerEmail || event.email || '', weight: 3 },
       
       // Medium priority fields (weight 2)
@@ -202,12 +203,12 @@ export function Dashboard() {
     const query = normalizeString(searchQuery.trim());
     
     return data.events.filter(event => {
-      const eventName = normalizeString(event.name || event.eventName || '');
+      const eventName = normalizeString(event.name || '');
       return eventName.includes(query);
     }).sort((a, b) => {
       // Sort by event name alphabetically
-      const nameA = (a.name || a.eventName || '').toLowerCase();
-      const nameB = (b.name || b.eventName || '').toLowerCase();
+      const nameA = (a.name || '').toLowerCase();
+      const nameB = (b.name || '').toLowerCase();
       return nameA.localeCompare(nameB);
     });
   }, [data?.events, searchQuery]);
@@ -228,11 +229,7 @@ export function Dashboard() {
       
       // Debug: Log searchable fields for events that might match
       if (query.toLowerCase() === 'deven') {
-        console.log(`Event: ${event.name || event.eventName}`, {
-          pocFirstName: event.pocFirstName,
-          pocLastName: event.pocLastName,
-          pocPreferredName: event.pocPreferredName,
-          pocSlackId: event.pocSlackId,
+        console.log(`Event: ${event.name}`, {
           searchableFields: searchableFields.map(f => ({ text: f.text, weight: f.weight }))
         });
       }
@@ -277,8 +274,8 @@ export function Dashboard() {
         }
         
         // Secondary sort: event name alphabetically for similar scores
-        const nameA = (a.event.name || a.event.eventName || '').toLowerCase();
-        const nameB = (b.event.name || b.event.eventName || '').toLowerCase();
+        const nameA = (a.event.name || '').toLowerCase();
+        const nameB = (b.event.name || '').toLowerCase();
         return nameA.localeCompare(nameB);
       })
       .map(item => item.event);
@@ -296,11 +293,8 @@ export function Dashboard() {
           .sort((a, b) => b.score - a.score)
           .slice(0, 10)
           .map(item => ({
-            name: item.event.name || item.event.eventName,
+            name: item.event.name,
             score: item.score.toFixed(2),
-            pocFirstName: item.event.pocFirstName,
-            pocLastName: item.event.pocLastName,
-            pocPreferredName: item.event.pocPreferredName,
             included: item.score > 5
           }))
         );
@@ -491,6 +485,11 @@ export function Dashboard() {
               )}
             </div>
           </div>
+        )}
+
+        {/* Admin Console */}
+        {isAdmin && (
+          <AdminConsole authToken={token || ''} />
         )}
 
         {/* Map Section - Temporarily disabled */}
