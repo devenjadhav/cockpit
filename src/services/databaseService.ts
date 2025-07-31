@@ -217,6 +217,21 @@ class DatabaseService {
   isInitialized(): boolean {
     return this.pool !== null && this.readOnlyPool !== null;
   }
+
+  getPoolInfo() {
+    return {
+      main: {
+        totalCount: this.pool?.totalCount || 0,
+        idleCount: this.pool?.idleCount || 0,
+        waitingCount: this.pool?.waitingCount || 0
+      },
+      readOnly: {
+        totalCount: this.readOnlyPool?.totalCount || 0,
+        idleCount: this.readOnlyPool?.idleCount || 0,
+        waitingCount: this.readOnlyPool?.waitingCount || 0
+      }
+    };
+  }
 }
 
 export const databaseService = new DatabaseService();

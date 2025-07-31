@@ -8,6 +8,7 @@ import dashboardRoutes from './routes/dashboard';
 import adminRoutes from './routes/admin';
 import adminConsoleRoutes from './routes/adminConsole';
 import securityRoutes from './routes/security';
+import healthRoutes from './routes/health';
 import { databaseService } from './services/databaseService';
 import { syncService } from './services/syncService';
 import { apiRateLimit, securityMonitoringMiddleware } from './middleware/rateLimiting';
@@ -82,6 +83,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/admin-console', adminConsoleRoutes);
 app.use('/api/security', securityRoutes);
+app.use('/api/health', healthRoutes);
 
 // 404 handler for undefined routes
 app.use(notFoundHandler);

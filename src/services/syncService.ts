@@ -10,16 +10,17 @@ interface SyncResult {
 }
 
 interface SyncMetadata {
-  tableName: string;
-  lastSyncAt: Date;
-  recordsSynced: number;
-  errorsCount: number;
-  errorDetails?: string;
+  table_name: string;
+  last_sync_at: Date;
+  last_sync_status: string;
+  records_synced: number;
+  errors_count: number;
+  error_details?: string;
 }
 
 class SyncService {
   private syncIntervalId: NodeJS.Timeout | null = null;
-  private readonly SYNC_INTERVAL_MS = 2 * 60 * 1000; // 2 minutes
+  private readonly SYNC_INTERVAL_MS = 30 * 1000; // 30 seconds
   private _isRunning = false;
 
   constructor() {
@@ -424,7 +425,7 @@ class SyncService {
       ORDER BY table_name, created_at DESC
     `;
 
-    const result = await databaseService.readOnlyQuery(query);
+    const result = await databaseService.query(query);
     return result.rows;
   }
 

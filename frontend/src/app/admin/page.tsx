@@ -205,6 +205,12 @@ export default function AdminPage() {
               <p className="text-gray-600">All Events Overview</p>
             </div>
             <div className="flex items-center space-x-4">
+              <button
+                onClick={() => router.push('/admin/health')}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Health Dashboard
+              </button>
               <span className="text-sm text-gray-600">
                 Welcome, {user?.email}
               </span>
