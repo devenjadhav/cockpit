@@ -30,6 +30,9 @@ RUN adduser -S nextjs -u 1001
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+# Ensure nextjs user owns the working directory
+RUN chown -R nextjs:nodejs /app
+
 USER nextjs
 
 EXPOSE 3000
@@ -40,7 +43,7 @@ ENV PORT=3000
 
 # Health check for Next.js
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3000', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3000 || exit 1
 
 # Add startup logging
 CMD ["sh", "-c", "echo 'Starting Next.js frontend on 0.0.0.0:3000' && echo 'Environment:' && env | grep -E '(NODE_ENV|NEXT_PUBLIC_|HOSTNAME|PORT)' && dumb-init node server.js"]
