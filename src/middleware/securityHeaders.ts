@@ -105,11 +105,14 @@ export const corsOptions = {
       return callback(null, true);
     }
 
+    // Check for Vercel domains (handles preview deployments)
+    if (origin.includes('vercel.app') || origin.includes('daydream-portal')) {
+      return callback(null, true);
+    }
+
     // Production origins
     const allowedOrigins = [
-      // Add your production domains here
-      'https://your-domain.com',
-      'https://www.your-domain.com',
+      'https://your-custom-domain.com', // If you add a custom domain
     ];
 
     // Development origins
