@@ -3,7 +3,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: daydream-backend
     restart: unless-stopped
     environment:
       - NODE_ENV=production
@@ -19,8 +18,8 @@ services:
       - AIRTABLE_BASE_ID=${AIRTABLE_BASE_ID}
       - LOOPS_API_KEY=${LOOPS_API_KEY}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-    ports:
-      - "3001:3001"
+    expose:
+      - "3001"
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3001/api/health || exit 1"]
       interval: 30s
@@ -32,13 +31,12 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: daydream-frontend
     restart: unless-stopped
     environment:
       - NODE_ENV=production
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000 || exit 1"]
       interval: 30s
