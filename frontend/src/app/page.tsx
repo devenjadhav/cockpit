@@ -8,6 +8,10 @@ export default function HomePage() {
   const { isAuthenticated, loading } = useAuth();
   const router = useRouter();
 
+  // Add logging
+  console.log('[Frontend] HomePage rendering:', { isAuthenticated, loading });
+  console.log('[Frontend] API URL:', process.env.NEXT_PUBLIC_API_URL);
+
   useEffect(() => {
     if (!loading) {
       if (isAuthenticated) {

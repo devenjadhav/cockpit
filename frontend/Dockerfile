@@ -35,9 +35,12 @@ USER nextjs
 EXPOSE 3000
 
 ENV NODE_ENV=production
+ENV HOSTNAME=0.0.0.0
+ENV PORT=3000
 
-# Health check
+# Health check for Next.js
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3000/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
+  CMD node -e "require('http').get('http://localhost:3000', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
 
-CMD ["dumb-init", "node", "server.js"]
+# Add startup logging
+CMD ["sh", "-c", "echo 'Starting Next.js frontend on 0.0.0.0:3000' && echo 'Environment:' && env | grep -E '(NODE_ENV|NEXT_PUBLIC_|HOSTNAME|PORT)' && dumb-init node server.js"]

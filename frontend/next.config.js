@@ -10,6 +10,18 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // Ensure server runs on all interfaces
+  experimental: {
+    serverActions: {
+      allowedOrigins: ['*']
+    }
+  },
+  // Add logging
+  logging: {
+    fetches: {
+      fullUrl: true,
+    },
+  },
 }
 
 module.exports = nextConfig
