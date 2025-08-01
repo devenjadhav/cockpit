@@ -55,7 +55,17 @@ setInterval(() => {
 
 // Custom key generator that includes IP and user agent fingerprinting
 const generateKey = (req: Request): string => {
-  const ip = req.ip || req.connection.remoteAddress || req.headers['x-forwarded-for'] as string;
+  // Get IP address safely
+  let ip = req.ip || 
+           (req.connection && req.connection.remoteAddress) || 
+           (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
+           'unknown';
+  
+  // Handle IPv6 addresses properly
+  if (ip.includes('::ffff:')) {
+    ip = ip.replace('::ffff:', ''); // Convert IPv4-mapped IPv6 to IPv4
+  }
+  
   const userAgent = req.headers['user-agent'] || 'unknown';
   const userAgentHash = Buffer.from(userAgent).toString('base64').substring(0, 10);
   return `${ip}_${userAgentHash}`;

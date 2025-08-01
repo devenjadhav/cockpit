@@ -43,6 +43,27 @@ interface ServerMetrics {
 
 const router = express.Router();
 
+// Basic health check endpoint (no auth required)
+router.get('/', async (req, res) => {
+  try {
+    const isDbHealthy = await databaseService.healthCheck();
+    
+    res.status(200).json({
+      success: true,
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      database: isDbHealthy ? 'connected' : 'disconnected'
+    });
+  } catch (error) {
+    res.status(503).json({
+      success: false,
+      status: 'unhealthy',
+      timestamp: new Date().toISOString(),
+      error: 'Service unavailable'
+    });
+  }
+});
+
 // Get comprehensive health status
 router.get('/status', adminAuth, async (req, res) => {
   try {
