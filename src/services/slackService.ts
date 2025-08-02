@@ -1,6 +1,6 @@
 import { WebClient } from '@slack/web-api';
 import { databaseService } from './databaseService';
-import { logStreamService } from './logStreamService';
+
 
 interface SlackMember {
   id: string;
@@ -71,9 +71,7 @@ class SlackService {
     }
 
     try {
-      logStreamService.log('info', 'Starting Slack channel member sync...', 'slack-sync');
       console.log('Starting Slack channel member sync...');
-      logStreamService.log('info', `Using channel IDs: ${JSON.stringify(this.channels)}`, 'slack-sync');
       console.log('Using channel IDs:', this.channels);
       
       // Check bot permissions first
@@ -110,7 +108,6 @@ class SlackService {
           );
 
           if (membersToAdd.length > 0) {
-            logStreamService.log('info', `Adding ${membersToAdd.length} members to #${channelName}`, 'slack-sync');
             console.log(`Adding ${membersToAdd.length} members to #${channelName}`);
             
             for (const memberId of membersToAdd) {
@@ -145,12 +142,7 @@ class SlackService {
       const duration = Date.now() - startTime;
       const success = errors.length === 0;
 
-      logStreamService.log('info', `Slack sync completed: ${totalMembersAdded} members added, ${errors.length} errors, ${duration}ms`, 'slack-sync', {
-        membersAdded: totalMembersAdded,
-        errors: errors.length,
-        duration,
-        success
-      });
+      console.log(`Slack sync completed: ${totalMembersAdded} members added, ${errors.length} errors, ${duration}ms`);
 
       // Save sync metadata
       await this.saveSyncMetadata({

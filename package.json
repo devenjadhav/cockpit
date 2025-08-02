@@ -30,7 +30,6 @@
     "@slack/web-api": "^7.9.3",
     "@types/pg": "^8.15.5",
     "@types/validator": "^13.15.2",
-    "@types/ws": "^8.18.1",
     "airtable": "^0.12.2",
     "axios": "^1.6.2",
     "bcrypt": "^5.1.1",

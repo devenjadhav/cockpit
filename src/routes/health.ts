@@ -5,7 +5,7 @@ import { syncService } from '../services/syncService';
 import { databaseService } from '../services/databaseService';
 import { slackService } from '../services/slackService';
 import { slackSyncJobService } from '../services/slackSyncJobService';
-import { logStreamService } from '../services/logStreamService';
+
 import { airtableService } from '../services/airtableService';
 import jwt from 'jsonwebtoken';
 import os from 'os';
@@ -391,65 +391,6 @@ async function getSyncMetrics() {
   }
 }
 
-// WebSocket test endpoint
-router.get('/ws-test', adminAuth, (req, res) => {
-  res.json({
-    success: true,
-    message: 'WebSocket server should be available at /api/health/logs/ws',
-    timestamp: new Date().toISOString()
-  });
-});
 
-// Test log generation endpoint
-router.post('/test-logs', adminAuth, (req, res) => {
-  console.log('🧪 Test log: INFO level message');
-  console.warn('🧪 Test log: WARNING level message');
-  console.error('🧪 Test log: ERROR level message');
-  
-  logStreamService.log('info', '🧪 Direct log service: INFO message', 'test-service', { test: true });
-  logStreamService.log('warn', '🧪 Direct log service: WARN message', 'test-service', { test: true });
-  logStreamService.log('error', '🧪 Direct log service: ERROR message', 'test-service', { test: true });
-  
-  res.json({
-    success: true,
-    message: 'Generated 6 test log entries',
-    timestamp: new Date().toISOString()
-  });
-});
-
-// Get recent logs (non-streaming)
-router.get('/logs', adminAuth, async (req, res) => {
-  try {
-    const limit = parseInt(req.query.limit as string) || 100;
-    const levelFilter = req.query.level as string | string[] | undefined;
-    const serviceFilter = req.query.service as string | string[] | undefined;
-    
-    const filters: any = {};
-    if (levelFilter) {
-      filters.level = Array.isArray(levelFilter) ? levelFilter : [levelFilter];
-    }
-    if (serviceFilter) {
-      filters.service = Array.isArray(serviceFilter) ? serviceFilter : [serviceFilter];
-    }
-    
-    const logs = logStreamService.getRecentLogs(limit, Object.keys(filters).length > 0 ? filters : undefined);
-    
-    const response: ApiResponse<any[]> = {
-      success: true,
-      data: logs
-    };
-    
-    res.json(response);
-  } catch (error) {
-    console.error('Error getting logs:', error);
-    
-    const response: ApiResponse<null> = {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to get logs'
-    };
-    
-    res.status(500).json(response);
-  }
-});
 
 export default router;
