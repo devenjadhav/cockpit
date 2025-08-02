@@ -54,15 +54,41 @@ interface SyncLog {
   last_sync_at: string;
 }
 
+interface SlackSyncLog {
+  id: number;
+  sync_type: string;
+  channels_synced: string[];
+  members_added: number;
+  last_sync_at: string;
+  last_sync_status: 'success' | 'failure' | 'partial';
+  errors_count: number;
+  error_details?: string;
+  duration_ms: number;
+}
+
+interface LogEntry {
+  id: string;
+  timestamp: string;
+  level: 'info' | 'warn' | 'error' | 'debug';
+  message: string;
+  service?: string;
+  metadata?: any;
+}
+
 export default function HealthDashboard() {
   const { user, token } = useAuth();
   const [healthData, setHealthData] = useState<ServerMetrics | null>(null);
   const [syncLogs, setSyncLogs] = useState<SyncLog[]>([]);
+  const [slackSyncLogs, setSlackSyncLogs] = useState<SlackSyncLog[]>([]);
+  const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [historicalData, setHistoricalData] = useState<any[]>([]);
   const [syncTrends, setSyncTrends] = useState<any[]>([]);
+  const [isLogStreamActive, setIsLogStreamActive] = useState(false);
+  const [logFilter, setLogFilter] = useState<string>('all');
+  const [webSocket, setWebSocket] = useState<WebSocket | null>(null);
 
   const fetchHealthData = async () => {
     if (!token) return;
@@ -145,6 +171,31 @@ export default function HealthDashboard() {
     }
   };
 
+  const fetchSlackSyncLogs = async () => {
+    if (!token) return;
+
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+      const response = await fetch(`${apiUrl}/health/slack-sync`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch Slack sync logs');
+      }
+
+      const result = await response.json();
+      if (result.success) {
+        setSlackSyncLogs(result.data.logs || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch Slack sync logs:', err);
+    }
+  };
+
   const triggerManualSync = async () => {
     if (!token) return;
 
@@ -168,6 +219,7 @@ export default function HealthDashboard() {
         alert('Manual sync triggered successfully');
         fetchHealthData();
         fetchSyncLogs();
+        fetchSlackSyncLogs();
       } else {
         alert(`Sync failed: ${result.error}`);
       }
@@ -178,10 +230,147 @@ export default function HealthDashboard() {
     }
   };
 
+  const triggerSlackSync = async () => {
+    if (!token) return;
+
+    try {
+      setRefreshing(true);
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+      const response = await fetch(`${apiUrl}/health/slack-sync/trigger`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to trigger Slack sync');
+      }
+
+      const result = await response.json();
+      if (result.success) {
+        alert('Slack sync triggered successfully');
+        fetchHealthData();
+        fetchSlackSyncLogs();
+      } else {
+        alert(`Slack sync failed: ${result.error}`);
+      }
+    } catch (err) {
+      alert('Failed to trigger Slack sync');
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const toggleLogStream = () => {
+    if (isLogStreamActive && webSocket) {
+      webSocket.close();
+      setWebSocket(null);
+      setIsLogStreamActive(false);
+    } else {
+      startLogStream();
+    }
+  };
+
+  const startLogStream = () => {
+    if (!token) {
+      console.error('No token available for WebSocket connection');
+      return;
+    }
+
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+    // Remove /api suffix for WebSocket base URL since we add it back manually
+    const baseUrl = apiUrl.replace(/\/api$/, '');
+    const wsUrl = baseUrl.replace('http://', 'ws://').replace('https://', 'wss://');
+    
+    const params = new URLSearchParams();
+    if (logFilter !== 'all') {
+      params.append('level', logFilter);
+    }
+    
+    // Add token to params for WebSocket auth (browsers don't support custom headers)
+    params.append('token', token);
+    
+    const fullWsUrl = `${wsUrl}/api/health/logs/ws?${params.toString()}`;
+    console.log('Attempting WebSocket connection to:', fullWsUrl);
+    
+    try {
+      // Create WebSocket connection
+      const newWebSocket = new WebSocket(fullWsUrl);
+      
+      setWebSocket(newWebSocket);
+
+    newWebSocket.onopen = () => {
+    console.log('WebSocket connection established');
+    setIsLogStreamActive(true);
+      
+        // Add a test log entry to verify the connection works
+        setLogs(prev => [...prev, {
+          id: 'test-connection',
+          timestamp: new Date().toISOString(),
+          level: 'info',
+          message: '🔗 WebSocket connection established - waiting for server logs...',
+          service: 'websocket'
+        }]);
+      };
+
+    newWebSocket.onmessage = (event) => {
+      console.log('WebSocket message received:', event.data);
+      try {
+        const logEntry: LogEntry = JSON.parse(event.data);
+        console.log('Parsed log entry:', logEntry);
+        setLogs(prev => {
+          const newLogs = [...prev, logEntry];
+          console.log('Updated logs array length:', newLogs.length);
+          // Keep only last 500 logs in memory
+          return newLogs.slice(-500);
+        });
+      } catch (error) {
+        console.error('Error parsing log entry:', error, 'Raw data:', event.data);
+      }
+    };
+
+      newWebSocket.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        setIsLogStreamActive(false);
+        setWebSocket(null);
+      };
+
+      newWebSocket.onclose = (event) => {
+        console.log('WebSocket connection closed:', event.code, event.reason);
+        setIsLogStreamActive(false);
+        setWebSocket(null);
+      };
+    } catch (error) {
+      console.error('Failed to create WebSocket:', error);
+    }
+  };
+
+  const getLogLevelColor = (level: string) => {
+    switch (level) {
+      case 'error': return 'text-red-400';
+      case 'warn': return 'text-yellow-400';
+      case 'info': return 'text-green-400';
+      case 'debug': return 'text-gray-400';
+      default: return 'text-white';
+    }
+  };
+
+  const getLogLevelBadge = (level: string) => {
+    switch (level) {
+      case 'error': return 'bg-red-100 text-red-800';
+      case 'warn': return 'bg-yellow-100 text-yellow-800';
+      case 'info': return 'bg-blue-100 text-blue-800';
+      case 'debug': return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   useEffect(() => {
     if (user && token) {
       setLoading(true);
-      Promise.all([fetchHealthData(), fetchSyncLogs()])
+      Promise.all([fetchHealthData(), fetchSyncLogs(), fetchSlackSyncLogs()])
         .finally(() => setLoading(false));
     }
   }, [user, token]);
@@ -191,11 +380,21 @@ export default function HealthDashboard() {
       if (user && token) {
         fetchHealthData();
         fetchSyncLogs();
+        fetchSlackSyncLogs();
       }
     }, 30000); // Refresh every 30 seconds
 
     return () => clearInterval(interval);
   }, [user, token]);
+
+  // Cleanup WebSocket on unmount
+  useEffect(() => {
+    return () => {
+      if (webSocket) {
+        webSocket.close();
+      }
+    };
+  }, [webSocket]);
 
   if (!user) {
     return <div>Please log in to access the health dashboard.</div>;
@@ -292,7 +491,64 @@ export default function HealthDashboard() {
             disabled={refreshing}
             className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
           >
-            Trigger Sync
+            Trigger Airtable Sync
+          </button>
+          <button
+            onClick={triggerSlackSync}
+            disabled={refreshing}
+            className="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
+          >
+            Trigger Slack Sync
+          </button>
+          <button
+            onClick={toggleLogStream}
+            className={`font-bold py-2 px-4 rounded ${
+              isLogStreamActive 
+                ? 'bg-red-500 hover:bg-red-700 text-white' 
+                : 'bg-gray-500 hover:bg-gray-700 text-white'
+            }`}
+          >
+            {isLogStreamActive ? 'Stop Log Stream' : 'Start Log Stream'}
+          </button>
+          <button
+            onClick={async () => {
+              const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+              try {
+                const response = await fetch(`${apiUrl}/health/ws-test`, {
+                  headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const result = await response.json();
+                console.log('WebSocket test result:', result);
+                alert('WebSocket test: ' + (result.success ? 'Server Ready' : 'Server Not Ready'));
+              } catch (error) {
+                console.error('WebSocket test failed:', error);
+                alert('WebSocket test failed: ' + error);
+              }
+            }}
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          >
+            Test WebSocket Server
+          </button>
+          <button
+            onClick={async () => {
+              const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+              try {
+                // Use the dedicated test logs endpoint
+                const response = await fetch(`${apiUrl}/health/test-logs`, {
+                  method: 'POST',
+                  headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const result = await response.json();
+                console.log('Test logs result:', result);
+                alert('Generated test logs - check log stream!');
+              } catch (error) {
+                console.error('Failed to generate test logs:', error);
+                alert('Failed to generate test logs: ' + error);
+              }
+            }}
+            className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded"
+          >
+            Generate Test Logs
           </button>
         </div>
       </div>
@@ -545,7 +801,7 @@ export default function HealthDashboard() {
 
           {/* Recent Sync Logs Table */}
           <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold mb-4">Recent Sync Logs</h2>
+            <h2 className="text-xl font-semibold mb-4">Recent Airtable Sync Logs</h2>
             <div className="overflow-x-auto">
               <table className="min-w-full table-auto">
                 <thead>
@@ -582,6 +838,119 @@ export default function HealthDashboard() {
                 </tbody>
               </table>
             </div>
+          </div>
+
+          {/* Slack Sync Logs Table */}
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h2 className="text-xl font-semibold mb-4">Recent Slack Sync Logs</h2>
+            <div className="overflow-x-auto">
+              <table className="min-w-full table-auto">
+                <thead>
+                  <tr className="bg-gray-50">
+                    <th className="px-4 py-3 text-left font-medium text-gray-900">Channels</th>
+                    <th className="px-4 py-3 text-left font-medium text-gray-900">Status</th>
+                    <th className="px-4 py-3 text-left font-medium text-gray-900">Members Added</th>
+                    <th className="px-4 py-3 text-left font-medium text-gray-900">Errors</th>
+                    <th className="px-4 py-3 text-left font-medium text-gray-900">Duration</th>
+                    <th className="px-4 py-3 text-left font-medium text-gray-900">Time</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {slackSyncLogs.map((log, index) => (
+                    <tr key={index} className="border-t hover:bg-gray-50">
+                      <td className="px-4 py-3 font-medium">
+                        {log.channels_synced.join(', ') || 'N/A'}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getSyncStatusColor(log.last_sync_status)}`}>
+                          {log.last_sync_status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">{log.members_added}</td>
+                      <td className="px-4 py-3">
+                        {log.errors_count > 0 ? (
+                          <span className="text-red-600 font-medium" title={log.error_details}>
+                            {log.errors_count}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-600">
+                        {(log.duration_ms / 1000).toFixed(2)}s
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-600">
+                        {new Date(log.last_sync_at).toLocaleString()}
+                      </td>
+                    </tr>
+                  ))}
+                  {slackSyncLogs.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                        No Slack sync logs available
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Live Logs Section */}
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Live Logs</h2>
+              <div className="flex items-center space-x-4">
+                <select 
+                  value={logFilter} 
+                  onChange={(e) => setLogFilter(e.target.value)}
+                  className="border rounded px-3 py-1 text-sm"
+                >
+                  <option value="all">All Levels</option>
+                  <option value="error">Errors Only</option>
+                  <option value="warn">Warnings Only</option>
+                  <option value="info">Info Only</option>
+                </select>
+                <div className={`px-2 py-1 rounded text-xs font-medium ${
+                  isLogStreamActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                }`}>
+                  {isLogStreamActive ? 'Live' : 'Stopped'}
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-black rounded p-4 h-96 overflow-y-auto font-mono text-sm">
+              {logs.length === 0 ? (
+                <div className="text-gray-400">
+                  {isLogStreamActive ? 'Waiting for logs...' : 'Click "Start Log Stream" to view real-time logs'}
+                </div>
+              ) : (
+                logs.map((log) => (
+                  <div key={log.id} className="mb-1 flex items-start space-x-2">
+                    <span className="text-gray-500 text-xs whitespace-nowrap">
+                      {new Date(log.timestamp).toLocaleTimeString()}
+                    </span>
+                    <span className={`text-xs px-1 rounded whitespace-nowrap ${getLogLevelBadge(log.level)}`}>
+                      {log.level.toUpperCase()}
+                    </span>
+                    {log.service && (
+                      <span className="text-xs bg-gray-700 text-gray-300 px-1 rounded whitespace-nowrap">
+                        {log.service}
+                      </span>
+                    )}
+                    <span className={`flex-1 ${getLogLevelColor(log.level)} break-words`}>
+                      {log.message}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+            
+            {logs.length > 0 && (
+              <div className="mt-2 text-xs text-gray-500">
+                Showing {logs.length} recent log entries. Stream updates in real-time.
+              </div>
+            )}
           </div>
         </div>
       )}

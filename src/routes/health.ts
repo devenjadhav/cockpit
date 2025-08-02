@@ -3,6 +3,11 @@ import { adminAuth } from '../middleware/adminAuth';
 import { ApiResponse } from '../types/api';
 import { syncService } from '../services/syncService';
 import { databaseService } from '../services/databaseService';
+import { slackService } from '../services/slackService';
+import { slackSyncJobService } from '../services/slackSyncJobService';
+import { logStreamService } from '../services/logStreamService';
+import { airtableService } from '../services/airtableService';
+import jwt from 'jsonwebtoken';
 import os from 'os';
 
 interface HealthStatus {
@@ -39,6 +44,7 @@ interface ServerMetrics {
   };
   database: HealthStatus;
   syncJobs: BackgroundJobStatus[];
+  slackService?: HealthStatus;
 }
 
 const router = express.Router();
@@ -93,6 +99,9 @@ router.get('/sync-jobs', adminAuth, async (req, res) => {
     const syncStatus = await syncService.getSyncStatus();
     const isRunning = syncService.isRunning();
     
+    const slackStatus = await slackService.getHealthStatus();
+    const slackMetrics = await slackService.getSyncMetrics();
+
     const jobs: BackgroundJobStatus[] = [
       {
         name: 'Airtable Sync',
@@ -104,6 +113,22 @@ router.get('/sync-jobs', adminAuth, async (req, res) => {
         frequency: '30 seconds',
         lastRun: syncStatus.find(s => s.table_name === 'events')?.last_sync_at,
         metrics: await getSyncMetrics()
+      },
+      {
+        name: 'Slack Channel Sync',
+        status: {
+          status: slackStatus.status,
+          lastCheck: new Date(),
+          details: slackStatus.details
+        },
+        frequency: slackSyncJobService.getFrequency(),
+        lastRun: slackStatus.lastSync,
+        nextRun: slackSyncJobService.getNextRunTime() || undefined,
+        metrics: {
+          successRate: slackMetrics.successRate,
+          averageDuration: slackMetrics.averageDuration,
+          errorCount: slackMetrics.errorCount
+        }
       }
     ];
     
@@ -155,6 +180,61 @@ router.get('/sync-logs', adminAuth, async (req, res) => {
       error: error instanceof Error ? error.message : 'Failed to get sync logs'
     };
     
+    res.status(500).json(response);
+  }
+});
+
+// Get Slack sync details
+router.get('/slack-sync', adminAuth, async (req, res) => {
+  try {
+    const status = await slackService.getHealthStatus();
+    const metrics = await slackService.getSyncMetrics();
+    const logs = await slackService.getRecentSyncLogs(20);
+
+    const response: ApiResponse<any> = {
+      success: true,
+      data: {
+        status,
+        metrics,
+        logs,
+        isJobRunning: slackSyncJobService.isRunning(),
+        frequency: slackSyncJobService.getFrequency(),
+        nextRun: slackSyncJobService.getNextRunTime()
+      }
+    };
+
+    res.json(response);
+  } catch (error) {
+    console.error('Error getting Slack sync details:', error);
+
+    const response: ApiResponse<null> = {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to get Slack sync details'
+    };
+
+    res.status(500).json(response);
+  }
+});
+
+// Force manual Slack sync
+router.post('/slack-sync/trigger', adminAuth, async (req, res) => {
+  try {
+    await slackSyncJobService.performSync();
+
+    const response: ApiResponse<any> = {
+      success: true,
+      data: { message: 'Slack sync triggered successfully' }
+    };
+
+    res.json(response);
+  } catch (error) {
+    console.error('Error triggering Slack sync:', error);
+
+    const response: ApiResponse<null> = {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to trigger Slack sync'
+    };
+
     res.status(500).json(response);
   }
 });
@@ -225,6 +305,7 @@ async function getSystemHealth(): Promise<ServerMetrics> {
   const dbHealthy = await databaseService.healthCheck();
   const syncStatus = await syncService.getSyncStatus();
   const isRunning = syncService.isRunning();
+  const slackStatus = await slackService.getHealthStatus();
   
   return {
     uptime: process.uptime(),
@@ -255,8 +336,25 @@ async function getSystemHealth(): Promise<ServerMetrics> {
         frequency: '30 seconds',
         lastRun: syncStatus.find(s => s.table_name === 'events')?.last_sync_at,
         metrics: await getSyncMetrics()
+      },
+      {
+        name: 'Slack Channel Sync',
+        status: {
+          status: slackStatus.status,
+          lastCheck: new Date(),
+          details: slackStatus.details
+        },
+        frequency: slackSyncJobService.getFrequency(),
+        lastRun: slackStatus.lastSync,
+        nextRun: slackSyncJobService.getNextRunTime() || undefined,
+        metrics: await slackService.getSyncMetrics()
       }
-    ]
+    ],
+    slackService: {
+      status: slackStatus.status,
+      lastCheck: new Date(),
+      details: slackStatus.details
+    }
   };
 }
 
@@ -292,5 +390,66 @@ async function getSyncMetrics() {
     };
   }
 }
+
+// WebSocket test endpoint
+router.get('/ws-test', adminAuth, (req, res) => {
+  res.json({
+    success: true,
+    message: 'WebSocket server should be available at /api/health/logs/ws',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Test log generation endpoint
+router.post('/test-logs', adminAuth, (req, res) => {
+  console.log('🧪 Test log: INFO level message');
+  console.warn('🧪 Test log: WARNING level message');
+  console.error('🧪 Test log: ERROR level message');
+  
+  logStreamService.log('info', '🧪 Direct log service: INFO message', 'test-service', { test: true });
+  logStreamService.log('warn', '🧪 Direct log service: WARN message', 'test-service', { test: true });
+  logStreamService.log('error', '🧪 Direct log service: ERROR message', 'test-service', { test: true });
+  
+  res.json({
+    success: true,
+    message: 'Generated 6 test log entries',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Get recent logs (non-streaming)
+router.get('/logs', adminAuth, async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 100;
+    const levelFilter = req.query.level as string | string[] | undefined;
+    const serviceFilter = req.query.service as string | string[] | undefined;
+    
+    const filters: any = {};
+    if (levelFilter) {
+      filters.level = Array.isArray(levelFilter) ? levelFilter : [levelFilter];
+    }
+    if (serviceFilter) {
+      filters.service = Array.isArray(serviceFilter) ? serviceFilter : [serviceFilter];
+    }
+    
+    const logs = logStreamService.getRecentLogs(limit, Object.keys(filters).length > 0 ? filters : undefined);
+    
+    const response: ApiResponse<any[]> = {
+      success: true,
+      data: logs
+    };
+    
+    res.json(response);
+  } catch (error) {
+    console.error('Error getting logs:', error);
+    
+    const response: ApiResponse<null> = {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to get logs'
+    };
+    
+    res.status(500).json(response);
+  }
+});
 
 export default router;
