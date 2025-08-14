@@ -113,6 +113,7 @@ export const corsOptions = {
     // Production origins
     const allowedOrigins = [
       'https://your-custom-domain.com', // If you add a custom domain
+      'https://cockpit.hackclub.dev',
     ];
 
     // Development origins
