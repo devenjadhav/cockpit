@@ -231,20 +231,43 @@ export default function EventManagePage() {
     }
   };
 
-  const copyAllAttendees = async () => {
+  const downloadAttendeesCSV = () => {
     try {
-      const attendeesList = filteredAndSortedAttendees().map(attendee => {
+      const attendees = filteredAndSortedAttendees();
+      
+      // CSV headers
+      const headers = ['Name', 'Email', 'Phone', 'Age'];
+      
+      // CSV rows
+      const rows = attendees.map(attendee => {
         const age = calculateAge(attendee.dob || '');
-        return `${getAttendeeDisplayName(attendee)}\n${attendee.email}${attendee.phone ? '\n' + attendee.phone : ''}${age ? '\nAge: ' + age + ' years old' : ''}\n`;
-      }).join('\n');
+        return [
+          `"${getAttendeeDisplayName(attendee)}"`,
+          `"${attendee.email}"`,
+          `"${attendee.phone || ''}"`,
+          age ? age.toString() : ''
+        ].join(',');
+      });
       
-      const fullText = `${event?.name} - Attendees List\n\n${attendeesList}`;
+      // Combine headers and rows
+      const csvContent = [headers.join(','), ...rows].join('\n');
       
-      await navigator.clipboard.writeText(fullText);
-      setCopiedField('all-attendees');
+      // Create blob and download
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `${event?.name?.replace(/[^a-z0-9]/gi, '_') || 'event'}_attendees.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Show feedback
+      setCopiedField('csv-downloaded');
       setTimeout(() => setCopiedField(null), 2000);
     } catch (err) {
-      console.error('Failed to copy:', err);
+      console.error('Failed to download CSV:', err);
     }
   };
 
@@ -1003,21 +1026,21 @@ export default function EventManagePage() {
                 </div>
                 <div className="flex items-center space-x-2">
                 <button
-                onClick={copyAllAttendees}
-                  className="inline-flex items-center px-3 py-1 text-xs font-medium rounded-md text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/40 hover:bg-blue-200 dark:hover:bg-blue-800/60 transition-colors"
-                    title="Copy all attendees to clipboard"
-                   >
-                     {copiedField === 'all-attendees' ? (
-                       <Check className="w-3 h-3 mr-1" />
-                     ) : (
-                       <Copy className="w-3 h-3 mr-1" />
-                     )}
-                     Copy All
-                   </button>
-                   <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200">
-                     {event.attendees.length} {event.attendees.length === 1 ? 'attendee' : 'attendees'}
-                   </span>
-                 </div>
+                onClick={downloadAttendeesCSV}
+                className="inline-flex items-center px-3 py-1 text-xs font-medium rounded-md text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-900/40 hover:bg-green-200 dark:hover:bg-green-800/60 transition-colors"
+                title="Download attendees as CSV"
+                >
+                {copiedField === 'csv-downloaded' ? (
+                <Check className="w-3 h-3 mr-1" />
+                ) : (
+                <Download className="w-3 h-3 mr-1" />
+                )}
+                {copiedField === 'csv-downloaded' ? 'Downloaded!' : 'Download CSV'}
+                </button>
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200">
+                {event.attendees.length} {event.attendees.length === 1 ? 'attendee' : 'attendees'}
+                </span>
+                </div>
               </div>
             </div>
 
