@@ -1,6 +1,7 @@
 import { airtableService } from './airtableService';
 import { databaseService } from './databaseService';
 import { Event, EventFields } from '../types/event';
+import { Attendee } from '../types/attendee';
 
 interface SyncResult {
   success: boolean;
@@ -102,6 +103,17 @@ class SyncService {
         errors.push(...adminsResult.errors);
       } catch (error) {
         const errorMsg = `Admins sync failed: ${error instanceof Error ? error.message : 'Unknown error'}`;
+        console.error(errorMsg);
+        errors.push(errorMsg);
+      }
+
+      // Sync attendees
+      try {
+        const attendeesResult = await this.syncAttendees();
+        totalRecords += attendeesResult.recordsSynced;
+        errors.push(...attendeesResult.errors);
+      } catch (error) {
+        const errorMsg = `Attendees sync failed: ${error instanceof Error ? error.message : 'Unknown error'}`;
         console.error(errorMsg);
         errors.push(errorMsg);
       }
@@ -252,6 +264,58 @@ class SyncService {
     }
   }
 
+  private async syncAttendees(): Promise<SyncResult> {
+    const startTime = Date.now();
+    const errors: string[] = [];
+    let syncedCount = 0;
+
+    try {
+      console.log('Syncing attendees from Airtable...');
+      
+      // Get all attendees from Airtable
+      const airtableAttendees = await airtableService.getAllAttendees();
+      console.log(`Retrieved ${airtableAttendees.length} attendees from Airtable`);
+
+      // Process attendees in batches
+      const batchSize = 50;
+      for (let i = 0; i < airtableAttendees.length; i += batchSize) {
+        const batch = airtableAttendees.slice(i, i + batchSize);
+        
+        try {
+          await this.upsertAttendeesBatch(batch);
+          syncedCount += batch.length;
+        } catch (error) {
+          const errorMsg = `Batch sync failed for attendees ${i}-${i + batch.length}: ${error instanceof Error ? error.message : 'Unknown error'}`;
+          console.error(errorMsg);
+          errors.push(errorMsg);
+        }
+      }
+
+      // Update sync metadata
+      await this.updateSyncMetadata('attendees', syncedCount, errors.length, errors.join('; '));
+
+      return {
+        success: errors.length === 0,
+        recordsSynced: syncedCount,
+        errors,
+        duration: Date.now() - startTime
+      };
+
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Attendees sync failed:', errorMsg);
+      
+      await this.updateSyncMetadata('attendees', syncedCount, 1, errorMsg);
+      
+      return {
+        success: false,
+        recordsSynced: syncedCount,
+        errors: [errorMsg, ...errors],
+        duration: Date.now() - startTime
+      };
+    }
+  }
+
   private async upsertEventsBatch(events: Event[]): Promise<void> {
     const values = events.map(event => {
       // Map Airtable event to PostgreSQL format
@@ -367,6 +431,40 @@ class SyncService {
         first_name = EXCLUDED.first_name,
         last_name = EXCLUDED.last_name,
         user_status = EXCLUDED.user_status,
+        synced_at = NOW()
+    `;
+
+    await databaseService.query(query, values.flat());
+  }
+
+  private async upsertAttendeesBatch(attendees: Attendee[]): Promise<void> {
+    const values = attendees.map(attendee => [
+      attendee.id, // airtable_id
+      this.sanitizeString(attendee.email),
+      this.sanitizeString(attendee.preferredName),
+      this.sanitizeString(attendee.firstName),
+      this.sanitizeString(attendee.lastName),
+      attendee.dob || null,
+      this.sanitizeString(attendee.phone),
+      this.sanitizeString(attendee.event)
+    ]);
+
+    const placeholders = values.map((_, index) => {
+      const offset = index * 8;
+      return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8})`;
+    }).join(', ');
+
+    const query = `
+      INSERT INTO attendees (airtable_id, email, preferred_name, first_name, last_name, dob, phone, event_airtable_id)
+      VALUES ${placeholders}
+      ON CONFLICT (airtable_id) DO UPDATE SET
+        email = EXCLUDED.email,
+        preferred_name = EXCLUDED.preferred_name,
+        first_name = EXCLUDED.first_name,
+        last_name = EXCLUDED.last_name,
+        dob = EXCLUDED.dob,
+        phone = EXCLUDED.phone,
+        event_airtable_id = EXCLUDED.event_airtable_id,
         synced_at = NOW()
     `;
 

@@ -1,12 +1,14 @@
 import Airtable from 'airtable';
 import { Event, EventFields, UpdateEventData } from '../types/event';
 import { Admin, AdminFields } from '../types/admin';
+import { Attendee, AttendeeFields } from '../types/attendee';
 import { cacheService } from './cacheService';
 
 export class AirtableService {
   private base: Airtable.Base;
   private eventsTable: Airtable.Table<EventFields>;
   private adminsTable: Airtable.Table<AdminFields>;
+  private attendeesTable: Airtable.Table<AttendeeFields>;
 
   constructor() {
     if (!process.env.AIRTABLE_API_KEY || !process.env.AIRTABLE_BASE_ID) {
@@ -21,6 +23,7 @@ export class AirtableService {
     
     this.eventsTable = this.base<EventFields>('events');
     this.adminsTable = this.base<AdminFields>('admins');
+    this.attendeesTable = this.base<AttendeeFields>('attendees');
   }
 
   private mapEventRecord(record: Airtable.Record<EventFields>): Event {
@@ -324,6 +327,51 @@ export class AirtableService {
         hasAccess: false,
         isAdmin: false
       };
+    }
+  }
+
+  private mapAttendeeRecord(record: Airtable.Record<AttendeeFields>): Attendee {
+    const fields = record.fields;
+    return {
+      id: record.id,
+      email: fields.email,
+      preferredName: fields.preferred_name,
+      firstName: fields.first_name,
+      lastName: fields.last_name,
+      dob: fields.dob ? new Date(fields.dob) : undefined,
+      phone: fields.phone,
+      event: Array.isArray(fields.event) && fields.event.length > 0 ? fields.event[0] : undefined
+    };
+  }
+
+  async getAllAttendees(): Promise<Attendee[]> {
+    try {
+      const records = await this.attendeesTable
+        .select({
+          sort: [{ field: 'email', direction: 'asc' }]
+        })
+        .all();
+
+      return records.map(record => this.mapAttendeeRecord(record));
+    } catch (error) {
+      console.error('Error fetching attendees from Airtable:', error);
+      throw error;
+    }
+  }
+
+  async getAttendeesByEvent(eventAirtableId: string): Promise<Attendee[]> {
+    try {
+      const records = await this.attendeesTable
+        .select({
+          filterByFormula: `FIND("${eventAirtableId}", ARRAYJOIN({event})) > 0`,
+          sort: [{ field: 'email', direction: 'asc' }]
+        })
+        .all();
+
+      return records.map(record => this.mapAttendeeRecord(record));
+    } catch (error) {
+      console.error('Error fetching attendees for event from Airtable:', error);
+      throw error;
     }
   }
 

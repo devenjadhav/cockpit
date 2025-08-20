@@ -2,6 +2,7 @@ import express from 'express';
 import { airtableService } from '../services/airtableService';
 import { loopsService } from '../services/loopsService';
 import { DashboardService } from '../services/dashboardService';
+import { databaseService } from '../services/databaseService';
 import { authenticateToken } from '../middleware/auth';
 import { AuthenticatedRequest } from '../types/auth';
 import { ApiResponse, EventWithStats, PaginatedResponse } from '../types/api';
@@ -76,12 +77,16 @@ router.get('/:eventId', async (req: AuthenticatedRequest, res) => {
       } as ApiResponse);
     }
 
-    // Return event with basic stats (no attendee data)
-    const eventWithStats: EventWithStats = {
+    // Get attendees for this event
+    const attendees = await databaseService.getAttendeesByEvent(event.id);
+    
+    // Return event with attendee data
+    const eventWithStats: EventWithStats & { attendees?: any[] } = {
       ...event,
-      attendeeCount: 0, // No attendee tracking
-      capacityPercentage: 0, // No capacity tracking
+      attendeeCount: attendees.length,
+      capacityPercentage: event.estimatedAttendeeCount ? (attendees.length / event.estimatedAttendeeCount) * 100 : 0,
       isUpcoming: event.triageStatus === 'Approved',
+      attendees: attendees,
       // Include admin-only fields if user is admin
       ...(isAdmin && {
         organizerEmail: event.email,

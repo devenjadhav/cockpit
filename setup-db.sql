@@ -65,6 +65,23 @@ CREATE TABLE IF NOT EXISTS admins (
     synced_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Attendees table (mirrors Airtable attendees)
+CREATE TABLE IF NOT EXISTS attendees (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    airtable_id VARCHAR(255) UNIQUE NOT NULL,
+    email VARCHAR(500) NOT NULL,
+    preferred_name VARCHAR(255),
+    first_name VARCHAR(255),
+    last_name VARCHAR(255),
+    dob DATE,
+    phone VARCHAR(50),
+    event_airtable_id VARCHAR(255),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    synced_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    FOREIGN KEY (event_airtable_id) REFERENCES events(airtable_id) ON DELETE CASCADE
+);
+
 -- Sync metadata table for tracking sync operations
 CREATE TABLE IF NOT EXISTS sync_metadata (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -90,6 +107,11 @@ CREATE INDEX IF NOT EXISTS idx_admins_email ON admins(email);
 CREATE INDEX IF NOT EXISTS idx_admins_user_status ON admins(user_status);
 CREATE INDEX IF NOT EXISTS idx_admins_airtable_id ON admins(airtable_id);
 
+CREATE INDEX IF NOT EXISTS idx_attendees_email ON attendees(email);
+CREATE INDEX IF NOT EXISTS idx_attendees_event_airtable_id ON attendees(event_airtable_id);
+CREATE INDEX IF NOT EXISTS idx_attendees_airtable_id ON attendees(airtable_id);
+CREATE INDEX IF NOT EXISTS idx_attendees_synced_at ON attendees(synced_at);
+
 CREATE INDEX IF NOT EXISTS idx_sync_metadata_table_name ON sync_metadata(table_name);
 CREATE INDEX IF NOT EXISTS idx_sync_metadata_last_sync_at ON sync_metadata(last_sync_at);
 
@@ -111,11 +133,16 @@ DROP TRIGGER IF EXISTS update_admins_updated_at ON admins;
 CREATE TRIGGER update_admins_updated_at BEFORE UPDATE ON admins
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_attendees_updated_at ON attendees;
+CREATE TRIGGER update_attendees_updated_at BEFORE UPDATE ON attendees
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 -- Insert initial sync metadata
 INSERT INTO sync_metadata (table_name, last_sync_status, records_synced) 
 VALUES 
     ('events', 'pending', 0),
-    ('admins', 'pending', 0)
+    ('admins', 'pending', 0),
+    ('attendees', 'pending', 0)
 ON CONFLICT DO NOTHING;
 
 -- Create read-only user for admin console queries (update password)

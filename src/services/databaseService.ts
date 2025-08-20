@@ -218,6 +218,25 @@ class DatabaseService {
     return this.pool !== null && this.readOnlyPool !== null;
   }
 
+  async getAttendeesByEvent(eventAirtableId: string) {
+    const query = `
+      SELECT 
+        airtable_id as id,
+        email,
+        preferred_name as "preferredName",
+        first_name as "firstName", 
+        last_name as "lastName",
+        dob,
+        phone
+      FROM attendees 
+      WHERE event_airtable_id = $1
+      ORDER BY email ASC
+    `;
+    
+    const result = await this.query(query, [eventAirtableId]);
+    return result.rows;
+  }
+
   getPoolInfo() {
     return {
       main: {

@@ -74,3 +74,13 @@ export interface AuthResponse {
   jwt?: string;
   message: string;
 }
+
+export interface Attendee {
+  id: string;
+  email: string;
+  preferredName?: string;
+  firstName?: string;
+  lastName?: string;
+  dob?: string;
+  phone?: string;
+}
