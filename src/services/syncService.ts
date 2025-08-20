@@ -206,23 +206,9 @@ class SyncService {
     try {
       console.log('Syncing admins from Airtable...');
       
-      // Get all admin emails and then their details
-      const adminEmails = await airtableService.getAllOrganizerEmails();
-      console.log(`Retrieved ${adminEmails.length} potential admin emails from Airtable`);
-
-      const admins = [];
-      for (const email of adminEmails) {
-        try {
-          const admin = await airtableService.getAdminByEmail(email);
-          if (admin) {
-            admins.push(admin);
-          }
-        } catch (error) {
-          // Skip non-admin emails silently
-        }
-      }
-
-      console.log(`Found ${admins.length} actual admins`);
+      // Get all admins directly from the admins table
+      const admins = await airtableService.getAllAdmins();
+      console.log(`Found ${admins.length} admins in Airtable`);
 
       // Process admins in batches
       const batchSize = 20;

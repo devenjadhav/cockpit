@@ -284,6 +284,22 @@ export class AirtableService {
     }
   }
 
+  async getAllAdmins(): Promise<Admin[]> {
+    try {
+      console.log('Fetching all admins from Airtable...');
+      const records = await this.adminsTable
+        .select()
+        .all();
+
+      console.log(`Found ${records.length} admin records`);
+      const admins = records.map(record => this.mapAdminRecord(record));
+      
+      return admins;
+    } catch (error) {
+      throw new Error(`Failed to fetch all admins: ${error}`);
+    }
+  }
+
   async checkEmailAccess(email: string): Promise<{ hasAccess: boolean; isAdmin: boolean; adminData?: Admin }> {
     try {
       const normalizedEmail = email.toLowerCase();
