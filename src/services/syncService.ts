@@ -473,8 +473,15 @@ class SyncService {
 
   private async updateSyncMetadata(tableName: string, recordsSynced: number, errorsCount: number, errorDetails?: string): Promise<void> {
     const query = `
-      INSERT INTO sync_metadata (table_name, last_sync_status, records_synced, errors_count, error_details)
-      VALUES ($1, $2, $3, $4, $5)
+      INSERT INTO sync_metadata (table_name, last_sync_status, records_synced, errors_count, error_details, last_sync_at)
+      VALUES ($1, $2, $3, $4, $5, NOW())
+      ON CONFLICT (table_name) DO UPDATE SET
+        last_sync_status = EXCLUDED.last_sync_status,
+        records_synced = EXCLUDED.records_synced,
+        errors_count = EXCLUDED.errors_count,
+        error_details = EXCLUDED.error_details,
+        last_sync_at = EXCLUDED.last_sync_at,
+        created_at = COALESCE(sync_metadata.created_at, NOW())
     `;
 
     const status = errorsCount === 0 ? 'success' : 'partial_failure';
