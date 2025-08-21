@@ -35,6 +35,9 @@ COPY --from=builder --chown=backend:nodejs /app/package*.json ./
 COPY --from=builder --chown=backend:nodejs /app/scripts ./scripts
 COPY --from=builder --chown=backend:nodejs /app/setup-db.sql ./setup-db.sql
 
+# Make migration script executable (before switching to non-root user)
+RUN chmod +x /app/scripts/start-with-migration.sh
+
 USER backend
 
 EXPOSE 3001
@@ -43,4 +46,4 @@ EXPOSE 3001
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3001/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
 
-CMD ["dumb-init", "./scripts/start-with-migration.sh"]
+CMD ["dumb-init", "/app/scripts/start-with-migration.sh"]
