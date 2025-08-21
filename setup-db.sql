@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS attendees (
 -- Sync metadata table for tracking sync operations
 CREATE TABLE IF NOT EXISTS sync_metadata (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    table_name VARCHAR(100) NOT NULL,
+    table_name VARCHAR(100) NOT NULL UNIQUE,
     last_sync_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     last_sync_status VARCHAR(50) DEFAULT 'success',
     records_synced INTEGER DEFAULT 0,

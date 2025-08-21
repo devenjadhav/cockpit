@@ -21,8 +21,8 @@ FROM node:18-alpine AS production
 
 WORKDIR /app
 
-# Install dumb-init for proper signal handling
-RUN apk add --no-cache dumb-init
+# Install dumb-init for proper signal handling and postgresql-client for pg_isready
+RUN apk add --no-cache dumb-init postgresql-client
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs
@@ -32,6 +32,8 @@ RUN adduser -S backend -u 1001
 COPY --from=builder --chown=backend:nodejs /app/dist ./dist
 COPY --from=builder --chown=backend:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=backend:nodejs /app/package*.json ./
+COPY --from=builder --chown=backend:nodejs /app/scripts ./scripts
+COPY --from=builder --chown=backend:nodejs /app/setup-db.sql ./setup-db.sql
 
 USER backend
 
@@ -41,4 +43,4 @@ EXPOSE 3001
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3001/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
 
-CMD ["dumb-init", "node", "dist/index.js"]
+CMD ["dumb-init", "./scripts/start-with-migration.sh"]
