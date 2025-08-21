@@ -85,7 +85,6 @@ test-data.sql
 # Development scripts
 run-local.sh
 setup.sh
-scripts/
 
 # Static assets in root (use public/ instead)
 static/
@@ -101,6 +100,7 @@ build/
 
 # Database files
 database/
+!setup-db.sql
 
 # Temporary files
 tmp/
