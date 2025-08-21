@@ -46,4 +46,4 @@ EXPOSE 3001
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3001/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
 
-CMD ["dumb-init", "/app/scripts/start-with-migration.sh"]
+CMD ["dumb-init", "sh", "-c", "pwd && ls -la && ls -la scripts/ || echo 'No scripts dir' && echo 'Starting migration and server...' && node scripts/migrate-db.js && echo 'Migration complete, starting server...' && node dist/index.js"]
