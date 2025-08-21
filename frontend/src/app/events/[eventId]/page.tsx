@@ -1167,22 +1167,10 @@ export default function EventManagePage() {
                 
                 {/* Summary Stats */}
                 <div className="border-t border-gray-200 dark:border-gray-600 pt-6">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                  <div className="grid grid-cols-2 gap-6">
                     <div className="text-center">
                       <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{event.attendees.length}</div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">Total Attendees</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                        {event.attendees.filter(a => a.phone).length}
-                      </div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">With Phone</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                        {event.attendees.filter(a => calculateAge(a.dob || '')).length}
-                      </div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">With Age Info</div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">Total Signups</div>
                     </div>
                     <div className="text-center">
                       <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
