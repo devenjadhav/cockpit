@@ -17,6 +17,7 @@ export function Dashboard() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminLoading, setAdminLoading] = useState(true);
   const [adminConsoleActive, setAdminConsoleActive] = useState(false);
+  const [userProfile, setUserProfile] = useState<{firstName?: string; pocPreferredName?: string} | null>(null);
   const { data, loading, error, refresh } = useDashboard({ 
     filters: { triageStatus: selectedTriageStatus || undefined },
     enablePolling: !adminConsoleActive, // Disable polling when admin console is active
@@ -24,13 +25,24 @@ export function Dashboard() {
   });
   const { statuses: triageStatuses, loading: statusesLoading } = useTriageStatuses();
 
-  // Check admin status
+  // Get time-based greeting
+  const getTimeBasedGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+  };
+
+  // Check admin status and fetch user profile
   useEffect(() => {
-    const checkAdminStatus = async () => {
+    const checkAdminStatusAndProfile = async () => {
       try {
         const response = await apiClient.getAdminStatus();
         if (response.success) {
           setIsAdmin(response.data.isAdmin);
+          if (response.data.isAdmin && response.data.admin) {
+            setUserProfile({ firstName: response.data.admin.firstName });
+          }
         }
       } catch (error) {
         console.error('Failed to check admin status:', error);
@@ -40,8 +52,15 @@ export function Dashboard() {
       }
     };
 
-    checkAdminStatus();
+    checkAdminStatusAndProfile();
   }, []);
+
+  // Set user profile from dashboard data for non-admin users
+  useEffect(() => {
+    if (!isAdmin && data?.userProfile && !userProfile) {
+      setUserProfile({ pocPreferredName: data.userProfile.pocPreferredName });
+    }
+  }, [isAdmin, data?.userProfile, userProfile]);
 
   // Advanced fuzzy search implementation with proper relevance scoring
   const normalizeString = (str: string): string => {
@@ -363,27 +382,34 @@ export function Dashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Event Dashboard</h1>
+              <h1 className="text-2xl font-bold text-gray-900">
+                {userProfile 
+                  ? `${getTimeBasedGreeting()}, ${isAdmin ? userProfile.firstName : userProfile.pocPreferredName}` 
+                  : 'Event Dashboard'
+                }
+              </h1>
               <p className="text-sm text-gray-600">{data.organizerEmail || user?.email}</p>
             </div>
             <div className="flex items-center space-x-4">
               {/* Triage Status Filter */}
-              <div className="flex items-center space-x-2">
-                <Filter className="w-4 h-4 text-gray-500" />
-                <select
-                  value={selectedTriageStatus}
-                  onChange={(e) => setSelectedTriageStatus(e.target.value)}
-                  className="text-sm border border-gray-300 rounded-md px-3 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  disabled={statusesLoading}
-                >
-                  <option value="">All Status</option>
-                  {triageStatuses.map((status) => (
-                    <option key={status} value={status}>
-                      {status}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {isAdmin && (
+                <div className="flex items-center space-x-2 border-2 border-dashed border-yellow-400 rounded px-2 py-1">
+                  <Filter className="w-4 h-4 text-gray-500" />
+                  <select
+                    value={selectedTriageStatus}
+                    onChange={(e) => setSelectedTriageStatus(e.target.value)}
+                    className="text-sm border border-gray-300 rounded-md px-3 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    disabled={statusesLoading}
+                  >
+                    <option value="">All Status</option>
+                    {triageStatuses.map((status) => (
+                      <option key={status} value={status}>
+                        {status}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
               
               <button
                 onClick={refresh}
@@ -408,43 +434,6 @@ export function Dashboard() {
         {/* Admin Tools */}
         {isAdmin && (
           <div className="mb-8 bg-white rounded-lg shadow-md overflow-hidden border-2 border-dashed border-yellow-400">
-            <div className="bg-yellow-50 px-4 py-2 border-b border-yellow-200">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <Search className="w-4 h-4 text-yellow-600 mr-2" />
-                  <span className="text-sm font-medium text-yellow-800">
-                    Admin Tools
-                  </span>
-                  <span className="ml-2 text-xs text-yellow-600">(Admin Only)</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className="text-xs text-yellow-700">
-                    {fuzzySearchEnabled ? 'Fuzzy Search (All Fields)' : 'Simple Search (Names Only)'}
-                  </span>
-                  <button
-                    onClick={toggleFuzzySearch}
-                    className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded transition-colors ${
-                      fuzzySearchEnabled
-                        ? 'bg-yellow-200 text-yellow-800 hover:bg-yellow-300'
-                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                    }`}
-                    title={fuzzySearchEnabled ? 'Switch to Simple Search' : 'Switch to Fuzzy Search'}
-                  >
-                    {fuzzySearchEnabled ? (
-                      <>
-                        <Zap className="w-3 h-3 mr-1" />
-                        Fuzzy
-                      </>
-                    ) : (
-                      <>
-                        <Type className="w-3 h-3 mr-1" />
-                        Simple
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-            </div>
             <div className="p-6 space-y-6">
               {/* Event Search */}
               <div>
@@ -457,15 +446,36 @@ export function Dashboard() {
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                    className="block w-full pl-10 pr-32 py-3 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
                     placeholder={
                       fuzzySearchEnabled
                         ? "Fuzzy search across all event fields: name, location, organizer, status, format, tags, etc..."
                         : "Simple search by event name only..."
                     }
                   />
-                  {searchQuery && (
-                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center space-x-1">
+                    <button
+                      onClick={toggleFuzzySearch}
+                      className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded transition-colors ${
+                        fuzzySearchEnabled
+                          ? 'bg-yellow-200 text-yellow-800 hover:bg-yellow-300'
+                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      }`}
+                      title={fuzzySearchEnabled ? 'Switch to Simple Search' : 'Switch to Fuzzy Search'}
+                    >
+                      {fuzzySearchEnabled ? (
+                        <>
+                          <Zap className="w-3 h-3 mr-1" />
+                          Fuzzy
+                        </>
+                      ) : (
+                        <>
+                          <Type className="w-3 h-3 mr-1" />
+                          Simple
+                        </>
+                      )}
+                    </button>
+                    {searchQuery && (
                       <button
                         onClick={clearSearch}
                         className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
@@ -473,8 +483,8 @@ export function Dashboard() {
                       >
                         <X className="h-4 w-4" />
                       </button>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
                 {searchQuery && (
                   <div className="mt-3 flex items-center justify-between text-sm">

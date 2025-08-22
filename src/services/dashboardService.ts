@@ -28,20 +28,33 @@ export class DashboardService {
     }
     
     // Create event cards without attendee data, including POC fields for admins
-    const eventCards = events.map(event => this.createEventCard(event, isAdmin));
+    const eventCards = events.map(event => this.createEventCard(event, isAdmin, organizerEmail));
     
     // Calculate overall stats
     const stats = this.calculateDashboardStats(events, eventCards);
+
+    // Get user profile for greeting
+    let userProfile: { pocPreferredName?: string } | undefined = undefined;
+    if (!isAdmin && events.length > 0) {
+      // For regular users, use poc_preferred_name from their first event
+      const firstEvent = events[0];
+      if (firstEvent.pocPreferredName) {
+        userProfile = {
+          pocPreferredName: firstEvent.pocPreferredName
+        };
+      }
+    }
 
     return {
       organizerEmail,
       stats,
       events: eventCards,
       recentActivity: [], // TODO: Implement activity tracking
+      userProfile,
     };
   }
 
-  private static createEventCard(event: Event, isAdmin: boolean = false): EventCardData {
+  private static createEventCard(event: Event, isAdmin: boolean = false, organizerEmail?: string): EventCardData {
     const attendeeCount = 0; // No attendee tracking
     const estimatedCount = event.estimatedAttendeeCount || 0;
     const capacityPercentage = 0; // No capacity tracking without attendees

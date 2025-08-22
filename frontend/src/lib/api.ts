@@ -92,8 +92,8 @@ class ApiClient {
     return response.data;
   }
 
-  async getAdminStatus(): Promise<ApiResponse<{ isAdmin: boolean }>> {
-    const response: AxiosResponse<ApiResponse<{ isAdmin: boolean }>> = await this.client.get('/admin/status');
+  async getAdminStatus(): Promise<ApiResponse<{ isAdmin: boolean; admin?: any }>> {
+    const response: AxiosResponse<ApiResponse<{ isAdmin: boolean; admin?: any }>> = await this.client.get('/admin/status');
     return response.data;
   }
 

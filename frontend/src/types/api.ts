@@ -43,6 +43,9 @@ export interface DashboardData {
   stats: DashboardStats;
   events: EventCardData[];
   recentActivity: ActivityItem[];
+  userProfile?: {
+    pocPreferredName?: string;
+  };
 }
 
 export interface ActivityItem {
