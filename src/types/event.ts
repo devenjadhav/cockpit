@@ -35,7 +35,7 @@ export interface Event {
   actionTriggerRejectionEmail?: string;
   actionTriggerHoldEmail?: string;
   actionTriggerAskEmail?: string;
-  hasConfirmedVenue?: boolean;
+
   // Additional Airtable fields
   description?: string;
   tags?: string;

@@ -23,7 +23,7 @@ export interface EventCardData {
   isUpcoming: boolean;
   daysUntilEvent: number;
   eventFormat?: string;
-  hasConfirmedVenue?: boolean;
+
 }
 
 export interface DashboardData {

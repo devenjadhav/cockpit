@@ -37,7 +37,7 @@ interface EventData {
   eventName?: string;
   estimatedAttendeeCount?: number;
   triageStatus?: string;
-  hasConfirmedVenue?: boolean;
+
   notes?: string;
   // Admin-only fields
   organizerEmail?: string;
@@ -678,9 +678,9 @@ export default function EventManagePage() {
                 <div>
                   <p className="font-medium text-gray-600 dark:text-gray-400 mb-2">Venue Status</p>
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    event.hasConfirmedVenue ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-200' : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200'
+                    (event.venue && event.venue.venueName) ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-200' : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200'
                   }`}>
-                    {event.hasConfirmedVenue ? 'Venue Confirmed' : 'Venue Not Confirmed'}
+                    {(event.venue && event.venue.venueName) ? 'Venue Confirmed' : 'Venue Not Confirmed'}
                   </span>
                 </div>
 

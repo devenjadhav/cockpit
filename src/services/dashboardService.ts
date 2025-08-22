@@ -73,7 +73,7 @@ export class DashboardService {
       isUpcoming,
       daysUntilEvent,
       eventFormat: event.eventFormat,
-      hasConfirmedVenue: event.hasConfirmedVenue,
+
     };
 
     // Include POC fields for admin users
