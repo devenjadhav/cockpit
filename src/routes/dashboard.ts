@@ -9,29 +9,7 @@ import { dashboardRateLimit } from '../middleware/rateLimiting';
 
 const router = express.Router();
 
-// Temporary test endpoint without auth - MUST be before auth middleware
-router.get('/test', async (req, res) => {
-  try {
-    console.log('Testing dashboard for dev@hackclub.com');
-    const isAdmin = await airtableService.isAdmin('dev@hackclub.com');
-    console.log('Testing dashboard with admin status:', isAdmin);
-    const dashboardData = await DashboardService.getDashboardData('dev@hackclub.com', isAdmin);
-    console.log('Dashboard data retrieved:', JSON.stringify(dashboardData, null, 2));
-    res.json({
-      success: true,
-      data: dashboardData,
-    } as ApiResponse);
-  } catch (error) {
-    console.error('Test dashboard error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch test dashboard data',
-      error: error instanceof Error ? error.message : 'Unknown error'
-    } as ApiResponse);
-  }
-});
-
-// Apply authentication middleware to all other routes
+// Apply authentication middleware to all routes
 router.use(authenticateToken);
 
 // GET /api/dashboard - overview of organizer's events (or all events if admin)
