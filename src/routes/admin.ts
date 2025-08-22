@@ -1,5 +1,6 @@
 import express from 'express';
 import { airtableService } from '../services/airtableService';
+import { databaseService } from '../services/databaseService';
 import { adminAuth } from '../middleware/adminAuth';
 import { ApiResponse } from '../types/api';
 import { Event } from '../types/event';
@@ -17,9 +18,30 @@ router.get('/events', adminAuth, async (req, res) => {
     const events = await airtableService.getAllEvents();
     console.log(`Found ${events.length} events for admin view`);
     
+    // Add attendee count data to each event
+    const eventsWithAttendeeData = await Promise.all(
+      events.map(async (event) => {
+        try {
+          const attendees = await databaseService.getAttendeesByEvent(event.id);
+          return {
+            ...event,
+            attendeeCount: attendees.length,
+            maxAttendees: event.estimatedAttendeeCount, // Add compatibility field
+          };
+        } catch (error) {
+          console.error(`Error getting attendees for event ${event.id}:`, error);
+          return {
+            ...event,
+            attendeeCount: 0,
+            maxAttendees: event.estimatedAttendeeCount, // Add compatibility field even on error
+          };
+        }
+      })
+    );
+    
     const response: ApiResponse<Event[]> = {
       success: true,
-      data: events
+      data: eventsWithAttendeeData
     };
     
     res.json(response);

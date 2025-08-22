@@ -17,6 +17,8 @@ interface Event {
   country: string;
   eventFormat: string;
   estimatedAttendeeCount: number;
+  attendeeCount?: number;
+  maxAttendees?: number;
   triageStatus: string;
   startDate: string;
   endDate: string;
@@ -47,7 +49,7 @@ export default function AdminPage() {
   // Filter states
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState({
-    sortBy: 'date-desc',
+    sortBy: 'name',
   });
 
 
@@ -205,14 +207,16 @@ export default function AdminPage() {
 
 
     // Apply sort
-    if (filters.sortBy === 'date-desc') {
-      filtered.sort((a, b) => new Date(b.startDate || '').getTime() - new Date(a.startDate || '').getTime());
-    } else if (filters.sortBy === 'date-asc') {
-      filtered.sort((a, b) => new Date(a.startDate || '').getTime() - new Date(b.startDate || '').getTime());
-    } else if (filters.sortBy === 'name') {
+    if (filters.sortBy === 'name') {
       filtered.sort((a, b) => a.eventName.localeCompare(b.eventName));
     } else if (filters.sortBy === 'attendees-desc') {
       filtered.sort((a, b) => (b.estimatedAttendeeCount || 0) - (a.estimatedAttendeeCount || 0));
+    } else if (filters.sortBy === 'attendees-asc') {
+      filtered.sort((a, b) => (a.estimatedAttendeeCount || 0) - (b.estimatedAttendeeCount || 0));
+    } else if (filters.sortBy === 'signups-desc') {
+      filtered.sort((a, b) => (b.attendeeCount || 0) - (a.attendeeCount || 0));
+    } else if (filters.sortBy === 'signups-asc') {
+      filtered.sort((a, b) => (a.attendeeCount || 0) - (b.attendeeCount || 0));
     }
 
     setFilteredEvents(filtered);
@@ -388,8 +392,8 @@ export default function AdminPage() {
         </div>
 
         <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-          {/* Search Bar */}
-          <div className="mb-6">
+          {/* Search Bar and Filters */}
+          <div className="mb-6 space-y-4">
             <input
               type="text"
               placeholder="Search Query"
@@ -397,6 +401,26 @@ export default function AdminPage() {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
             />
+            
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <label htmlFor="sort-select" className="text-sm font-medium text-gray-700">
+                  Sort by:
+                </label>
+                <select
+                  id="sort-select"
+                  value={filters.sortBy}
+                  onChange={(e) => setFilters({...filters, sortBy: e.target.value})}
+                  className="px-3 py-2 border border-gray-300 rounded-md text-sm bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="name">Event Name (A-Z)</option>
+                  <option value="signups-desc">Actual Signups (High to Low)</option>
+                  <option value="signups-asc">Actual Signups (Low to High)</option>
+                  <option value="attendees-desc">Estimated Capacity (High to Low)</option>
+                  <option value="attendees-asc">Estimated Capacity (Low to High)</option>
+                </select>
+              </div>
+            </div>
           </div>
 
 
@@ -442,7 +466,6 @@ export default function AdminPage() {
                   <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Format</th>
                   <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">Attendees</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-36">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -452,7 +475,10 @@ export default function AdminPage() {
                       {event.id.slice(-4)}
                     </td>
                     <td className="px-4 py-4 w-48">
-                      <div className="text-sm font-medium text-blue-600 hover:text-blue-900 cursor-pointer truncate">
+                      <div 
+                        className="text-sm font-medium text-blue-600 hover:text-blue-900 cursor-pointer truncate"
+                        onClick={() => router.push(`/events/${event.id}`)}
+                      >
                         {event.eventName}
                       </div>
                     </td>
@@ -468,15 +494,14 @@ export default function AdminPage() {
                       <div className="truncate">{event.eventFormat || 'N/A'}</div>
                     </td>
                     <td className="px-3 py-4 text-sm text-gray-900 w-20 text-center">
-                      {event.estimatedAttendeeCount || 'N/A'}
+                      {event.maxAttendees 
+                        ? `${event.attendeeCount || 0}/${event.maxAttendees}` 
+                        : 'N/A'}
                     </td>
                     <td className="px-4 py-4 w-36">
                       <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium truncate ${getStatusColor(event.triageStatus)}`}>
                         {event.triageStatus || 'Unknown'}
                       </span>
-                    </td>
-                    <td className="px-4 py-4 text-sm text-blue-600 w-28">
-                      <button className="hover:text-blue-900 truncate">View Details</button>
                     </td>
                   </tr>
                 ))}
