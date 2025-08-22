@@ -2,6 +2,7 @@ import { airtableService } from './airtableService';
 import { databaseService } from './databaseService';
 import { Event, EventFields } from '../types/event';
 import { Attendee } from '../types/attendee';
+import { Venue } from '../types/venue';
 
 interface SyncResult {
   success: boolean;
@@ -114,6 +115,17 @@ class SyncService {
         errors.push(...attendeesResult.errors);
       } catch (error) {
         const errorMsg = `Attendees sync failed: ${error instanceof Error ? error.message : 'Unknown error'}`;
+        console.error(errorMsg);
+        errors.push(errorMsg);
+      }
+
+      // Sync venues
+      try {
+        const venuesResult = await this.syncVenues();
+        totalRecords += venuesResult.recordsSynced;
+        errors.push(...venuesResult.errors);
+      } catch (error) {
+        const errorMsg = `Venues sync failed: ${error instanceof Error ? error.message : 'Unknown error'}`;
         console.error(errorMsg);
         errors.push(errorMsg);
       }
@@ -451,6 +463,100 @@ class SyncService {
         dob = EXCLUDED.dob,
         phone = EXCLUDED.phone,
         event_airtable_id = EXCLUDED.event_airtable_id,
+        synced_at = NOW()
+    `;
+
+    await databaseService.query(query, values.flat());
+  }
+
+  private async syncVenues(): Promise<SyncResult> {
+    const startTime = Date.now();
+    const errors: string[] = [];
+    let syncedCount = 0;
+
+    try {
+      console.log('Syncing venues from Airtable...');
+      
+      // Get all venues from Airtable
+      const airtableVenues = await airtableService.getAllVenues();
+      console.log(`Retrieved ${airtableVenues.length} venues from Airtable`);
+
+      // Process venues in batches
+      const batchSize = 50;
+      for (let i = 0; i < airtableVenues.length; i += batchSize) {
+        const batch = airtableVenues.slice(i, i + batchSize);
+        
+        try {
+          await this.upsertVenuesBatch(batch);
+          syncedCount += batch.length;
+        } catch (error) {
+          const errorMsg = `Batch sync failed for venues ${i}-${i + batch.length}: ${error instanceof Error ? error.message : 'Unknown error'}`;
+          console.error(errorMsg);
+          errors.push(errorMsg);
+        }
+      }
+
+      // Update sync metadata
+      await this.updateSyncMetadata('venues', syncedCount, errors.length, errors.join('; '));
+
+      return {
+        success: errors.length === 0,
+        recordsSynced: syncedCount,
+        errors,
+        duration: Date.now() - startTime
+      };
+
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Venues sync failed:', errorMsg);
+      
+      await this.updateSyncMetadata('venues', syncedCount, 1, errorMsg);
+      
+      return {
+        success: false,
+        recordsSynced: syncedCount,
+        errors: [errorMsg, ...errors],
+        duration: Date.now() - startTime
+      };
+    }
+  }
+
+  private async upsertVenuesBatch(venues: Venue[]): Promise<void> {
+    const values = venues.map(venue => [
+      venue.id, // airtable_id
+      this.sanitizeString(venue.venueId),
+      this.sanitizeString(venue.eventName),
+      this.sanitizeString(venue.venueName),
+      this.sanitizeString(venue.address1),
+      this.sanitizeString(venue.address2),
+      this.sanitizeString(venue.city),
+      this.sanitizeString(venue.state),
+      this.sanitizeString(venue.country),
+      this.sanitizeString(venue.zipCode),
+      this.sanitizeString(venue.venueContactName),
+      this.sanitizeString(venue.venueContactEmail)
+    ]);
+
+    const placeholders = values.map((_, index) => {
+      const offset = index * 12;
+      return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9}, $${offset + 10}, $${offset + 11}, $${offset + 12})`;
+    }).join(', ');
+
+    const query = `
+      INSERT INTO venues (airtable_id, venue_id, event_name, venue_name, address_1, address_2, city, state, country, zip_code, venue_contact_name, venue_contact_email)
+      VALUES ${placeholders}
+      ON CONFLICT (airtable_id) DO UPDATE SET
+        venue_id = EXCLUDED.venue_id,
+        event_name = EXCLUDED.event_name,
+        venue_name = EXCLUDED.venue_name,
+        address_1 = EXCLUDED.address_1,
+        address_2 = EXCLUDED.address_2,
+        city = EXCLUDED.city,
+        state = EXCLUDED.state,
+        country = EXCLUDED.country,
+        zip_code = EXCLUDED.zip_code,
+        venue_contact_name = EXCLUDED.venue_contact_name,
+        venue_contact_email = EXCLUDED.venue_contact_email,
         synced_at = NOW()
     `;
 

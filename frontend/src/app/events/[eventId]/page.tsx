@@ -56,6 +56,21 @@ interface EventData {
   pocAge?: number;
   // Attendees data
   attendees?: Attendee[];
+  // Venue data
+  venue?: {
+    id: string;
+    venueId: string;
+    eventName: string;
+    venueName: string;
+    address1: string;
+    address2?: string;
+    city: string;
+    state: string;
+    country: string;
+    zipCode: string;
+    venueContactName: string;
+    venueContactEmail: string;
+  };
 }
 
 export default function EventManagePage() {
@@ -1004,6 +1019,78 @@ export default function EventManagePage() {
                   These notes are only visible to administrators and are used for internal tracking.
                 </p>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Venue Section */}
+        {event.venue && (
+          <div className="mt-8 bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden border border-gray-200 dark:border-gray-700">
+            <div className="bg-green-50 dark:bg-green-900/20 px-6 py-4 border-b border-green-200 dark:border-green-800/30">
+              <div className="flex items-center">
+                <MapPin className="w-6 h-6 text-green-600 dark:text-green-400 mr-3" />
+                <div>
+                  <h2 className="text-xl font-semibold text-green-900 dark:text-green-100">Venue Information</h2>
+                  <p className="text-sm text-green-700 dark:text-green-300 mt-1">Event location and contact details</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Venue Details */}
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">{event.venue.venueName}</h3>
+                    <div className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                      <div className="flex items-start">
+                        <MapPin className="w-4 h-4 text-gray-400 mt-0.5 mr-2 flex-shrink-0" />
+                        <div>
+                          <div>{event.venue.address1}</div>
+                          {event.venue.address2 && <div>{event.venue.address2}</div>}
+                          <div>{event.venue.city}, {event.venue.state} {event.venue.zipCode}</div>
+                          <div>{event.venue.country}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Contact Information */}
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Venue Contact</h3>
+                    <div className="space-y-2">
+                      <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
+                        <User className="w-4 h-4 text-gray-400 mr-2" />
+                        <span 
+                          className="cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                          onClick={() => copyText(event.venue!.venueContactName, 'venue-contact-name')}
+                          title="Click to copy contact name"
+                        >
+                          {event.venue.venueContactName}
+                          {copiedField === 'venue-contact-name' && (
+                            <span className="ml-2 text-green-600 dark:text-green-400">✓</span>
+                          )}
+                        </span>
+                      </div>
+                      <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
+                        <Mail className="w-4 h-4 text-gray-400 mr-2" />
+                        <span 
+                          className="cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                          onClick={() => copyText(event.venue!.venueContactEmail, 'venue-contact-email')}
+                          title="Click to copy contact email"
+                        >
+                          {event.venue.venueContactEmail}
+                          {copiedField === 'venue-contact-email' && (
+                            <span className="ml-2 text-green-600 dark:text-green-400">✓</span>
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}

@@ -50,7 +50,10 @@ export default function AdminPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState({
     sortBy: 'name',
+    eventFormat: '',
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(100);
 
 
   const tabCounts: TabCounts = {
@@ -85,6 +88,7 @@ export default function AdminPage() {
 
   useEffect(() => {
     applyFilters();
+    setCurrentPage(1); // Reset to first page when filters change
   }, [events, searchQuery, filters, activeTab]);
 
   const checkAdminStatus = async () => {
@@ -200,6 +204,11 @@ export default function AdminPage() {
       );
     }
 
+    // Apply event format filter
+    if (filters.eventFormat) {
+      filtered = filtered.filter(event => event.eventFormat === filters.eventFormat);
+    }
+
 
 
 
@@ -221,6 +230,19 @@ export default function AdminPage() {
 
     setFilteredEvents(filtered);
   };
+
+  // Pagination helpers
+  const totalPages = Math.ceil(filteredEvents.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentEvents = filteredEvents.slice(startIndex, endIndex);
+
+  const goToPage = (page: number) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  };
+
+  const goToNextPage = () => goToPage(currentPage + 1);
+  const goToPrevPage = () => goToPage(currentPage - 1);
 
 
 
@@ -402,7 +424,7 @@ export default function AdminPage() {
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
             />
             
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-6">
               <div className="flex items-center space-x-2">
                 <label htmlFor="sort-select" className="text-sm font-medium text-gray-700">
                   Sort by:
@@ -418,6 +440,22 @@ export default function AdminPage() {
                   <option value="signups-asc">Actual Signups (Low to High)</option>
                   <option value="attendees-desc">Estimated Capacity (High to Low)</option>
                   <option value="attendees-asc">Estimated Capacity (Low to High)</option>
+                </select>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <label htmlFor="format-filter" className="text-sm font-medium text-gray-700">
+                  Event Format:
+                </label>
+                <select
+                  id="format-filter"
+                  value={filters.eventFormat}
+                  onChange={(e) => setFilters({...filters, eventFormat: e.target.value})}
+                  className="px-3 py-2 border border-gray-300 rounded-md text-sm bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">All Formats</option>
+                  <option value="12-hours">12 Hours</option>
+                  <option value="24-hours">24 Hours</option>
                 </select>
               </div>
             </div>
@@ -448,7 +486,7 @@ export default function AdminPage() {
           {/* Results Summary */}
           <div className="mb-4">
             <p className="text-sm text-gray-600">
-              Displaying events <strong>1 - {Math.min(100, filteredEvents.length)}</strong> of <strong>{filteredEvents.length}</strong> in total.{' '}
+              Displaying events <strong>{startIndex + 1} - {Math.min(endIndex, filteredEvents.length)}</strong> of <strong>{filteredEvents.length}</strong> in total.{' '}
               <a href="#" className="text-blue-600 hover:underline">Create a new event</a>.{' '}
               <a href="#" className="text-blue-600 hover:underline">Import events from Airtable</a>.
             </p>
@@ -469,7 +507,7 @@ export default function AdminPage() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredEvents.slice(0, 100).map((event, index) => (
+                {currentEvents.map((event, index) => (
                   <tr key={event.id} className={index % 2 === 1 ? 'bg-gray-50' : ''}>
                     <td className="px-3 py-4 text-sm text-gray-900 w-16">
                       {event.id.slice(-4)}
@@ -516,12 +554,62 @@ export default function AdminPage() {
           )}
 
           {/* Pagination */}
-          {filteredEvents.length > 100 && (
+          {totalPages > 1 && (
             <div className="mt-6 flex justify-between items-center">
-              <div></div>
+              <div className="text-sm text-gray-600">
+                Page {currentPage} of {totalPages}
+              </div>
               <div className="flex space-x-2">
-                <button className="px-3 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">Next ›</button>
-                <button className="px-3 py-2 text-sm text-gray-500">Last »</button>
+                <button
+                  onClick={() => goToPage(1)}
+                  disabled={currentPage === 1}
+                  className="px-3 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  « First
+                </button>
+                <button
+                  onClick={goToPrevPage}
+                  disabled={currentPage === 1}
+                  className="px-3 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  ‹ Previous
+                </button>
+                
+                {/* Page numbers */}
+                <div className="flex space-x-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    const page = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
+                    if (page > totalPages) return null;
+                    return (
+                      <button
+                        key={page}
+                        onClick={() => goToPage(page)}
+                        className={`px-3 py-2 text-sm border rounded ${
+                          page === currentPage
+                            ? 'bg-blue-600 text-white border-blue-600'
+                            : 'border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    );
+                  })}
+                </div>
+                
+                <button
+                  onClick={goToNextPage}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next ›
+                </button>
+                <button
+                  onClick={() => goToPage(totalPages)}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Last »
+                </button>
               </div>
             </div>
           )}

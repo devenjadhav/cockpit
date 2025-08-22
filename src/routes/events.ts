@@ -80,13 +80,17 @@ router.get('/:eventId', async (req: AuthenticatedRequest, res) => {
     // Get attendees for this event
     const attendees = await databaseService.getAttendeesByEvent(event.id);
     
-    // Return event with attendee data
-    const eventWithStats: EventWithStats & { attendees?: any[] } = {
+    // Get venue for this event
+    const venue = await databaseService.getVenueByEventAirtableId(event.id);
+    
+    // Return event with attendee data and venue info
+    const eventWithStats: EventWithStats & { attendees?: any[]; venue?: any } = {
       ...event,
       attendeeCount: attendees.length,
       capacityPercentage: event.estimatedAttendeeCount ? (attendees.length / event.estimatedAttendeeCount) * 100 : 0,
       isUpcoming: event.triageStatus === 'Approved',
       attendees: attendees,
+      venue: venue,
       // Include admin-only fields if user is admin
       ...(isAdmin && {
         organizerEmail: event.email,

@@ -237,6 +237,30 @@ class DatabaseService {
     return result.rows;
   }
 
+  async getVenueByEventAirtableId(eventAirtableId: string) {
+    const query = `
+      SELECT 
+        airtable_id as id,
+        venue_id as "venueId",
+        event_name as "eventName",
+        venue_name as "venueName",
+        address_1 as "address1",
+        address_2 as "address2",
+        city,
+        state,
+        country,
+        zip_code as "zipCode",
+        venue_contact_name as "venueContactName",
+        venue_contact_email as "venueContactEmail"
+      FROM venues 
+      WHERE event_name = $1
+      LIMIT 1
+    `;
+    
+    const result = await this.query(query, [eventAirtableId]);
+    return result.rows.length > 0 ? result.rows[0] : null;
+  }
+
   getPoolInfo() {
     return {
       main: {

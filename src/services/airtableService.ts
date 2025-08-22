@@ -2,6 +2,7 @@ import Airtable from 'airtable';
 import { Event, EventFields, UpdateEventData } from '../types/event';
 import { Admin, AdminFields } from '../types/admin';
 import { Attendee, AttendeeFields } from '../types/attendee';
+import { Venue, VenueFields } from '../types/venue';
 import { cacheService } from './cacheService';
 
 export class AirtableService {
@@ -9,6 +10,7 @@ export class AirtableService {
   private eventsTable: Airtable.Table<EventFields>;
   private adminsTable: Airtable.Table<AdminFields>;
   private attendeesTable: Airtable.Table<AttendeeFields>;
+  private venuesTable: Airtable.Table<VenueFields>;
 
   constructor() {
     if (!process.env.AIRTABLE_API_KEY || !process.env.AIRTABLE_BASE_ID) {
@@ -24,6 +26,7 @@ export class AirtableService {
     this.eventsTable = this.base<EventFields>('events');
     this.adminsTable = this.base<AdminFields>('admins');
     this.attendeesTable = this.base<AttendeeFields>('attendees');
+    this.venuesTable = this.base<VenueFields>('venues');
   }
 
   private mapEventRecord(record: Airtable.Record<EventFields>): Event {
@@ -360,6 +363,24 @@ export class AirtableService {
     };
   }
 
+  private mapVenueRecord(record: Airtable.Record<VenueFields>): Venue {
+    const fields = record.fields;
+    return {
+      id: record.id,
+      venueId: fields.venue_id,
+      eventName: fields.event_name,
+      venueName: fields.venue_name,
+      address1: fields.address_1,
+      address2: fields.address_2,
+      city: fields.city,
+      state: fields.state,
+      country: fields.country,
+      zipCode: fields.zip_code,
+      venueContactName: fields.venue_contact_name,
+      venueContactEmail: fields.venue_contact_email,
+    };
+  }
+
   async getAllAttendees(): Promise<Attendee[]> {
     try {
       const records = await this.attendeesTable
@@ -387,6 +408,43 @@ export class AirtableService {
       return records.map(record => this.mapAttendeeRecord(record));
     } catch (error) {
       console.error('Error fetching attendees for event from Airtable:', error);
+      throw error;
+    }
+  }
+
+  async getAllVenues(): Promise<Venue[]> {
+    try {
+      console.log('Fetching all venues from Airtable...');
+      const records = await this.venuesTable
+        .select({
+          sort: [{ field: 'event_name', direction: 'asc' }]
+        })
+        .all();
+
+      console.log(`Found ${records.length} venue records`);
+      return records.map(record => this.mapVenueRecord(record));
+    } catch (error) {
+      console.error('Error fetching venues from Airtable:', error);
+      throw error;
+    }
+  }
+
+  async getVenueByEventName(eventName: string): Promise<Venue | null> {
+    try {
+      const records = await this.venuesTable
+        .select({
+          filterByFormula: `{event_name} = "${eventName}"`,
+          maxRecords: 1
+        })
+        .all();
+
+      if (records.length === 0) {
+        return null;
+      }
+
+      return this.mapVenueRecord(records[0]);
+    } catch (error) {
+      console.error('Error fetching venue for event from Airtable:', error);
       throw error;
     }
   }
