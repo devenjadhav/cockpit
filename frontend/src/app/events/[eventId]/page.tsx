@@ -677,9 +677,9 @@ export default function EventManagePage() {
                         Venue Confirmed
                       </span>
                     ) : (
-                      <span className="px-4 py-2 rounded-lg text-lg font-bold bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-200 border-2 border-red-500 dark:border-red-400 animate-pulse">
+                      <div className="px-6 py-4 rounded-lg text-2xl font-black bg-red-600 dark:bg-red-700 text-white shadow-lg border-4 border-red-800 dark:border-red-500 text-center">
                         VENUE NOT CONFIRMED
-                      </span>
+                      </div>
                     )}
                     
                     {!(event.venue && event.venue.venueName) && (
