@@ -671,11 +671,34 @@ export default function EventManagePage() {
 
                 <div>
                   <p className="font-medium text-gray-600 dark:text-gray-400 mb-2">Venue Status</p>
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    (event.venue && event.venue.venueName) ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-200' : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200'
-                  }`}>
-                    {(event.venue && event.venue.venueName) ? 'Venue Confirmed' : 'Venue Not Confirmed'}
-                  </span>
+                  <div className="space-y-3">
+                    {(event.venue && event.venue.venueName) ? (
+                      <span className="px-3 py-1 rounded-full text-sm font-medium bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-200">
+                        Venue Confirmed
+                      </span>
+                    ) : (
+                      <span className="px-4 py-2 rounded-lg text-lg font-bold bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-200 border-2 border-red-500 dark:border-red-400 animate-pulse">
+                        VENUE NOT CONFIRMED
+                      </span>
+                    )}
+                    
+                    {!(event.venue && event.venue.venueName) && (
+                      <div className="text-sm text-gray-600 dark:text-gray-300">
+                        <p>
+                          Have a confirmed venue? Fill out{' '}
+                          <a
+                            href="http://forms.hackclub.com/daydream-venue"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline"
+                          >
+                            this form
+                          </a>
+                          {' '}to update our records.
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div>
