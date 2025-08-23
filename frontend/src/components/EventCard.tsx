@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, MapPin, Users, Settings, MapPin as Venue } from 'lucide-react';
+import { MapPin, Users, Settings, MapPin as Venue } from 'lucide-react';
 import { EventCardData } from '@/types/api';
 import { CountryFlag } from './ui/CountryFlag';
 import { CapacityIndicator } from './ui/CapacityIndicator';
@@ -28,14 +28,6 @@ const statusConfig = {
     label: 'Completed',
   },
 };
-
-function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-}
 
 function formatDaysUntil(days: number): string {
   if (days < 0) return 'Past event';
@@ -98,14 +90,6 @@ export function EventCard({ event, onManage }: EventCardProps) {
 
         {/* Event details */}
         <div className="space-y-2">
-          <div className="flex items-center text-sm text-gray-600">
-            <Calendar className="w-4 h-4 mr-2" />
-            <span>{safeEvent.startDate ? formatDate(safeEvent.startDate) : 'Date TBD'}</span>
-            {safeEvent.startDate && safeEvent.endDate && safeEvent.startDate !== safeEvent.endDate && (
-              <span className="ml-1">- {formatDate(safeEvent.endDate)}</span>
-            )}
-          </div>
-
           {safeEvent.location && (
             <div className="flex items-center text-sm text-gray-600">
               <MapPin className="w-4 h-4 mr-2" />

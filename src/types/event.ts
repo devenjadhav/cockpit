@@ -43,6 +43,7 @@ export interface Event {
   contactInfo?: string;
   createdAt?: string;
   updatedAt?: string;
+  hasConfirmedVenue?: boolean;
 }
 
 export interface EventFields {

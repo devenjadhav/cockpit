@@ -564,13 +564,7 @@ export default function EventManagePage() {
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Event Details</h3>
                 
-                <div className="flex items-center text-gray-600 dark:text-gray-400">
-                  <Calendar className="w-5 h-5 mr-3" />
-                  <div>
-                    <p className="font-medium">Start Date</p>
-                    <p className="text-sm">{formatDate(event.startDate)}</p>
-                  </div>
-                </div>
+
 
                 <div className="text-gray-600 dark:text-gray-400">
                   <div className="flex items-center mb-2">

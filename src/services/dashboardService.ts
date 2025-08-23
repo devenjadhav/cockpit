@@ -1,4 +1,5 @@
 import { airtableService } from './airtableService';
+import { databaseService } from './databaseService';
 import { DashboardData, DashboardStats, EventCardData } from '../types/dashboard';
 import { Event } from '../types/event';
 
@@ -27,8 +28,10 @@ export class DashboardService {
       console.log(`After filtering: ${events.length} events remaining`);
     }
     
-    // Create event cards without attendee data, including POC fields for admins
-    const eventCards = events.map(event => this.createEventCard(event, isAdmin, organizerEmail));
+    // Create event cards with venue data for proper venue status calculation
+    const eventCards = await Promise.all(events.map(async (event) => {
+      return this.createEventCard(event, isAdmin, organizerEmail);
+    }));
     
     // Calculate overall stats
     const stats = this.calculateDashboardStats(events, eventCards);
@@ -54,10 +57,12 @@ export class DashboardService {
     };
   }
 
-  private static createEventCard(event: Event, isAdmin: boolean = false, organizerEmail?: string): EventCardData {
-    const attendeeCount = 0; // No attendee tracking
+  private static async createEventCard(event: Event, isAdmin: boolean = false, organizerEmail?: string): Promise<EventCardData> {
+    // Get actual attendee count from database (same logic as individual event page)
+    const attendees = await databaseService.getAttendeesByEvent(event.id);
+    const attendeeCount = attendees.length;
     const estimatedCount = event.estimatedAttendeeCount || 0;
-    const capacityPercentage = 0; // No capacity tracking without attendees
+    const capacityPercentage = estimatedCount ? (attendeeCount / estimatedCount) * 100 : 0;
     
     const capacityStatus = this.getCapacityStatus(capacityPercentage);
     
@@ -67,6 +72,10 @@ export class DashboardService {
     
     // Use the country field directly from your data
     const countryCode = this.getCountryCode(event.country);
+
+    // Fetch venue data to calculate venue status (same logic as individual event page)
+    const venue = await databaseService.getVenueByEventAirtableId(event.id);
+    const hasConfirmedVenue = Boolean(venue && venue.venueName);
 
     console.log(`Event ${event.eventName} eventFormat:`, event.eventFormat);
     
@@ -86,7 +95,7 @@ export class DashboardService {
       isUpcoming,
       daysUntilEvent,
       eventFormat: event.eventFormat,
-
+      hasConfirmedVenue,
     };
 
     // Include POC fields for admin users

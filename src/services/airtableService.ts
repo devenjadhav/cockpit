@@ -68,7 +68,7 @@ export class AirtableService {
       actionTriggerRejectionEmail: fields['action - trigger_rejection_email'],
       actionTriggerHoldEmail: fields['action - trigger_hold_email'],
       actionTriggerAskEmail: fields['action - trigger_ask_email'],
-
+      hasConfirmedVenue: fields.has_confirmed_venue,
     };
   }
 
