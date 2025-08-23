@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Calendar, MapPin, Users, Edit, Save, X, HelpCircle, FileText, Mail, Clock, Tag, Globe, Phone, Database, User, Copy, Check, Search, Filter, SortAsc, Download } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users, Edit, Save, X, HelpCircle, FileText, Mail, Clock, Tag, Globe, Phone, Database, User, Copy, Check, Search, Filter, SortAsc, Download, ExternalLink } from 'lucide-react';
 import { apiClient } from '@/lib/api';
 import { AuthGuard } from '@/components/AuthGuard';
 import { CountryFlag } from '@/components/ui/CountryFlag';
@@ -93,6 +93,13 @@ export default function EventManagePage() {
   const [attendeeSearch, setAttendeeSearch] = useState('');
   const [attendeeSortBy, setAttendeeSortBy] = useState<'name' | 'email' | 'age'>('name');
   const [attendeeSortOrder, setAttendeeSortOrder] = useState<'asc' | 'desc'>('asc');
+  
+  // Quick links (computed based on event data)
+  const quickLinks = [
+    { id: '4', title: 'Week-3 check-in', url: 'https://forms.hackclub.com/daydream-check-in-3', icon: HelpCircle },
+    { id: '5', title: 'Daydream Organizer Guide', url: 'https://daydream.hackclub.com/guide', icon: Globe },
+    { id: '6', title: 'Unique signup link', url: `https://forms.hackclub.com/daydream-sign-up?event=${event?.id || ''}`, icon: Edit }
+  ];
   
   // Edit form state
   const [editForm, setEditForm] = useState({
@@ -245,6 +252,15 @@ export default function EventManagePage() {
       console.error('Failed to copy:', err);
     }
   };
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+  };
+
+
 
   const downloadAttendeesCSV = () => {
     try {
@@ -407,17 +423,8 @@ export default function EventManagePage() {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
       <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="inline-flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5 mr-2" />
-            Back to Dashboard
-          </button>
-          
+        <div className="flex justify-end mb-8">
           <div className="flex items-center space-x-3">
-            <ThemeToggle />
             {!editing ? (
               <button
                 onClick={() => setEditing(true)}
@@ -460,12 +467,101 @@ export default function EventManagePage() {
           </div>
         </div>
 
+        {/* Greeting */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+            {getGreeting()}, {event.pocPreferredName || event.pocFirstName || 'organizer'}
+          </h1>
+        </div>
+
         {/* Error Display */}
         {error && (
           <div className="mb-4 bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-400 px-4 py-3 rounded">
             {error}
           </div>
         )}
+
+        {/* Quick Links Section */}
+        <div className="mb-8 bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
+          <div className="bg-blue-50 dark:bg-blue-900/20 px-6 py-4 border-b border-blue-200 dark:border-blue-800/30">
+            <div className="flex items-center">
+              <Globe className="w-5 h-5 text-blue-600 dark:text-blue-400 mr-3" />
+              <h2 className="text-lg font-semibold text-blue-900 dark:text-blue-100">Daydream Resources</h2>
+            </div>
+          </div>
+          
+          <div className="p-6">
+            {/* Quick Links Grid */}
+            {quickLinks.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                {quickLinks.map((link) => {
+                  const IconComponent = link.icon;
+                  return (
+                    <div key={link.id} className="group relative">
+                      {link.url ? (
+                        <div className="flex items-center p-3 h-20 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200">
+                          <IconComponent className="w-5 h-5 text-blue-600 dark:text-blue-400 mr-3 flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                              {link.title}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                              {link.url}
+                            </p>
+                          </div>
+                          <div className="flex items-center space-x-2 ml-2">
+                            <button
+                              onClick={() => copyText(link.url, `quicklink-${link.id}`)}
+                              className="p-1 text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                              title="Copy link"
+                            >
+                              {copiedField === `quicklink-${link.id}` ? (
+                                <Check className="w-4 h-4 text-green-600" />
+                              ) : (
+                                <Copy className="w-4 h-4" />
+                              )}
+                            </button>
+                            <a
+                              href={link.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-1 text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                              title="Open link"
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                            </a>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center p-3 h-20 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600 opacity-50">
+                          <IconComponent className="w-5 h-5 text-gray-400 dark:text-gray-500 mr-3 flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+                              {link.title}
+                            </p>
+                            <p className="text-xs text-gray-400 dark:text-gray-500">
+                              URL not set
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                      
+
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                <Globe className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p className="text-sm">No quick links added yet</p>
+                <p className="text-xs mt-1">Add useful links for quick access to event resources</p>
+              </div>
+            )}
+
+
+          </div>
+        </div>
 
         {/* Event Info Card */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden border border-gray-200 dark:border-gray-700">
@@ -1130,6 +1226,18 @@ export default function EventManagePage() {
                 </div>
                 <div className="flex items-center space-x-2">
                 <button
+                onClick={() => copyText(`https://forms.hackclub.com/daydream-sign-up?event=${event.id}`, 'signup-link')}
+                className="inline-flex items-center px-3 py-1 text-xs font-medium rounded-md text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/40 hover:bg-blue-200 dark:hover:bg-blue-800/60 transition-colors"
+                title="Copy unique signup link"
+                >
+                {copiedField === 'signup-link' ? (
+                <Check className="w-3 h-3 mr-1" />
+                ) : (
+                <Copy className="w-3 h-3 mr-1" />
+                )}
+                {copiedField === 'signup-link' ? 'Copied!' : 'Copy Signup Link'}
+                </button>
+                <button
                 onClick={downloadAttendeesCSV}
                 className="inline-flex items-center px-3 py-1 text-xs font-medium rounded-md text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-900/40 hover:bg-green-200 dark:hover:bg-green-800/60 transition-colors"
                 title="Download attendees as CSV"
@@ -1289,47 +1397,7 @@ export default function EventManagePage() {
           </div>
         )}
 
-        {/* Additional Actions */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-          <button
-            disabled
-            className="p-4 bg-gray-50 rounded-lg shadow border border-gray-200 text-left relative opacity-60 cursor-not-allowed"
-          >
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-gray-500">View Statistics</h3>
-              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-200 text-gray-600">
-                Coming Soon
-              </span>
-            </div>
-            <p className="text-sm text-gray-400 mt-1">Event performance and metrics</p>
-          </button>
-          
-          <button
-            disabled
-            className="p-4 bg-gray-50 rounded-lg shadow border border-gray-200 text-left relative opacity-60 cursor-not-allowed"
-          >
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-gray-500">Send Updates</h3>
-              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-200 text-gray-600">
-                Coming Soon
-              </span>
-            </div>
-            <p className="text-sm text-gray-400 mt-1">Notify attendees about changes</p>
-          </button>
-          
-          <button
-            disabled
-            className="p-4 bg-gray-50 rounded-lg shadow border border-gray-200 text-left relative opacity-60 cursor-not-allowed"
-          >
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-gray-500">Export Data</h3>
-              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-200 text-gray-600">
-                Coming Soon
-              </span>
-            </div>
-            <p className="text-sm text-gray-400 mt-1">Download event information</p>
-          </button>
-        </div>
+
       </div>
       </div>
     </AuthGuard>
