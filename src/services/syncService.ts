@@ -444,16 +444,17 @@ class SyncService {
       this.sanitizeString(attendee.lastName),
       attendee.dob || null,
       this.sanitizeString(attendee.phone),
-      this.sanitizeString(attendee.event)
+      this.sanitizeString(attendee.event),
+      attendee.deleted_in_cockpit || false
     ]);
 
     const placeholders = values.map((_, index) => {
-      const offset = index * 8;
-      return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8})`;
+      const offset = index * 9;
+      return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9})`;
     }).join(', ');
 
     const query = `
-      INSERT INTO attendees (airtable_id, email, preferred_name, first_name, last_name, dob, phone, event_airtable_id)
+      INSERT INTO attendees (airtable_id, email, preferred_name, first_name, last_name, dob, phone, event_airtable_id, deleted_in_cockpit)
       VALUES ${placeholders}
       ON CONFLICT (airtable_id) DO UPDATE SET
         email = EXCLUDED.email,
@@ -463,6 +464,7 @@ class SyncService {
         dob = EXCLUDED.dob,
         phone = EXCLUDED.phone,
         event_airtable_id = EXCLUDED.event_airtable_id,
+        deleted_in_cockpit = EXCLUDED.deleted_in_cockpit,
         synced_at = NOW()
     `;
 

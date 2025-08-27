@@ -359,7 +359,8 @@ export class AirtableService {
       lastName: fields.last_name,
       dob: fields.dob ? new Date(fields.dob) : undefined,
       phone: fields.phone,
-      event: Array.isArray(fields.event) && fields.event.length > 0 ? fields.event[0] : undefined
+      event: Array.isArray(fields.event) && fields.event.length > 0 ? fields.event[0] : undefined,
+      deleted_in_cockpit: fields.deleted_in_cockpit || false
     };
   }
 
@@ -445,6 +446,24 @@ export class AirtableService {
       return this.mapVenueRecord(records[0]);
     } catch (error) {
       console.error('Error fetching venue for event from Airtable:', error);
+      throw error;
+    }
+  }
+
+  async updateAttendeeDeletedStatus(attendeeId: string, deleted_in_cockpit: boolean): Promise<void> {
+    try {
+      await this.attendeesTable.update([
+        {
+          id: attendeeId,
+          fields: {
+            deleted_in_cockpit
+          }
+        }
+      ]);
+      
+      console.log(`Updated attendee ${attendeeId} deleted_in_cockpit to ${deleted_in_cockpit}`);
+    } catch (error) {
+      console.error('Error updating attendee deleted status in Airtable:', error);
       throw error;
     }
   }

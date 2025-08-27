@@ -227,9 +227,11 @@ class DatabaseService {
         first_name as "firstName", 
         last_name as "lastName",
         dob,
-        phone
+        phone,
+        deleted_in_cockpit as "deleted_in_cockpit"
       FROM attendees 
       WHERE event_airtable_id = $1
+        AND (deleted_in_cockpit IS NULL OR deleted_in_cockpit = FALSE)
       ORDER BY email ASC
     `;
     

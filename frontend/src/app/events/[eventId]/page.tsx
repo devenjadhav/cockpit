@@ -26,6 +26,7 @@ import {
   SortAsc,
   Download,
   ExternalLink,
+  Trash2,
 } from "lucide-react";
 import { apiClient } from "@/lib/api";
 import { AuthGuard } from "@/components/AuthGuard";
@@ -121,6 +122,7 @@ export default function EventManagePage() {
   const [attendeeSortOrder, setAttendeeSortOrder] = useState<"asc" | "desc">(
     "asc"
   );
+  const [deletingAttendee, setDeletingAttendee] = useState<string | null>(null);
 
   // Quick links (computed based on event data)
   const quickLinks = [
@@ -302,6 +304,29 @@ export default function EventManagePage() {
     }
   };
 
+  const handleDeleteAttendee = async (attendeeId: string) => {
+    if (!window.confirm("Are you sure you want to remove this attendee from the event?")) {
+      return;
+    }
+
+    try {
+      setDeletingAttendee(attendeeId);
+      const response = await apiClient.updateAttendeeDeletedStatus(eventId, attendeeId, true);
+      
+      if (response.success) {
+        // Refresh the event data to reflect the change
+        await fetchEvent();
+      } else {
+        setError(response.message || "Failed to delete attendee");
+      }
+    } catch (err: any) {
+      console.error("Error deleting attendee:", err);
+      setError(err.response?.data?.message || "Failed to delete attendee");
+    } finally {
+      setDeletingAttendee(null);
+    }
+  };
+
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return "Good morning";
@@ -378,6 +403,9 @@ export default function EventManagePage() {
     if (!event?.attendees) return [];
 
     let filtered = event.attendees.filter((attendee) => {
+      // Filter out soft deleted attendees
+      if (attendee.deleted_in_cockpit) return false;
+      
       const name = getAttendeeDisplayName(attendee).toLowerCase();
       const email = attendee.email.toLowerCase();
       const search = attendeeSearch.toLowerCase();
@@ -1439,9 +1467,9 @@ export default function EventManagePage() {
                         Event Attendees
                       </h2>
                       <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                        {filteredAndSortedAttendees().length} of{" "}
-                        {event.attendees.length} attendees
-                        {attendeeSearch && ` matching "${attendeeSearch}"`}
+                        {filteredAndSortedAttendees().length}{" "}
+                        {attendeeSearch ? 'matching' : 'active'} attendees
+                        {attendeeSearch && ` for "${attendeeSearch}"`}
                       </p>
                     </div>
                   </div>
@@ -1480,14 +1508,14 @@ export default function EventManagePage() {
                         : "Download CSV"}
                     </button>
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200">
-                      {event.attendees.length}{" "}
-                      {event.attendees.length === 1 ? "attendee" : "attendees"}
+                      {filteredAndSortedAttendees().length}{" "}
+                      {filteredAndSortedAttendees().length === 1 ? "attendee" : "attendees"}
                     </span>
                   </div>
                 </div>
               </div>
 
-              {event.attendees.length === 0 ? (
+              {filteredAndSortedAttendees().length === 0 && !attendeeSearch ? (
                 <div className="p-12 text-center">
                   <Users className="w-16 h-16 text-gray-400 dark:text-gray-500 mx-auto mb-6" />
                   <h3 className="text-xl font-medium text-gray-900 dark:text-gray-100 mb-2">
@@ -1645,6 +1673,19 @@ export default function EventManagePage() {
                                     <span>{age} years old</span>
                                   </div>
                                 )}
+                                
+                                {/* Delete button */}
+                                <div className="flex justify-end pt-2">
+                                  <button
+                                    onClick={() => handleDeleteAttendee(attendee.id)}
+                                    disabled={deletingAttendee === attendee.id}
+                                    className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 border border-red-200 dark:border-red-800 transition-colors disabled:opacity-50"
+                                    title="Remove attendee from event"
+                                  >
+                                    <Trash2 className="w-3 h-3 mr-1" />
+                                    {deletingAttendee === attendee.id ? "Removing..." : "Remove"}
+                                  </button>
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -1658,17 +1699,17 @@ export default function EventManagePage() {
                     <div className="grid grid-cols-2 gap-6">
                       <div className="text-center">
                         <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                          {event.attendees.length}
+                          {filteredAndSortedAttendees().length}
                         </div>
                         <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                          Total Signups
+                          Active Attendees
                         </div>
                       </div>
                       <div className="text-center">
                         <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
                           {event.maxAttendees
                             ? Math.round(
-                                (event.attendees.length / event.maxAttendees) *
+                                (filteredAndSortedAttendees().length / event.maxAttendees) *
                                   100
                               )
                             : "-"}

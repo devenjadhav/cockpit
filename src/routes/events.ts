@@ -256,6 +256,61 @@ router.get('/:eventId/stats', async (req: AuthenticatedRequest, res) => {
 
 
 
+// PUT /api/events/:eventId/attendees/:attendeeId - soft delete attendee
+router.put('/:eventId/attendees/:attendeeId', async (req: AuthenticatedRequest, res) => {
+  try {
+    if (!req.user?.email) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required',
+      } as ApiResponse);
+    }
+
+    const { eventId, attendeeId } = req.params;
+    const { deleted_in_cockpit } = req.body;
+    
+    // Validate required fields
+    if (typeof deleted_in_cockpit !== 'boolean') {
+      return res.status(400).json({
+        success: false,
+        message: 'deleted_in_cockpit field is required and must be boolean',
+      } as ApiResponse);
+    }
+
+    // Verify event exists and user owns it
+    const event = await airtableService.getEventById(eventId);
+    if (!event) {
+      return res.status(404).json({
+        success: false,
+        message: 'Event not found',
+      } as ApiResponse);
+    }
+
+    // Check if user is an admin or the organizer
+    const isAdmin = await airtableService.isAdmin(req.user.email);
+    if (!isAdmin && event.email !== req.user.email) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. You can only modify attendees for your own events.',
+      } as ApiResponse);
+    }
+
+    // Update the attendee's deleted_in_cockpit field in Airtable
+    await airtableService.updateAttendeeDeletedStatus(attendeeId, deleted_in_cockpit);
+
+    res.json({
+      success: true,
+      message: deleted_in_cockpit ? 'Attendee soft deleted successfully' : 'Attendee restored successfully',
+    } as ApiResponse);
+  } catch (error) {
+    console.error('Update attendee deleted status error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update attendee status',
+    } as ApiResponse);
+  }
+});
+
 // POST /api/events/:eventId/notify - send update to attendees via Loops
 router.post('/:eventId/notify', async (req: AuthenticatedRequest, res) => {
   try {

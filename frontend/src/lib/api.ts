@@ -118,6 +118,13 @@ class ApiClient {
     return response.data;
   }
 
+  async updateAttendeeDeletedStatus(eventId: string, attendeeId: string, deleted_in_cockpit: boolean): Promise<ApiResponse<any>> {
+    const response: AxiosResponse<ApiResponse<any>> = await this.client.put(`/events/${eventId}/attendees/${attendeeId}`, {
+      deleted_in_cockpit
+    });
+    return response.data;
+  }
+
   // Auth helpers
   isAuthenticated(): boolean {
     return !!this.getToken();
