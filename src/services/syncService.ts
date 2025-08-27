@@ -436,7 +436,38 @@ class SyncService {
   }
 
   private async upsertAttendeesBatch(attendees: Attendee[]): Promise<void> {
-    const values = attendees.map(attendee => [
+    // Filter out attendees whose events don't exist in our database
+    const validAttendees: Attendee[] = [];
+    
+    for (const attendee of attendees) {
+      if (!attendee.event) {
+        console.warn(`Skipping attendee ${attendee.id} - no event linked`);
+        continue;
+      }
+      
+      // Check if the referenced event exists
+      try {
+        const eventCheck = await databaseService.query(
+          'SELECT airtable_id FROM events WHERE airtable_id = $1',
+          [attendee.event]
+        );
+        
+        if (eventCheck.rows.length > 0) {
+          validAttendees.push(attendee);
+        } else {
+          console.warn(`Skipping attendee ${attendee.id} - event ${attendee.event} not found`);
+        }
+      } catch (error) {
+        console.warn(`Error checking event for attendee ${attendee.id}:`, error);
+        continue;
+      }
+    }
+
+    if (validAttendees.length === 0) {
+      return;
+    }
+
+    const values = validAttendees.map(attendee => [
       attendee.id, // airtable_id
       this.sanitizeString(attendee.email),
       this.sanitizeString(attendee.preferredName),
