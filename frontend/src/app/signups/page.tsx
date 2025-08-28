@@ -130,6 +130,75 @@ export default function SignupsPage() {
         </button>
       </div>
 
+      {/* Summary Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="text-center">
+            <h3 className="text-sm font-medium text-gray-500">Total Events</h3>
+            <p className="text-3xl font-bold text-blue-600">{allEvents.length}</p>
+          </div>
+        </div>
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="text-center">
+            <h3 className="text-sm font-medium text-gray-500">Total Signups</h3>
+            <p className="text-3xl font-bold text-green-600">
+              {allEvents.reduce((sum, event) => sum + event.signupCount, 0).toLocaleString()}
+            </p>
+          </div>
+        </div>
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="text-center">
+            <h3 className="text-sm font-medium text-gray-500">Total Target Signups</h3>
+            <p className="text-3xl font-bold text-orange-600">
+              {allEvents.reduce((sum, event) => sum + (event.estimatedAttendees * 2), 0).toLocaleString()}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Overall Progress Bar */}
+      <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+        <div className="text-center mb-4">
+          <h2 className="text-xl font-semibold text-gray-900">Overall Signup Progress</h2>
+          <p className="text-sm text-gray-600 mt-1">
+            Progress towards total target signups across all approved events
+          </p>
+        </div>
+        {(() => {
+          const totalSignups = allEvents.reduce((sum, event) => sum + event.signupCount, 0);
+          const totalTargetSignups = allEvents.reduce((sum, event) => sum + (event.estimatedAttendees * 2), 0);
+          const progressPercentage = totalTargetSignups > 0 ? (totalSignups / totalTargetSignups) * 100 : 0;
+          
+          return (
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-2xl font-bold text-green-600">
+                  {totalSignups.toLocaleString()} signups
+                </span>
+                <span className="text-lg font-semibold text-gray-700">
+                  {progressPercentage.toFixed(1)}%
+                </span>
+                <span className="text-2xl font-bold text-orange-600">
+                  {totalTargetSignups.toLocaleString()} target
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-8">
+                <div 
+                  className={`h-8 rounded-full transition-all duration-500 flex items-center justify-center text-white font-semibold ${
+                    progressPercentage >= 100 ? 'bg-red-500' : 
+                    progressPercentage >= 80 ? 'bg-yellow-500' : 
+                    'bg-green-500'
+                  }`}
+                  style={{ width: `${Math.min(progressPercentage, 100)}%` }}
+                >
+                  {progressPercentage >= 15 && `${progressPercentage.toFixed(1)}%`}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+      </div>
+
       <div className="space-y-8">
         {/* Daily Signups Chart */}
         <div className="bg-white rounded-lg shadow-md p-6">
@@ -261,40 +330,7 @@ export default function SignupsPage() {
           )}
         </div>
 
-        {/* Summary Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="text-center">
-              <h3 className="text-sm font-medium text-gray-500">Total Events</h3>
-              <p className="text-3xl font-bold text-blue-600">{allEvents.length}</p>
-            </div>
-          </div>
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="text-center">
-              <h3 className="text-sm font-medium text-gray-500">Filtered Events</h3>
-              <p className="text-3xl font-bold text-indigo-600">{filteredEvents.length}</p>
-            </div>
-          </div>
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="text-center">
-              <h3 className="text-sm font-medium text-gray-500">Total Signups</h3>
-              <p className="text-3xl font-bold text-green-600">
-                {allEvents.reduce((sum, event) => sum + event.signupCount, 0).toLocaleString()}
-              </p>
-            </div>
-          </div>
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="text-center">
-              <h3 className="text-sm font-medium text-gray-500">Avg Signups/Event</h3>
-              <p className="text-3xl font-bold text-purple-600">
-                {allEvents.length > 0 
-                  ? Math.round(allEvents.reduce((sum, event) => sum + event.signupCount, 0) / allEvents.length).toLocaleString()
-                  : 0
-                }
-              </p>
-            </div>
-          </div>
-        </div>
+
       </div>
     </div>
   );
