@@ -42,27 +42,22 @@ router.get('/top-events', async (req, res) => {
         e.event_name as "eventName",
         e.estimated_attendee_count as "estimatedAttendees",
         e.location,
+        e.has_confirmed_venue as "hasConfirmedVenue",
         COUNT(a.airtable_id)::integer as "signupCount"
       FROM events e
       LEFT JOIN attendees a ON e.airtable_id = a.event_airtable_id 
       WHERE e.triage_status = 'approved'
-      GROUP BY e.airtable_id, e.event_name, e.estimated_attendee_count, e.location
+      GROUP BY e.airtable_id, e.event_name, e.estimated_attendee_count, e.location, e.has_confirmed_venue
       ORDER BY "signupCount" DESC
     `;
     
     const eventsResult = await databaseService.query(eventsQuery);
     const events = eventsResult.rows || [];
     
-    // For each event, check venue status using the same logic as individual event pages
-    const enrichedEvents = await Promise.all(events.map(async (event: any) => {
-      const venue = await databaseService.getVenueByEventName(event.eventName);
-      const hasConfirmedVenue = Boolean(venue && venue.venueName);
-      
-      return {
-        ...event,
-        venueName: venue?.venueName || event.location || 'TBD',
-        hasConfirmedVenue
-      };
+    // Use the has_confirmed_venue field from the database directly
+    const enrichedEvents = events.map((event: any) => ({
+      ...event,
+      venueName: event.location || 'TBD'
     }));
     
     res.json({
