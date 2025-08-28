@@ -339,13 +339,15 @@ export default function EventManagePage() {
       const attendees = filteredAndSortedAttendees();
 
       // CSV headers
-      const headers = ["Name", "Email", "Phone", "Age"];
+      const headers = ["Preferred Name", "First Name", "Last Name", "Email", "Phone", "Age"];
 
       // CSV rows
       const rows = attendees.map((attendee) => {
         const age = calculateAge(attendee.dob || "");
         return [
-          `"${getAttendeeDisplayName(attendee)}"`,
+          `"${attendee.preferredName || ""}"`,
+          `"${attendee.firstName || ""}"`,
+          `"${attendee.lastName || ""}"`,
           `"${attendee.email}"`,
           `"${attendee.phone || ""}"`,
           age ? age.toString() : "",
@@ -1607,25 +1609,50 @@ export default function EventManagePage() {
                           >
                             <div className="space-y-3">
                               <div>
-                                <h4
-                                  className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                                  onClick={() =>
-                                    copyText(
-                                      getAttendeeDisplayName(attendee),
-                                      `${attendee.id}-name`
-                                    )
-                                  }
-                                  title="Click to copy name"
-                                >
-                                  {getAttendeeDisplayName(attendee)}
-                                  {copiedField === `${attendee.id}-name` && (
-                                    <span className="ml-2 text-green-600 dark:text-green-400">
-                                      ✓
-                                    </span>
+                                <div className="space-y-1">
+                                  {/* Preferred name (primary display) */}
+                                  <h4
+                                    className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                                    onClick={() =>
+                                      copyText(
+                                        attendee.preferredName || getAttendeeDisplayName(attendee),
+                                        `${attendee.id}-preferred-name`
+                                      )
+                                    }
+                                    title="Click to copy preferred name"
+                                  >
+                                    {attendee.preferredName || getAttendeeDisplayName(attendee)}
+                                    {copiedField === `${attendee.id}-preferred-name` && (
+                                      <span className="ml-2 text-green-600 dark:text-green-400">
+                                        ✓
+                                      </span>
+                                    )}
+                                  </h4>
+                                  
+                                  {/* Legal name (if different from preferred) */}
+                                  {attendee.preferredName && (attendee.firstName || attendee.lastName) && (
+                                    <p
+                                      className="text-xs text-gray-500 dark:text-gray-400 truncate cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                                      onClick={() =>
+                                        copyText(
+                                          `${attendee.firstName || ''} ${attendee.lastName || ''}`.trim(),
+                                          `${attendee.id}-legal-name`
+                                        )
+                                      }
+                                      title="Click to copy legal name"
+                                    >
+                                      Legal: {attendee.firstName} {attendee.lastName}
+                                      {copiedField === `${attendee.id}-legal-name` && (
+                                        <span className="ml-2 text-green-600 dark:text-green-400">
+                                          ✓
+                                        </span>
+                                      )}
+                                    </p>
                                   )}
-                                </h4>
+                                </div>
+                                
                                 <p
-                                  className="text-sm text-gray-600 dark:text-gray-300 truncate mt-1 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                                  className="text-sm text-gray-600 dark:text-gray-300 truncate mt-2 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                                   onClick={() =>
                                     copyText(
                                       attendee.email,

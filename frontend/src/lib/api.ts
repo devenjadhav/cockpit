@@ -125,6 +125,17 @@ class ApiClient {
     return response.data;
   }
 
+  // Signup analytics endpoints (unauthenticated)
+  async getDailySignups(): Promise<ApiResponse<{ date: string; signups: number }[]>> {
+    const response: AxiosResponse<ApiResponse<{ date: string; signups: number }[]>> = await axios.get(`${this.client.defaults.baseURL}/signups/daily`);
+    return response.data;
+  }
+
+  async getTopEvents(): Promise<ApiResponse<any[]>> {
+    const response: AxiosResponse<ApiResponse<any[]>> = await axios.get(`${this.client.defaults.baseURL}/signups/top-events`);
+    return response.data;
+  }
+
   // Auth helpers
   isAuthenticated(): boolean {
     return !!this.getToken();

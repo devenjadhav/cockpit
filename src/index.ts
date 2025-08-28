@@ -9,6 +9,7 @@ import adminRoutes from './routes/admin';
 import adminConsoleRoutes from './routes/adminConsole';
 import securityRoutes from './routes/security';
 import healthRoutes from './routes/health';
+import signupRoutes from './routes/signups';
 import { databaseService } from './services/databaseService';
 import { syncService } from './services/syncService';
 import { slackSyncJobService } from './services/slackSyncJobService';
@@ -87,6 +88,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/admin-console', adminConsoleRoutes);
 app.use('/api/security', securityRoutes);
 app.use('/api/health', healthRoutes);
+app.use('/api/signups', signupRoutes);
 
 // 404 handler for undefined routes
 app.use(notFoundHandler);
