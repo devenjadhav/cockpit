@@ -342,8 +342,6 @@ class SyncService {
         event.lat || null,
         event.long || null,
         this.normalizeTriageStatus(event.triageStatus),
-        event.startDate || null,
-        event.endDate || null,
         event.registrationDeadline || null,
         this.sanitizeString(event.notes),
         this.sanitizeString(event.actionTriggerApprovalEmail),
@@ -355,8 +353,8 @@ class SyncService {
     });
 
     const placeholders = values.map((_, index) => {
-      const offset = index * 33;
-      return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9}, $${offset + 10}, $${offset + 11}, $${offset + 12}, $${offset + 13}, $${offset + 14}, $${offset + 15}, $${offset + 16}, $${offset + 17}, $${offset + 18}, $${offset + 19}, $${offset + 20}, $${offset + 21}, $${offset + 22}, $${offset + 23}, $${offset + 24}, $${offset + 25}, $${offset + 26}, $${offset + 27}, $${offset + 28}, $${offset + 29}, $${offset + 30}, $${offset + 31}, $${offset + 32}, $${offset + 33})`;
+      const offset = index * 31;
+      return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9}, $${offset + 10}, $${offset + 11}, $${offset + 12}, $${offset + 13}, $${offset + 14}, $${offset + 15}, $${offset + 16}, $${offset + 17}, $${offset + 18}, $${offset + 19}, $${offset + 20}, $${offset + 21}, $${offset + 22}, $${offset + 23}, $${offset + 24}, $${offset + 25}, $${offset + 26}, $${offset + 27}, $${offset + 28}, $${offset + 29}, $${offset + 30}, $${offset + 31})`;
     }).join(', ');
 
     const query = `
@@ -364,7 +362,7 @@ class SyncService {
         airtable_id, event_name, poc_first_name, poc_last_name, poc_preferred_name,
         poc_slack_id, poc_dob, email, location, slug, street_address, street_address_2,
         city, state, country, zipcode, event_format, sub_organizers, estimated_attendee_count,
-        project_url, project_description, lat, long, triage_status, start_date, end_date,
+        project_url, project_description, lat, long, triage_status,
         registration_deadline, notes, action_trigger_approval_email, action_trigger_rejection_email,
         action_trigger_hold_email, action_trigger_ask_email, has_confirmed_venue
       ) VALUES ${placeholders}
@@ -392,8 +390,6 @@ class SyncService {
         lat = EXCLUDED.lat,
         long = EXCLUDED.long,
         triage_status = EXCLUDED.triage_status,
-        start_date = EXCLUDED.start_date,
-        end_date = EXCLUDED.end_date,
         registration_deadline = EXCLUDED.registration_deadline,
         notes = EXCLUDED.notes,
         action_trigger_approval_email = EXCLUDED.action_trigger_approval_email,

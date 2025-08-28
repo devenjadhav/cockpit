@@ -224,9 +224,11 @@ export class AirtableService {
       const records = await this.eventsTable
         .select({
           sort: [{ field: 'event_name', direction: 'asc' }],
+
         })
         .all();
 
+      console.log(`Fetched ${records.length} event records from Airtable`);
       const events = records.map(record => this.mapEventRecord(record));
       
       // Cache the results for 2 minutes
