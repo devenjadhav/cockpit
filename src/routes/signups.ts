@@ -36,26 +36,38 @@ router.get('/daily', async (req, res) => {
 // GET /api/signups/top-events - get all events by signup count
 router.get('/top-events', async (req, res) => {
   try {
-    const query = `
+    const eventsQuery = `
       SELECT 
         e.airtable_id as "eventId",
         e.event_name as "eventName",
         e.estimated_attendee_count as "estimatedAttendees",
-        e.location as "venueName",
-        e.has_confirmed_venue as "hasConfirmedVenue",
+        e.location,
         COUNT(a.airtable_id)::integer as "signupCount"
       FROM events e
       LEFT JOIN attendees a ON e.airtable_id = a.event_airtable_id 
       WHERE e.triage_status = 'approved'
-      GROUP BY e.airtable_id, e.event_name, e.estimated_attendee_count, e.location, e.has_confirmed_venue
+      GROUP BY e.airtable_id, e.event_name, e.estimated_attendee_count, e.location
       ORDER BY "signupCount" DESC
     `;
     
-    const result = await databaseService.query(query);
+    const eventsResult = await databaseService.query(eventsQuery);
+    const events = eventsResult.rows || [];
+    
+    // For each event, check venue status using the same logic as individual event pages
+    const enrichedEvents = await Promise.all(events.map(async (event: any) => {
+      const venue = await databaseService.getVenueByEventName(event.eventName);
+      const hasConfirmedVenue = Boolean(venue && venue.venueName);
+      
+      return {
+        ...event,
+        venueName: venue?.venueName || event.location || 'TBD',
+        hasConfirmedVenue
+      };
+    }));
     
     res.json({
       success: true,
-      data: result.rows || [],
+      data: enrichedEvents,
     } as ApiResponse<any[]>);
   } catch (error) {
     console.error('Get top events error:', error);

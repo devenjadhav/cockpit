@@ -350,7 +350,7 @@ class SyncService {
         this.sanitizeString(event.actionTriggerRejectionEmail),
         this.sanitizeString(event.actionTriggerHoldEmail),
         this.sanitizeString(event.actionTriggerAskEmail),
-        false
+        event.hasConfirmedVenue || false
       ];
     });
 

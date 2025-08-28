@@ -41,8 +41,6 @@ interface DailySignupData {
 interface TopEventData {
   eventId: string;
   eventName: string;
-  eventDate: string;
-  organizerEmail: string;
   estimatedAttendees: number;
   signupCount: number;
   venueName: string;
@@ -95,8 +93,7 @@ export default function SignupsPage() {
       setFilteredEvents(allEvents);
     } else {
       const filtered = allEvents.filter(event =>
-        event.eventName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        event.organizerEmail.toLowerCase().includes(searchQuery.toLowerCase())
+        event.eventName.toLowerCase().includes(searchQuery.toLowerCase())
       );
       setFilteredEvents(filtered);
     }
@@ -296,7 +293,7 @@ export default function SignupsPage() {
                         {event.estimatedAttendees?.toLocaleString() || 'N/A'}
                       </td>
                       <td className="px-4 py-3">
-                        {event.venueName && event.hasConfirmedVenue ? (
+                        {event.hasConfirmedVenue ? (
                           <span className="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
                             Venue Confirmed
                           </span>
