@@ -45,6 +45,8 @@ interface TopEventData {
   organizerEmail: string;
   estimatedAttendees: number;
   signupCount: number;
+  venueName: string;
+  hasConfirmedVenue: boolean;
 }
 
 export default function SignupsPage() {
@@ -159,7 +161,7 @@ export default function SignupsPage() {
       {/* Overall Progress Bar */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-8">
         <div className="text-center mb-4">
-          <h2 className="text-xl font-semibold text-gray-900">Overall Signup Progress</h2>
+          <h2 className="text-2xl font-bold text-gray-900">Overall Signup Progress</h2>
           <p className="text-sm text-gray-600 mt-1">
             Progress towards total target signups across all approved events
           </p>
@@ -171,27 +173,27 @@ export default function SignupsPage() {
           
           return (
             <div>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-2xl font-bold text-green-600">
-                  {totalSignups.toLocaleString()} signups
+              <div className="flex justify-between items-center mb-3">
+                <span className="text-3xl font-bold text-green-600">
+                  {totalSignups.toLocaleString()}
                 </span>
-                <span className="text-lg font-semibold text-gray-700">
+                <span className="text-2xl font-bold text-gray-700">
                   {progressPercentage.toFixed(1)}%
                 </span>
-                <span className="text-2xl font-bold text-orange-600">
-                  {totalTargetSignups.toLocaleString()} target
+                <span className="text-3xl font-bold text-orange-600">
+                  {totalTargetSignups.toLocaleString()}
                 </span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-8">
+              <div className="w-full bg-gray-200 rounded-full h-12">
                 <div 
-                  className={`h-8 rounded-full transition-all duration-500 flex items-center justify-center text-white font-semibold ${
+                  className={`h-12 rounded-full transition-all duration-500 flex items-center justify-center text-white font-bold text-lg ${
                     progressPercentage >= 100 ? 'bg-red-500' : 
                     progressPercentage >= 80 ? 'bg-yellow-500' : 
                     'bg-green-500'
                   }`}
                   style={{ width: `${Math.min(progressPercentage, 100)}%` }}
                 >
-                  {progressPercentage >= 15 && `${progressPercentage.toFixed(1)}%`}
+                  {progressPercentage >= 20 && `${progressPercentage.toFixed(1)}%`}
                 </div>
               </div>
             </div>
@@ -253,6 +255,7 @@ export default function SignupsPage() {
                   <th className="px-4 py-3 text-left font-medium text-gray-900">Current Signups</th>
                   <th className="px-4 py-3 text-left font-medium text-gray-900">Target Signups</th>
                   <th className="px-4 py-3 text-left font-medium text-gray-900">Estimated Capacity</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-900">Venue Status</th>
                   <th className="px-4 py-3 text-left font-medium text-gray-900">
                     <CustomTooltip text="Percentage of target signups achieved (Current Signups / Target Signups). You must have twice the signups as your estimated capacity because we only expect 50% attendees to show up! For ex: if you are expecting 50 participants, you should have 100 signups">
                       Signup Rate
@@ -291,6 +294,17 @@ export default function SignupsPage() {
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600">
                         {event.estimatedAttendees?.toLocaleString() || 'N/A'}
+                      </td>
+                      <td className="px-4 py-3">
+                        {event.venueName && event.hasConfirmedVenue ? (
+                          <span className="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                            Venue Confirmed
+                          </span>
+                        ) : (
+                          <span className="px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                            Not Confirmed
+                          </span>
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         {event.estimatedAttendees > 0 ? (
