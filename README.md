@@ -1,4 +1,4 @@
-# Daydream Portal
+# cockpit.hackclub.dev
 
 A hackathon organizer portal built with Express.js, Next.js, and PostgreSQL. This application helps manage hackathon events, track attendees, and provides organizers with a dashboard to monitor their events.
 
