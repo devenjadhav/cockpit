@@ -31,6 +31,7 @@ export class AirtableService {
 
   private mapEventRecord(record: Airtable.Record<EventFields>): Event {
     const fields = record.fields;
+    console.log(`🔍 DEBUG: Mapping event ${fields.event_name} | Airtable has_confirmed_venue: ${fields.has_confirmed_venue} (type: ${typeof fields.has_confirmed_venue})`);
     return {
       id: record.id,
       name: fields.event_name, // Compatibility field

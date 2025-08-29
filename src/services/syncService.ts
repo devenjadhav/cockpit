@@ -74,7 +74,7 @@ class SyncService {
     const errors: string[] = [];
 
     try {
-      console.log('Starting full sync from Airtable to PostgreSQL');
+      console.log('🚀 STARTING FULL SYNC from Airtable to PostgreSQL - Time:', new Date().toISOString());
 
       // Check database connectivity
       if (!databaseService.isInitialized()) {
@@ -86,11 +86,26 @@ class SyncService {
         throw new Error('Database health check failed');
       }
 
-      // Sync events
+      // Sync venues FIRST (before events) to ensure formula dependencies are available
       try {
+        console.log('🏢 SYNCING VENUES FIRST - Time:', new Date().toISOString());
+        const venuesResult = await this.syncVenues();
+        totalRecords += venuesResult.recordsSynced;
+        errors.push(...venuesResult.errors);
+        console.log('✅ VENUES SYNC COMPLETE - Time:', new Date().toISOString());
+      } catch (error) {
+        const errorMsg = `Venues sync failed: ${error instanceof Error ? error.message : 'Unknown error'}`;
+        console.error(errorMsg);
+        errors.push(errorMsg);
+      }
+
+      // Sync events AFTER venues to ensure formula fields have correct data
+      try {
+        console.log('📅 SYNCING EVENTS AFTER VENUES - Time:', new Date().toISOString());
         const eventsResult = await this.syncEvents();
         totalRecords += eventsResult.recordsSynced;
         errors.push(...eventsResult.errors);
+        console.log('✅ EVENTS SYNC COMPLETE - Time:', new Date().toISOString());
       } catch (error) {
         const errorMsg = `Events sync failed: ${error instanceof Error ? error.message : 'Unknown error'}`;
         console.error(errorMsg);
@@ -115,17 +130,6 @@ class SyncService {
         errors.push(...attendeesResult.errors);
       } catch (error) {
         const errorMsg = `Attendees sync failed: ${error instanceof Error ? error.message : 'Unknown error'}`;
-        console.error(errorMsg);
-        errors.push(errorMsg);
-      }
-
-      // Sync venues
-      try {
-        const venuesResult = await this.syncVenues();
-        totalRecords += venuesResult.recordsSynced;
-        errors.push(...venuesResult.errors);
-      } catch (error) {
-        const errorMsg = `Venues sync failed: ${error instanceof Error ? error.message : 'Unknown error'}`;
         console.error(errorMsg);
         errors.push(errorMsg);
       }
@@ -315,6 +319,11 @@ class SyncService {
   }
 
   private async upsertEventsBatch(events: Event[]): Promise<void> {
+    console.log('🔍 DEBUG: Upserting events batch, checking has_confirmed_venue values...');
+    events.forEach((event, index) => {
+      console.log(`Event ${index}: ${event.eventName} | hasConfirmedVenue: ${event.hasConfirmedVenue} (type: ${typeof event.hasConfirmedVenue}) | RAW FIELD: ${JSON.stringify(event)}`);
+    });
+    
     const values = events.map(event => {
       // Map Airtable event to PostgreSQL format
       return [
