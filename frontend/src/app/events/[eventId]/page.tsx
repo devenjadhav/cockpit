@@ -129,8 +129,8 @@ export default function EventManagePage() {
   const quickLinks = [
     {
       id: "4",
-      title: "Week-3 check-in",
-      url: "https://forms.hackclub.com/daydream-check-in-3",
+      title: "Week-4 check in",
+      url: "https://forms.hackclub.com/daydream-check-in-4",
       icon: HelpCircle,
     },
     {
@@ -306,14 +306,22 @@ export default function EventManagePage() {
   };
 
   const handleDeleteAttendee = async (attendeeId: string) => {
-    if (!window.confirm("Are you sure you want to remove this attendee from the event?")) {
+    if (
+      !window.confirm(
+        "Are you sure you want to remove this attendee from the event?"
+      )
+    ) {
       return;
     }
 
     try {
       setDeletingAttendee(attendeeId);
-      const response = await apiClient.updateAttendeeDeletedStatus(eventId, attendeeId, true);
-      
+      const response = await apiClient.updateAttendeeDeletedStatus(
+        eventId,
+        attendeeId,
+        true
+      );
+
       if (response.success) {
         // Refresh the event data to reflect the change
         await fetchEvent();
@@ -340,7 +348,14 @@ export default function EventManagePage() {
       const attendees = filteredAndSortedAttendees();
 
       // CSV headers
-      const headers = ["Preferred Name", "First Name", "Last Name", "Email", "Phone", "Age"];
+      const headers = [
+        "Preferred Name",
+        "First Name",
+        "Last Name",
+        "Email",
+        "Phone",
+        "Age",
+      ];
 
       // CSV rows
       const rows = attendees.map((attendee) => {
@@ -408,7 +423,7 @@ export default function EventManagePage() {
     let filtered = event.attendees.filter((attendee) => {
       // Filter out soft deleted attendees
       if (attendee.deleted_in_cockpit) return false;
-      
+
       const name = getAttendeeDisplayName(attendee).toLowerCase();
       const email = attendee.email.toLowerCase();
       const search = attendeeSearch.toLowerCase();
@@ -1471,7 +1486,7 @@ export default function EventManagePage() {
                       </h2>
                       <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
                         {filteredAndSortedAttendees().length}{" "}
-                        {attendeeSearch ? 'matching' : 'active'} attendees
+                        {attendeeSearch ? "matching" : "active"} attendees
                         {attendeeSearch && ` for "${attendeeSearch}"`}
                       </p>
                     </div>
@@ -1512,7 +1527,9 @@ export default function EventManagePage() {
                     </button>
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200">
                       {filteredAndSortedAttendees().length}{" "}
-                      {filteredAndSortedAttendees().length === 1 ? "attendee" : "attendees"}
+                      {filteredAndSortedAttendees().length === 1
+                        ? "attendee"
+                        : "attendees"}
                     </span>
                   </div>
                 </div>
@@ -1616,42 +1633,51 @@ export default function EventManagePage() {
                                     className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                                     onClick={() =>
                                       copyText(
-                                        attendee.preferredName || getAttendeeDisplayName(attendee),
+                                        attendee.preferredName ||
+                                          getAttendeeDisplayName(attendee),
                                         `${attendee.id}-preferred-name`
                                       )
                                     }
                                     title="Click to copy preferred name"
                                   >
-                                    {attendee.preferredName || getAttendeeDisplayName(attendee)}
-                                    {copiedField === `${attendee.id}-preferred-name` && (
+                                    {attendee.preferredName ||
+                                      getAttendeeDisplayName(attendee)}
+                                    {copiedField ===
+                                      `${attendee.id}-preferred-name` && (
                                       <span className="ml-2 text-green-600 dark:text-green-400">
                                         ✓
                                       </span>
                                     )}
                                   </h4>
-                                  
+
                                   {/* Legal name (if different from preferred) */}
-                                  {attendee.preferredName && (attendee.firstName || attendee.lastName) && (
-                                    <p
-                                      className="text-xs text-gray-500 dark:text-gray-400 truncate cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                                      onClick={() =>
-                                        copyText(
-                                          `${attendee.firstName || ''} ${attendee.lastName || ''}`.trim(),
-                                          `${attendee.id}-legal-name`
-                                        )
-                                      }
-                                      title="Click to copy legal name"
-                                    >
-                                      Legal: {attendee.firstName} {attendee.lastName}
-                                      {copiedField === `${attendee.id}-legal-name` && (
-                                        <span className="ml-2 text-green-600 dark:text-green-400">
-                                          ✓
-                                        </span>
-                                      )}
-                                    </p>
-                                  )}
+                                  {attendee.preferredName &&
+                                    (attendee.firstName ||
+                                      attendee.lastName) && (
+                                      <p
+                                        className="text-xs text-gray-500 dark:text-gray-400 truncate cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                                        onClick={() =>
+                                          copyText(
+                                            `${attendee.firstName || ""} ${
+                                              attendee.lastName || ""
+                                            }`.trim(),
+                                            `${attendee.id}-legal-name`
+                                          )
+                                        }
+                                        title="Click to copy legal name"
+                                      >
+                                        Legal: {attendee.firstName}{" "}
+                                        {attendee.lastName}
+                                        {copiedField ===
+                                          `${attendee.id}-legal-name` && (
+                                          <span className="ml-2 text-green-600 dark:text-green-400">
+                                            ✓
+                                          </span>
+                                        )}
+                                      </p>
+                                    )}
                                 </div>
-                                
+
                                 <p
                                   className="text-sm text-gray-600 dark:text-gray-300 truncate mt-2 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                                   onClick={() =>
@@ -1701,17 +1727,21 @@ export default function EventManagePage() {
                                     <span>{age} years old</span>
                                   </div>
                                 )}
-                                
+
                                 {/* Delete button */}
                                 <div className="flex justify-end pt-2">
                                   <button
-                                    onClick={() => handleDeleteAttendee(attendee.id)}
+                                    onClick={() =>
+                                      handleDeleteAttendee(attendee.id)
+                                    }
                                     disabled={deletingAttendee === attendee.id}
                                     className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 border border-red-200 dark:border-red-800 transition-colors disabled:opacity-50"
                                     title="Remove attendee from event"
                                   >
                                     <Trash2 className="w-3 h-3 mr-1" />
-                                    {deletingAttendee === attendee.id ? "Removing..." : "Remove"}
+                                    {deletingAttendee === attendee.id
+                                      ? "Removing..."
+                                      : "Remove"}
                                   </button>
                                 </div>
                               </div>
@@ -1737,7 +1767,8 @@ export default function EventManagePage() {
                         <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
                           {event.maxAttendees
                             ? Math.round(
-                                (filteredAndSortedAttendees().length / event.maxAttendees) *
+                                (filteredAndSortedAttendees().length /
+                                  event.maxAttendees) *
                                   100
                               )
                             : "-"}
