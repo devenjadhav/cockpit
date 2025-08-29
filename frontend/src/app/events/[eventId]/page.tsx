@@ -82,6 +82,7 @@ interface EventData {
   // Attendees data
   attendees?: Attendee[];
   // Venue data
+  hasConfirmedVenue?: boolean;
   venue?: {
     id: string;
     venueId: string;
@@ -909,7 +910,7 @@ export default function EventManagePage() {
                       Venue Status
                     </p>
                     <div className="space-y-3">
-                      {event.venue && event.venue.venueName ? (
+                      {event.hasConfirmedVenue ? (
                         <span className="px-3 py-1 rounded-full text-sm font-medium bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-200">
                           Venue Confirmed
                         </span>
@@ -919,7 +920,7 @@ export default function EventManagePage() {
                         </div>
                       )}
 
-                      {!(event.venue && event.venue.venueName) && (
+                      {!event.hasConfirmedVenue && (
                         <div className="text-sm text-gray-600 dark:text-gray-300">
                           <p>
                             Have a confirmed venue? Fill out{" "}

@@ -73,9 +73,8 @@ export class DashboardService {
     // Use the country field directly from your data
     const countryCode = this.getCountryCode(event.country);
 
-    // Fetch venue data to calculate venue status (same logic as individual event page)
-    const venue = await databaseService.getVenueByEventAirtableId(event.id);
-    const hasConfirmedVenue = Boolean(venue && venue.venueName);
+    // Use the has_confirmed_venue field directly from the database (synced from Airtable)
+    const hasConfirmedVenue = Boolean(event.hasConfirmedVenue);
 
     console.log(`Event ${event.eventName} eventFormat:`, event.eventFormat);
     
