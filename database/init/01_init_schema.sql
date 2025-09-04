@@ -65,10 +65,48 @@ CREATE TABLE admins (
     synced_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Attendees table (mirrors Airtable attendees)
+CREATE TABLE attendees (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    airtable_id VARCHAR(255) UNIQUE NOT NULL,
+    email VARCHAR(500) NOT NULL,
+    preferred_name VARCHAR(255),
+    first_name VARCHAR(255),
+    last_name VARCHAR(255),
+    dob DATE,
+    phone VARCHAR(50),
+    event_airtable_id VARCHAR(255),
+    deleted_in_cockpit BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    synced_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    FOREIGN KEY (event_airtable_id) REFERENCES events(airtable_id) ON DELETE CASCADE
+);
+
+-- Venues table (mirrors Airtable venues)
+CREATE TABLE venues (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    airtable_id VARCHAR(255) UNIQUE NOT NULL,
+    venue_id VARCHAR(255),
+    event_name VARCHAR(500),
+    venue_name VARCHAR(500),
+    address_1 VARCHAR(500),
+    address_2 VARCHAR(500),
+    city VARCHAR(255),
+    state VARCHAR(255),
+    country VARCHAR(255),
+    zip_code VARCHAR(20),
+    venue_contact_name VARCHAR(255),
+    venue_contact_email VARCHAR(500),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    synced_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Sync metadata table for tracking sync operations
 CREATE TABLE sync_metadata (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    table_name VARCHAR(100) NOT NULL,
+    table_name VARCHAR(100) NOT NULL UNIQUE,
     last_sync_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     last_sync_status VARCHAR(50) DEFAULT 'success',
     records_synced INTEGER DEFAULT 0,
@@ -90,6 +128,16 @@ CREATE INDEX idx_admins_email ON admins(email);
 CREATE INDEX idx_admins_user_status ON admins(user_status);
 CREATE INDEX idx_admins_airtable_id ON admins(airtable_id);
 
+CREATE INDEX idx_attendees_email ON attendees(email);
+CREATE INDEX idx_attendees_event_airtable_id ON attendees(event_airtable_id);
+CREATE INDEX idx_attendees_airtable_id ON attendees(airtable_id);
+CREATE INDEX idx_attendees_synced_at ON attendees(synced_at);
+
+CREATE INDEX idx_venues_event_name ON venues(event_name);
+CREATE INDEX idx_venues_venue_name ON venues(venue_name);
+CREATE INDEX idx_venues_airtable_id ON venues(airtable_id);
+CREATE INDEX idx_venues_synced_at ON venues(synced_at);
+
 CREATE INDEX idx_sync_metadata_table_name ON sync_metadata(table_name);
 CREATE INDEX idx_sync_metadata_last_sync_at ON sync_metadata(last_sync_at);
 
@@ -109,11 +157,20 @@ CREATE TRIGGER update_events_updated_at BEFORE UPDATE ON events
 CREATE TRIGGER update_admins_updated_at BEFORE UPDATE ON admins
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+CREATE TRIGGER update_attendees_updated_at BEFORE UPDATE ON attendees
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_venues_updated_at BEFORE UPDATE ON venues
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 -- Insert initial sync metadata
 INSERT INTO sync_metadata (table_name, last_sync_status, records_synced) 
 VALUES 
     ('events', 'pending', 0),
-    ('admins', 'pending', 0);
+    ('admins', 'pending', 0),
+    ('attendees', 'pending', 0),
+    ('venues', 'pending', 0)
+ON CONFLICT (table_name) DO NOTHING;
 
 -- Create read-only user for admin console queries
 CREATE USER readonly_user WITH PASSWORD 'readonly_secure_pass_change_me';

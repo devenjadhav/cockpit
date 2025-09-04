@@ -22,7 +22,7 @@ interface SyncMetadata {
 
 class SyncService {
   private syncIntervalId: NodeJS.Timeout | null = null;
-  private readonly SYNC_INTERVAL_MS = 30 * 1000; // 30 seconds
+  private readonly SYNC_INTERVAL_MS = 1 * 1000; // 1 second
   private _isRunning = false;
 
   constructor() {
