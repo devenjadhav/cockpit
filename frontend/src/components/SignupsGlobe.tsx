@@ -104,9 +104,13 @@ export default function SignupsGlobe({ events, className = '', totalEvents, tota
       const container = document.getElementById('signups-globe-container');
       if (container) {
         const containerWidth = container.clientWidth;
+        const isMobile = window.innerWidth < 1024; // lg breakpoint
+        
         setDimensions({
           width: containerWidth,
-          height: Math.max(Math.min(containerWidth * 0.7, 800), 600) // Taller aspect ratio, min 600px
+          height: isMobile 
+            ? Math.max(Math.min(containerWidth * 0.8, 500), 300) // Mobile: shorter height, min 300px
+            : Math.max(Math.min(containerWidth * 0.7, 800), 600) // Desktop: min 600px
         });
       }
     };
@@ -122,11 +126,22 @@ export default function SignupsGlobe({ events, className = '', totalEvents, tota
     if (globeRef.current && isClient) {
       const globe = globeRef.current;
       
+      const isMobile = window.innerWidth < 1024;
+      
       globe.controls().autoRotate = true;
-      globe.controls().autoRotateSpeed = 0.4;
+      globe.controls().autoRotateSpeed = isMobile ? 0.2 : 0.4; // Slower on mobile
       globe.controls().enableZoom = true;
-      globe.controls().minDistance = 200;
-      globe.controls().maxDistance = 600;
+      globe.controls().enablePan = true;
+      globe.controls().enableDamping = true;
+      globe.controls().dampingFactor = 0.05;
+      globe.controls().minDistance = isMobile ? 150 : 200;
+      globe.controls().maxDistance = isMobile ? 400 : 600;
+      
+      // Enable touch interactions
+      globe.controls().touches = {
+        ONE: 2, // TOUCH.ROTATE
+        TWO: 1  // TOUCH.DOLLY_PAN
+      };
       
       // Set initial view to show India
       setTimeout(() => {

@@ -186,8 +186,8 @@ export default function SignupsPage() {
           const progressPercentage = totalTargetSignups > 0 ? (totalSignups / totalTargetSignups) * 100 : 0;
           
           return (
-            <div className="mb-8 max-w-md">
-              <div className="flex justify-between items-center mb-2 text-sm">
+            <div className="mb-8 max-w-full lg:max-w-md">
+              <div className="flex justify-between items-center mb-2 text-xs lg:text-sm">
                 <span className="text-white/80">{totalSignups.toLocaleString()} signups</span>
                 <span className="text-white/60">{progressPercentage.toFixed(1)}%</span>
                 <span className="text-white/80">{totalTargetSignups.toLocaleString()} target</span>
@@ -207,30 +207,30 @@ export default function SignupsPage() {
         })()}
 
         {/* Main Content Layout */}
-        <div className="flex gap-8 mb-8">
+        <div className="flex flex-col lg:flex-row gap-8 mb-8">
           {/* Left Stats Panel */}
-          <div className="flex-[2]">
+          <div className="flex-[2] order-2 lg:order-1">
             {/* Key Metrics */}
-            <div className="space-y-8 mb-8">
+            <div className="space-y-6 lg:space-y-8 mb-8">
               {/* Primary Metric - Active Events */}
               <div>
                 <div className="text-white/80 text-base mb-3">Active Events</div>
-                <div className="text-white text-6xl font-bold">{allEvents.length}</div>
+                <div className="text-white text-4xl lg:text-6xl font-bold">{allEvents.length}</div>
               </div>
               
               {/* Secondary Metrics */}
-              <div className="space-y-5">
+              <div className="grid grid-cols-2 gap-4 lg:block lg:space-y-5">
                 <div>
                   <div className="text-white/60 text-sm mb-2">Countries</div>
-                  <div className="text-white text-3xl font-bold">{new Set(allEvents.map(e => e.country)).size}</div>
+                  <div className="text-white text-2xl lg:text-3xl font-bold">{new Set(allEvents.map(e => e.country)).size}</div>
                 </div>
                 <div>
                   <div className="text-white/60 text-sm mb-2">Current Signups</div>
-                  <div className="text-white text-3xl font-bold">{allEvents.reduce((sum, event) => sum + event.signupCount, 0).toLocaleString()}</div>
+                  <div className="text-white text-2xl lg:text-3xl font-bold">{allEvents.reduce((sum, event) => sum + event.signupCount, 0).toLocaleString()}</div>
                 </div>
                 <div>
                   <div className="text-white/60 text-sm mb-2">Total Signup Goal</div>
-                  <div className="text-white text-3xl font-bold">{allEvents.reduce((sum, event) => sum + (event.estimatedAttendees * 2), 0).toLocaleString()}</div>
+                  <div className="text-white text-2xl lg:text-3xl font-bold">{allEvents.reduce((sum, event) => sum + (event.estimatedAttendees * 2), 0).toLocaleString()}</div>
                 </div>
               </div>
             </div>
@@ -238,7 +238,7 @@ export default function SignupsPage() {
             {/* Globe Legend */}
             <div>
               <div className="text-white/60 text-sm mb-2">Map Legend (based on signup rate)</div>
-              <div className="space-y-2">
+              <div className="grid grid-cols-2 gap-2 lg:block lg:space-y-2">
                 <div className="flex items-center space-x-3">
                   <div className="w-4 h-3 bg-red-400 rounded-sm"></div>
                   <span className="text-white text-sm">Very Low (&lt;5%)</span>
@@ -260,7 +260,7 @@ export default function SignupsPage() {
           </div>
           
           {/* Right Globe */}
-          <div className="flex-1">
+          <div className="flex-1 order-1 lg:order-2">
             <SignupsGlobe events={allEvents} className="w-full" />
           </div>
         </div>
@@ -342,7 +342,7 @@ export default function SignupsPage() {
                         {index + 1}
                       </td>
                       <td className="px-4 py-3">
-                        <div className="font-medium text-purple-300">{event.eventName}</div>
+                        <div className="font-medium text-white">{event.eventName}</div>
                       </td>
                       <td className="px-4 py-3">
                         <span className="text-lg font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
