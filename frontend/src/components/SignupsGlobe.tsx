@@ -49,12 +49,7 @@ export default function SignupsGlobe({ events, className = '', totalEvents, tota
 
   // Filter events with valid coordinates
   const validEvents = useMemo(() => {
-    // Debug: Check what event format data we're receiving
-    console.log('Event format data sample:', events.slice(0, 3).map(e => ({
-      name: e.eventName,
-      eventFormat: e.eventFormat,
-      allFields: Object.keys(e)
-    })));
+
     
     return events.filter(event => 
       event.lat && event.lng && 

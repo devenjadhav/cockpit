@@ -24,11 +24,9 @@ router.get('/', dashboardRateLimit, async (req: AuthenticatedRequest, res) => {
 
     // Check if user is an admin
     const isAdmin = await airtableService.isAdmin(req.user.email);
-    console.log(`Dashboard request from ${req.user.email} - isAdmin: ${isAdmin}`);
 
     // Extract filter parameters from query
     const triageStatusFilter = req.query.triageStatus as string;
-    console.log('Dashboard filter - triageStatus:', triageStatusFilter);
 
     const dashboardData = await DashboardService.getDashboardData(req.user.email, isAdmin, {
       triageStatus: triageStatusFilter

@@ -9,10 +9,8 @@ interface AuthenticatedRequest extends Request {
 export const adminAuth = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '');
-    console.log('Admin auth middleware - token present:', !!token);
     
     if (!token) {
-      console.log('Admin auth failed: No token provided');
       return res.status(401).json({ message: 'Access denied. No token provided.' });
     }
 
@@ -22,11 +20,9 @@ export const adminAuth = async (req: AuthenticatedRequest, res: Response, next: 
 
     // Verify the JWT token
     const decoded = jwt.verify(token, process.env.JWT_SECRET) as { email: string };
-    console.log('Admin auth - JWT decoded for email:', decoded.email);
     
     // Check if the user is an admin
     const isAdmin = await airtableService.isAdmin(decoded.email);
-    console.log('Admin auth - isAdmin check result:', isAdmin);
     
     if (!isAdmin) {
       console.log('Admin auth failed: User is not an admin');
@@ -34,7 +30,6 @@ export const adminAuth = async (req: AuthenticatedRequest, res: Response, next: 
     }
 
     req.user = decoded;
-    console.log('Admin auth successful for:', decoded.email);
     next();
   } catch (error) {
     console.error('Admin auth error:', error);

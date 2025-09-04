@@ -99,7 +99,7 @@ class DatabaseService {
       });
 
       this.pool.on('connect', () => {
-        console.log('New database client connected');
+        // Connection established
       });
     }
 
@@ -149,11 +149,7 @@ class DatabaseService {
       const result = await client.query(text, params);
       const duration = Date.now() - start;
       
-      console.log('Query executed', { 
-        duration: `${duration}ms`, 
-        rows: result.rowCount,
-        command: result.command 
-      });
+      // Query executed successfully
       
       return result;
     } catch (error) {
@@ -175,10 +171,7 @@ class DatabaseService {
       const result = await client.query(text, params);
       const duration = Date.now() - start;
       
-      console.log('Read-only query executed', { 
-        duration: `${duration}ms`, 
-        rows: result.rowCount 
-      });
+      // Read-only query executed successfully
       
       return result;
     } catch (error) {
@@ -203,11 +196,11 @@ class DatabaseService {
     try {
       if (this.pool) {
         await this.pool.end();
-        console.log('Main database pool closed');
+        // Main database pool closed
       }
       if (this.readOnlyPool) {
         await this.readOnlyPool.end();
-        console.log('Read-only database pool closed');
+        // Read-only database pool closed
       }
     } catch (error) {
       console.error('Error closing database pools:', error);

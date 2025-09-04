@@ -199,7 +199,6 @@ export default function EventManagePage() {
       setLoading(true);
       const response = await apiClient.getEvent(eventId);
       if (response.success) {
-        console.log("Event data received:", response.data);
         setEvent(response.data);
         setEditForm({
           location: response.data.location || "",
@@ -232,7 +231,6 @@ export default function EventManagePage() {
   const handleSave = async () => {
     try {
       setSaving(true);
-      console.log("Sending update data:", editForm);
       const response = await apiClient.updateEvent(eventId, editForm);
       if (response.success) {
         setEvent(response.data);
@@ -255,7 +253,6 @@ export default function EventManagePage() {
   const handleAdminSave = async () => {
     try {
       setAdminSaving(true);
-      console.log("Sending admin update data:", adminEditForm);
       const response = await apiClient.updateEvent(eventId, adminEditForm);
       if (response.success) {
         setEvent(response.data);

@@ -50,16 +50,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (data: LoginRequest) => {
     try {
-      console.log('Making login request with data:', data);
       const response = await apiClient.requestLogin(data);
-      console.log('Login response:', response);
       return {
         success: response.success,
         message: response.message,
       };
     } catch (error: any) {
       console.error('Login error:', error);
-      console.error('Error response:', error.response);
       return {
         success: false,
         message: error.response?.data?.message || 'Login failed',

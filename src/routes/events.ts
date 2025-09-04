@@ -135,8 +135,6 @@ router.put('/:eventId', async (req: AuthenticatedRequest, res) => {
 
     const { eventId } = req.params;
     const updateData: UpdateEventData = req.body;
-    
-    console.log('Update event request:', { eventId, updateData });
 
     // First, verify the event exists and user owns it
     const existingEvent = await airtableService.getEventById(eventId);

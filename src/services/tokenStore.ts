@@ -34,23 +34,15 @@ export class TokenStore {
   }
 
   verifyToken(email: string, token: string): boolean {
-    console.log('TokenStore: Verifying token for email:', email);
-    console.log('TokenStore: Looking for token:', token.substring(0, 10) + '...');
-    
     const authToken = this.getToken(email);
     
     if (!authToken) {
-      console.log('TokenStore: No token found for email:', email);
-      console.log('TokenStore: Available tokens:', Array.from(this.tokens.keys()));
       return false;
     }
 
-    console.log('TokenStore: Found token:', authToken.token.substring(0, 10) + '...');
     const isValid = authToken.token === token;
-    console.log('TokenStore: Token match:', isValid);
     
     if (isValid) {
-      console.log('TokenStore: Removing token after successful verification');
       this.removeToken(email);
     }
 

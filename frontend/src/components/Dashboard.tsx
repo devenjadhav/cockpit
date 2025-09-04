@@ -249,12 +249,7 @@ export function Dashboard() {
     const eventsWithScores = data.events.map(event => {
       const searchableFields = getSearchableFields(event);
       
-      // Debug: Log searchable fields for events that might match
-      if (query.toLowerCase() === 'deven') {
-        console.log(`Event: ${event.name}`, {
-          searchableFields: searchableFields.map(f => ({ text: f.text, weight: f.weight }))
-        });
-      }
+
       
       let totalScore = 0;
       let maxFieldScore = 0;
@@ -263,11 +258,7 @@ export function Dashboard() {
         const fieldScore = calculateRelevanceScore(field.text, query, field.weight);
         totalScore += fieldScore;
         maxFieldScore = Math.max(maxFieldScore, fieldScore);
-        
-        // Debug: Log individual field scores for "Deven" search
-        if (query.toLowerCase() === 'deven' && fieldScore > 0) {
-          console.log(`  Field "${field.text}" (weight ${field.weight}): score ${fieldScore.toFixed(2)}`);
-        }
+
       }
       
       // Final score combines total relevance with best field match
@@ -301,29 +292,7 @@ export function Dashboard() {
         return nameA.localeCompare(nameB);
       })
       .map(item => item.event);
-    
-    // Debug logging for development
-    if (query && eventsWithScores.length > 0) {
-      console.log('Fuzzy Search Results for:', query);
-      
-      // Show events with any score > 0
-      const eventsWithAnyScore = eventsWithScores.filter(item => item.score > 0);
-      console.log(`Events with score > 0: ${eventsWithAnyScore.length}`);
-      
-      if (eventsWithAnyScore.length > 0) {
-        console.log('Top scoring events:', eventsWithAnyScore
-          .sort((a, b) => b.score - a.score)
-          .slice(0, 10)
-          .map(item => ({
-            name: item.event.name,
-            score: item.score.toFixed(2),
-            included: item.score > 5
-          }))
-        );
-      }
-      
-      console.log(`Total events: ${eventsWithScores.length}, Filtered results: ${filtered.length}`);
-    }
+
     
     return filtered;
   }, [data?.events, searchQuery]);

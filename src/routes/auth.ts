@@ -10,11 +10,9 @@ const router = express.Router();
 // POST /api/auth/request-login
 router.post('/request-login', validateAuthRequest, async (req, res) => {
   try {
-    console.log('Login request received:', req.body);
     const { email, type = 'magic-link' }: LoginRequest = req.body;
 
     if (!email) {
-      console.log('No email provided');
       return res.status(400).json({
         success: false,
         message: 'Email is required',
@@ -24,7 +22,6 @@ router.post('/request-login', validateAuthRequest, async (req, res) => {
     // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      console.log('Invalid email format:', email);
       return res.status(400).json({
         success: false,
         message: 'Please provide a valid email address',
@@ -35,16 +32,11 @@ router.post('/request-login', validateAuthRequest, async (req, res) => {
     const ipAddress = req.ip || req.connection.remoteAddress || req.headers['x-forwarded-for'] as string;
     const userAgent = req.headers['user-agent'];
 
-    console.log('Processing login for:', email, 'from IP:', ipAddress);
     const result = await authService.requestLogin({ email, type }, ipAddress, userAgent);
-    console.log('Login result:', result);
 
     if (!result.success) {
-      console.log('Login failed:', result.message);
       return res.status(400).json(result as ApiResponse);
     }
-
-    console.log('Login successful for:', email);
     res.json(result as ApiResponse);
   } catch (error) {
     console.error('Request login error:', error);
@@ -58,11 +50,9 @@ router.post('/request-login', validateAuthRequest, async (req, res) => {
 // POST /api/auth/verify-token
 router.post('/verify-token', validateAuthRequest, async (req, res) => {
   try {
-    console.log('Token verification request received:', req.body);
     const { email, token }: VerifyTokenRequest = req.body;
 
     if (!email || !token) {
-      console.log('Missing email or token in verification request');
       return res.status(400).json({
         success: false,
         message: 'Email and token are required',
@@ -73,16 +63,11 @@ router.post('/verify-token', validateAuthRequest, async (req, res) => {
     const ipAddress = req.ip || req.connection.remoteAddress || req.headers['x-forwarded-for'] as string;
     const userAgent = req.headers['user-agent'];
 
-    console.log('Verifying token for email:', email, 'from IP:', ipAddress);
     const result = await authService.verifyToken({ email, token }, ipAddress, userAgent);
-    console.log('Verification result:', result);
 
     if (!result.success) {
-      console.log('Token verification failed:', result.message);
       return res.status(400).json(result as ApiResponse);
     }
-
-    console.log('Token verification successful for:', email);
     res.json(result as ApiResponse);
   } catch (error) {
     console.error('Verify token error:', error);

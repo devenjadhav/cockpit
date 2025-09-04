@@ -37,9 +37,6 @@ function formatDaysUntil(days: number): string {
 }
 
 export function EventCard({ event, onManage }: EventCardProps) {
-  console.log('EventCard received event:', event);
-  console.log('EventCard eventFormat:', event?.eventFormat);
-  
   // Ensure we have default values for all required fields
   const safeEvent = {
     id: event?.id || '',

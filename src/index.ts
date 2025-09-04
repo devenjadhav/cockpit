@@ -63,9 +63,7 @@ app.use('/api/', apiSecurityHeaders);
 app.get('/api/test-eventformat', async (req, res) => {
   try {
     const { DashboardService } = await import('./services/dashboardService');
-    console.log('Testing dashboard for dev@hackclub.com');
     const dashboardData = await DashboardService.getDashboardData('dev@hackclub.com');
-    console.log('Dashboard data retrieved:', JSON.stringify(dashboardData, null, 2));
     res.json({
       success: true,
       data: dashboardData,

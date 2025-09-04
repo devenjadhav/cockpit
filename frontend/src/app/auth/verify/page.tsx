@@ -23,8 +23,6 @@ export default function VerifyPage() {
     const token = searchParams.get('token');
     const email = searchParams.get('email');
 
-    console.log('Verification attempt:', { token: token?.substring(0, 10) + '...', email });
-
     if (!token || !email) {
       setStatus('error');
       setMessage('Invalid verification link. Missing token or email.');
@@ -34,10 +32,8 @@ export default function VerifyPage() {
     const verify = async () => {
       try {
         setHasVerified(true);
-        console.log('Starting verification...');
         
         const result = await verifyToken({ email, token });
-        console.log('Verification result:', result);
         
         if (result.success) {
           setStatus('success');
@@ -53,16 +49,13 @@ export default function VerifyPage() {
                 
                 if (events.length === 1) {
                   // Single event - redirect to event page
-                  console.log('Single event found, redirecting to:', `/events/${events[0].id}`);
                   router.push(`/events/${events[0].id}`);
                 } else {
                   // Multiple events or no events - redirect to dashboard
-                  console.log(`${events.length} events found, redirecting to dashboard`);
                   router.push('/dashboard');
                 }
               } else {
                 // Fallback to dashboard if API call fails
-                console.log('Failed to fetch events, redirecting to dashboard');
                 router.push('/dashboard');
               }
             } catch (error) {

@@ -128,7 +128,7 @@ Return ONLY the SQL query, no explanations or markdown formatting.`;
         };
       }
 
-      console.log('Raw Claude response:', generatedCode);
+      // Claude response received
 
       // Clean the SQL query by removing markdown fences
       let cleanedSQL = generatedCode
@@ -137,7 +137,7 @@ Return ONLY the SQL query, no explanations or markdown formatting.`;
         .replace(/\s*```$/i, '')      // Remove closing ```
         .trim();
 
-      console.log('Cleaned SQL:', cleanedSQL);
+      // SQL query cleaned
 
       // Enhanced security validation
       const validationResult = SqlSanitizer.validateAiGeneratedQuery(cleanedSQL, userQuery);
@@ -190,14 +190,14 @@ Return ONLY the SQL query, no explanations or markdown formatting.`;
         };
       }
 
-      console.log('Executing cleaned SQL query:', sqlQuery);
+      // Executing SQL query
 
       // Execute the query using read-only database connection (fallback to main connection if readonly fails)
       let result;
       try {
         result = await databaseService.readOnlyQuery(sqlQuery);
       } catch (readOnlyError: any) {
-        console.log('Read-only connection failed, using main connection:', readOnlyError.message);
+        // Read-only connection failed, using main connection
         result = await databaseService.query(sqlQuery);
       }
       

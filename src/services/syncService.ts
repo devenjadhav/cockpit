@@ -319,12 +319,22 @@ class SyncService {
   }
 
   private async upsertEventsBatch(events: Event[]): Promise<void> {
-    console.log('🔍 DEBUG: Upserting events batch, checking has_confirmed_venue values...');
-    events.forEach((event, index) => {
-      console.log(`Event ${index}: ${event.eventName} | hasConfirmedVenue: ${event.hasConfirmedVenue} (type: ${typeof event.hasConfirmedVenue}) | RAW FIELD: ${JSON.stringify(event)}`);
+    // Filter out events without valid emails (required field)
+    const validEvents = events.filter(event => {
+      const sanitizedEmail = this.sanitizeString(event.email);
+      return sanitizedEmail !== null && sanitizedEmail.length > 0;
     });
     
-    const values = events.map(event => {
+    if (validEvents.length === 0) {
+      console.log('No events with valid emails to sync');
+      return;
+    }
+    
+    if (validEvents.length < events.length) {
+      console.log(`Skipping ${events.length - validEvents.length} events with missing emails`);
+    }
+    
+    const values = validEvents.map(event => {
       // Map Airtable event to PostgreSQL format
       return [
         event.id, // airtable_id

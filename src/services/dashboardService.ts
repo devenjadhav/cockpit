@@ -14,18 +14,16 @@ export class DashboardService {
     if (isAdmin) {
       // Get all events for admin users
       events = await airtableService.getAllEvents();
-      console.log(`Found ${events.length} events for admin ${organizerEmail}`);
+      // Found events for admin
     } else {
       // Get only organizer's events for regular users
       events = await airtableService.getEventsByOrganizer(organizerEmail);
-      console.log(`Found ${events.length} events for ${organizerEmail}:`, events.map(e => ({ name: e.eventName, format: e.eventFormat })));
+      // Found events for organizer
     }
     
     // Apply filters if provided
     if (filters?.triageStatus) {
-      console.log(`Filtering events by triageStatus: ${filters.triageStatus}`);
       events = events.filter(event => event.triageStatus === filters.triageStatus);
-      console.log(`After filtering: ${events.length} events remaining`);
     }
     
     // Create event cards with venue data for proper venue status calculation
@@ -76,7 +74,7 @@ export class DashboardService {
     // Use the has_confirmed_venue field directly from the database (synced from Airtable)
     const hasConfirmedVenue = Boolean(event.hasConfirmedVenue);
 
-    console.log(`Event ${event.eventName} eventFormat:`, event.eventFormat);
+    // Event format determined
     
     const eventCard: EventCardData = {
       id: event.id,

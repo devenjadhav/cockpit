@@ -31,7 +31,6 @@ export class AirtableService {
 
   private mapEventRecord(record: Airtable.Record<EventFields>): Event {
     const fields = record.fields;
-    console.log(`🔍 DEBUG: Mapping event ${fields.event_name} | Airtable has_confirmed_venue: ${fields.has_confirmed_venue} (type: ${typeof fields.has_confirmed_venue})`);
     return {
       id: record.id,
       name: fields.event_name, // Compatibility field
@@ -89,12 +88,10 @@ export class AirtableService {
     const cacheKey = cacheService.getEventsCacheKey(organizerEmail);
     const cachedEvents = cacheService.get<Event[]>(cacheKey);
     if (cachedEvents) {
-      console.log(`Cache hit for events by organizer: ${organizerEmail}`);
       return cachedEvents;
     }
 
     try {
-      console.log(`Cache miss for events by organizer: ${organizerEmail}, fetching from Airtable`);
       const records = await this.eventsTable
         .select({
           filterByFormula: `{email} = "${organizerEmail}"`,
@@ -118,12 +115,10 @@ export class AirtableService {
     const cacheKey = cacheService.getEventCacheKey(eventId);
     const cachedEvent = cacheService.get<Event>(cacheKey);
     if (cachedEvent) {
-      console.log(`Cache hit for event: ${eventId}`);
       return cachedEvent;
     }
 
     try {
-      console.log(`Cache miss for event: ${eventId}, fetching from Airtable`);
       const record = await this.eventsTable.find(eventId);
       const event = this.mapEventRecord(record);
       
@@ -182,24 +177,19 @@ export class AirtableService {
     const cacheKey = cacheService.getOrganizerEmailsCacheKey();
     const cachedEmails = cacheService.get<string[]>(cacheKey);
     if (cachedEmails) {
-      console.log('Cache hit for organizer emails');
       return cachedEmails;
     }
 
     try {
-      console.log('Cache miss for organizer emails, fetching from Airtable...');
       const records = await this.eventsTable
         .select({
           fields: ['email'],
         })
         .all();
 
-      console.log(`Found ${records.length} records`);
       const emails = records
         .map(record => record.fields.email)
         .filter((email, index, self) => email && self.indexOf(email) === index);
-
-      console.log('Unique emails found:', emails);
       
       // Cache the results
       cacheService.cacheOrganizerEmails(emails);
@@ -216,20 +206,16 @@ export class AirtableService {
     const cacheKey = 'all-events';
     const cachedEvents = cacheService.get<Event[]>(cacheKey);
     if (cachedEvents) {
-      console.log('Cache hit for all events');
       return cachedEvents;
     }
 
     try {
-      console.log('Cache miss for all events, fetching from Airtable');
       const records = await this.eventsTable
         .select({
           sort: [{ field: 'event_name', direction: 'asc' }],
 
         })
         .all();
-
-      console.log(`Fetched ${records.length} event records from Airtable`);
       const events = records.map(record => this.mapEventRecord(record));
       
       // Cache the results for 2 minutes
@@ -246,12 +232,10 @@ export class AirtableService {
     const cacheKey = `admin-check:${email}`;
     const cachedResult = cacheService.get<boolean>(cacheKey);
     if (cachedResult !== null) {
-      console.log(`Cache hit for admin check: ${email}`);
       return cachedResult;
     }
 
     try {
-      console.log(`Cache miss for admin check: ${email}, checking Airtable`);
       const records = await this.adminsTable
         .select({
           filterByFormula: `{email} = "${email}"`,
@@ -292,12 +276,9 @@ export class AirtableService {
 
   async getAllAdmins(): Promise<Admin[]> {
     try {
-      console.log('Fetching all admins from Airtable...');
       const records = await this.adminsTable
         .select()
         .all();
-
-      console.log(`Found ${records.length} admin records`);
       const admins = records.map(record => this.mapAdminRecord(record));
       
       return admins;
@@ -418,14 +399,11 @@ export class AirtableService {
 
   async getAllVenues(): Promise<Venue[]> {
     try {
-      console.log('Fetching all venues from Airtable...');
       const records = await this.venuesTable
         .select({
           sort: [{ field: 'event_name', direction: 'asc' }]
         })
         .all();
-
-      console.log(`Found ${records.length} venue records`);
       return records.map(record => this.mapVenueRecord(record));
     } catch (error) {
       console.error('Error fetching venues from Airtable:', error);

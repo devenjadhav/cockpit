@@ -7,7 +7,14 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-echo -e "${BLUE}🚀 Starting Daydream Portal${NC}"
+echo -e "${RED}"
+echo " ______     ______     ______     __  __     ______   __     ______  "
+echo "/\\  ___\\   /\\  __ \\   /\\  ___\\   /\\ \\/ /    /\\  == \\ /\\ \\   /\\__  _\\ "
+echo "\\ \\ \\____  \\ \\ \\/\\ \\  \\ \\ \\____  \\ \\  _\"-.  \\ \\  _-/ \\ \\ \\  \\/_/\\ \\/ "
+echo " \\ \\_____\\  \\ \\_____\\  \\ \\_____\\  \\ \\_\\ \\_\\  \\ \\_\\    \\ \\_\\    \\ \\_\\ "
+echo "  \\/_____/   \\/_____/   \\/_____/   \\/_/\\/_/   \\/_/     \\/_/     \\/_/ "
+echo -e "${NC}"
+echo -e "${BLUE}Welcome to Hack Club Cockpit. The system is now starting up.${NC}"
 echo "============================="
 
 # Check if .env file exists

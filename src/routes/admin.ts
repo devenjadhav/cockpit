@@ -14,9 +14,7 @@ const router = express.Router();
 // Get all events (admin only)
 router.get('/events', adminAuth, async (req, res) => {
   try {
-    console.log('Admin events endpoint called');
     const events = await airtableService.getAllEvents();
-    console.log(`Found ${events.length} events for admin view`);
     
     // Add attendee count data to each event
     const eventsWithAttendeeData = await Promise.all(
@@ -60,8 +58,6 @@ router.get('/events', adminAuth, async (req, res) => {
 // Check admin status
 router.get('/status', adminAuth, async (req: AuthenticatedRequest, res) => {
   try {
-    console.log('Admin status endpoint called for user:', req.user?.email);
-    
     if (!req.user?.email) {
       return res.status(401).json({
         success: false,
@@ -70,7 +66,6 @@ router.get('/status', adminAuth, async (req: AuthenticatedRequest, res) => {
     }
 
     const admin = await airtableService.getAdminByEmail(req.user.email);
-    console.log('Admin data found:', admin);
     
     const response: ApiResponse<{ isAdmin: boolean; admin: any }> = {
       success: true,
