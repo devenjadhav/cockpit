@@ -43,11 +43,16 @@ router.get('/top-events', async (req, res) => {
         e.estimated_attendee_count as "estimatedAttendees",
         e.location,
         e.has_confirmed_venue as "hasConfirmedVenue",
+        e.lat,
+        e.long as lng,
+        e.city,
+        e.country,
+        e.event_format as "eventFormat",
         COUNT(a.airtable_id)::integer as "signupCount"
       FROM events e
       LEFT JOIN attendees a ON e.airtable_id = a.event_airtable_id 
       WHERE e.triage_status = 'approved'
-      GROUP BY e.airtable_id, e.event_name, e.estimated_attendee_count, e.location, e.has_confirmed_venue
+      GROUP BY e.airtable_id, e.event_name, e.estimated_attendee_count, e.location, e.has_confirmed_venue, e.lat, e.long, e.city, e.country, e.event_format
       ORDER BY "signupCount" DESC
     `;
     

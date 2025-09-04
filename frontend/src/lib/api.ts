@@ -136,6 +136,12 @@ class ApiClient {
     return response.data;
   }
 
+  // Globe-specific endpoint - same as top events but optimized for globe display
+  async getEventsWithLocation(): Promise<ApiResponse<any[]>> {
+    const response: AxiosResponse<ApiResponse<any[]>> = await axios.get(`${this.client.defaults.baseURL}/signups/top-events`);
+    return response.data;
+  }
+
   // Auth helpers
   isAuthenticated(): boolean {
     return !!this.getToken();
