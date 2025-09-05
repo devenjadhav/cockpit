@@ -102,6 +102,14 @@ export default function SignupsPage() {
 
   useEffect(() => {
     fetchSignupData();
+    
+    // Set up auto-refresh every 5 seconds
+    const interval = setInterval(() => {
+      fetchSignupData();
+    }, 5000);
+    
+    // Cleanup interval on unmount
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
