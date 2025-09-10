@@ -31,7 +31,7 @@ const tokenUsage: Map<string, { lastUsed: Date; useCount: number; ipHistory: str
 
 export class JwtSecurityManager {
   private static readonly JWT_SECRET = process.env.JWT_SECRET;
-  private static readonly TOKEN_EXPIRY = '1h'; // 1 hour
+  private static readonly TOKEN_EXPIRY = '15d'; // 15 days
   private static readonly REFRESH_TOKEN_EXPIRY = '7d'; // 7 days
   private static readonly ISSUER = 'daydream-portal';
   private static readonly AUDIENCE = 'daydream-users';
@@ -105,7 +105,7 @@ export class JwtSecurityManager {
 
       // Check token age (additional validation)
       const tokenAge = Date.now() - (decoded.iat * 1000);
-      const maxAge = 24 * 60 * 60 * 1000; // 24 hours max
+      const maxAge = 15 * 24 * 60 * 60 * 1000; // 15 days max
       if (tokenAge > maxAge) {
         result.securityViolations.push('Token too old');
         return result;
@@ -240,7 +240,7 @@ export class JwtSecurityManager {
    * Clean up expired token tracking data
    */
   static cleanupExpiredTokens(): number {
-    const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000); // 24 hours
+    const cutoff = new Date(Date.now() - 15 * 24 * 60 * 60 * 1000); // 15 days
     let cleanedCount = 0;
     
     for (const [jti, usage] of tokenUsage.entries()) {
