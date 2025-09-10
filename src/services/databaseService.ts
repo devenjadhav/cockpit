@@ -221,7 +221,8 @@ class DatabaseService {
         last_name as "lastName",
         dob,
         phone,
-        deleted_in_cockpit as "deleted_in_cockpit"
+        deleted_in_cockpit as "deleted_in_cockpit",
+        event_volunteer as "event_volunteer"
       FROM attendees 
       WHERE event_airtable_id = $1
         AND (deleted_in_cockpit IS NULL OR deleted_in_cockpit = FALSE)

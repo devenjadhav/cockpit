@@ -352,6 +352,7 @@ export default function EventManagePage() {
         "Email",
         "Phone",
         "Age",
+        "Volunteer",
       ];
 
       // CSV rows
@@ -364,6 +365,7 @@ export default function EventManagePage() {
           `"${attendee.email}"`,
           `"${attendee.phone || ""}"`,
           age ? age.toString() : "",
+          attendee.event_volunteer ? "Yes" : "No",
         ].join(",");
       });
 
@@ -1620,32 +1622,43 @@ export default function EventManagePage() {
                         return (
                           <div
                             key={attendee.id}
-                            className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600 hover:shadow-md hover:border-blue-300 dark:hover:border-blue-500 transition-all duration-200"
+                            className={`${
+                              attendee.event_volunteer === true
+                                ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
+                                : "bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600"
+                            } rounded-lg p-4 border hover:shadow-md hover:border-blue-300 dark:hover:border-blue-500 transition-all duration-200`}
                           >
                             <div className="space-y-3">
                               <div>
                                 <div className="space-y-1">
                                   {/* Preferred name (primary display) */}
-                                  <h4
-                                    className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                                    onClick={() =>
-                                      copyText(
-                                        attendee.preferredName ||
-                                          getAttendeeDisplayName(attendee),
-                                        `${attendee.id}-preferred-name`
-                                      )
-                                    }
-                                    title="Click to copy preferred name"
-                                  >
-                                    {attendee.preferredName ||
-                                      getAttendeeDisplayName(attendee)}
-                                    {copiedField ===
-                                      `${attendee.id}-preferred-name` && (
-                                      <span className="ml-2 text-green-600 dark:text-green-400">
-                                        ✓
+                                  <div className="flex items-center gap-2">
+                                    <h4
+                                      className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex-1"
+                                      onClick={() =>
+                                        copyText(
+                                          attendee.preferredName ||
+                                            getAttendeeDisplayName(attendee),
+                                          `${attendee.id}-preferred-name`
+                                        )
+                                      }
+                                      title="Click to copy preferred name"
+                                    >
+                                      {attendee.preferredName ||
+                                        getAttendeeDisplayName(attendee)}
+                                      {copiedField ===
+                                        `${attendee.id}-preferred-name` && (
+                                        <span className="ml-2 text-green-600 dark:text-green-400">
+                                          ✓
+                                        </span>
+                                      )}
+                                    </h4>
+                                    {attendee.event_volunteer === true && (
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-100 border border-green-200 dark:border-green-700">
+                                        Volunteer
                                       </span>
                                     )}
-                                  </h4>
+                                  </div>
 
                                   {/* Legal name (if different from preferred) */}
                                   {attendee.preferredName &&

@@ -87,4 +87,5 @@ export interface Attendee {
   dob?: string;
   phone?: string;
   deleted_in_cockpit?: boolean; // Soft delete flag
+  event_volunteer?: boolean; // Volunteer flag
 }
