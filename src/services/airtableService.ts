@@ -344,7 +344,8 @@ export class AirtableService {
       dob: fields.dob ? new Date(fields.dob) : undefined,
       phone: fields.phone,
       event: Array.isArray(fields.event) && fields.event.length > 0 ? fields.event[0] : undefined,
-      deleted_in_cockpit: fields.deleted_in_cockpit || false
+      deleted_in_cockpit: fields.deleted_in_cockpit || false,
+      event_volunteer: fields.event_volunteer || false
     };
   }
 

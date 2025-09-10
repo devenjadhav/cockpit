@@ -8,6 +8,7 @@ export interface Attendee {
   phone?: string;
   event?: string; // Airtable ID of the linked event
   deleted_in_cockpit?: boolean; // Soft delete flag
+  event_volunteer?: boolean; // Whether the attendee is a volunteer
 }
 
 export interface AttendeeFields {
@@ -19,5 +20,6 @@ export interface AttendeeFields {
   phone?: string;
   event?: string[];
   deleted_in_cockpit?: boolean; // Soft delete flag
+  event_volunteer?: boolean; // Whether the attendee is a volunteer
   [key: string]: any; // Index signature for Airtable FieldSet
 }

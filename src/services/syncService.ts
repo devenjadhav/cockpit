@@ -491,16 +491,17 @@ class SyncService {
       attendee.dob || null,
       this.sanitizeString(attendee.phone),
       this.sanitizeString(attendee.event),
-      attendee.deleted_in_cockpit || false
+      attendee.deleted_in_cockpit || false,
+      attendee.event_volunteer || false
     ]);
 
     const placeholders = values.map((_, index) => {
-      const offset = index * 9;
-      return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9})`;
+      const offset = index * 10;
+      return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9}, $${offset + 10})`;
     }).join(', ');
 
     const query = `
-      INSERT INTO attendees (airtable_id, email, preferred_name, first_name, last_name, dob, phone, event_airtable_id, deleted_in_cockpit)
+      INSERT INTO attendees (airtable_id, email, preferred_name, first_name, last_name, dob, phone, event_airtable_id, deleted_in_cockpit, event_volunteer)
       VALUES ${placeholders}
       ON CONFLICT (airtable_id) DO UPDATE SET
         email = EXCLUDED.email,
@@ -511,6 +512,7 @@ class SyncService {
         phone = EXCLUDED.phone,
         event_airtable_id = EXCLUDED.event_airtable_id,
         deleted_in_cockpit = EXCLUDED.deleted_in_cockpit,
+        event_volunteer = EXCLUDED.event_volunteer,
         synced_at = NOW()
     `;
 
