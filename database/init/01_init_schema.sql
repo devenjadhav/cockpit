@@ -6,7 +6,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pg_stat_statements";
 
 -- Create enum types
-CREATE TYPE event_format_type AS ENUM ('12-hours', '24-hours');
+CREATE TYPE event_format_type AS ENUM ('12-hours', '24-hours', '2-day');
 CREATE TYPE triage_status_type AS ENUM ('approved', 'rejected', 'hold', 'ask', 'pending', 'denied', 'merge_confirmed');
 CREATE TYPE user_status_type AS ENUM ('active', 'admin', 'inactive');
 

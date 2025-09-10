@@ -1,3 +1,5 @@
+export type EventFormat = '12-hours' | '24-hours' | '2-day';
+
 export interface Event {
   id: string;
   name: string;  // Added for compatibility
@@ -12,7 +14,7 @@ export interface Event {
   state?: string;
   country: string;
   zipcode?: string;
-  eventFormat: string;
+  eventFormat: EventFormat;
   subOrganizers?: string;
   email: string; // organizer email
   pocPreferredName?: string;
@@ -59,7 +61,7 @@ export interface EventFields {
   state?: string;
   country: string;
   zipcode?: string;
-  event_format: string;
+  event_format: EventFormat;
   sub_organizers?: string;
   email: string;
   poc_preferred_name?: string;
@@ -97,7 +99,7 @@ export interface UpdateEventData {
   state?: string;
   country?: string;
   zipcode?: string;
-  eventFormat?: string;
+  eventFormat?: EventFormat;
   estimatedAttendeeCount?: number;
   projectUrl?: string;
   projectDescription?: string;

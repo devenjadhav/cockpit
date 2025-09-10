@@ -362,7 +362,7 @@ Return ONLY the SQL query, no explanations or markdown formatting.`;
 - has_confirmed_venue (BOOLEAN): Whether venue booking is finalized
 
 ### Event Details & Timing:
-- event_format (ENUM): Duration - '12-hours' or '24-hours'
+- event_format (ENUM): Duration - '12-hours', '24-hours', or '2-day'
 - start_date, end_date (DATE): Event start and end dates
 - registration_deadline (DATE): When registration closes
 - estimated_attendee_count (INTEGER): Expected number of participants

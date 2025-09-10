@@ -56,7 +56,7 @@ Your table should have these fields (which match your CSV):
 | email | Email | ✅ | Organizer email (THIS IS KEY!) |
 | city | Single line text | ✅ | Event city |
 | country | Single line text | ✅ | Event country |
-| event_format | Single line text | ❌ | Format (e.g., "24-hours") |
+| event_format | Single line text | ❌ | Format (e.g., "12-hours", "24-hours", "2-day") |
 | estimated_attendee_count | Number | ❌ | Expected attendees |
 | triage_status | Single line text | ✅ | Status (e.g., "Approved") |
 | project_url | URL | ❌ | Organizer's project URL |

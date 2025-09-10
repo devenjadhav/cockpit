@@ -121,7 +121,7 @@ class DatabaseMigrator {
     const enums = [
       {
         name: 'event_format_type',
-        values: ['12-hours', '24-hours']
+        values: ['12-hours', '24-hours', '2-day']
       },
       {
         name: 'triage_status_type',

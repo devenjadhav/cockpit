@@ -10,7 +10,7 @@ CREATE EXTENSION IF NOT EXISTS "pg_stat_statements";
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'event_format_type') THEN
-        CREATE TYPE event_format_type AS ENUM ('12-hours', '24-hours');
+        CREATE TYPE event_format_type AS ENUM ('12-hours', '24-hours', '2-day');
     END IF;
 END$$;
 

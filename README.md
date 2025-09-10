@@ -92,7 +92,7 @@ Create a table named **"daydream-events"** with the following fields:
 | email | Email | Yes | Organizer email (used for auth) |
 | city | Single line text | Yes | Event city |
 | country | Single line text | Yes | Event country |
-| event_format | Single line text | No | Format (e.g., "24-hours") |
+| event_format | Single line text | No | Format (e.g., "12-hours", "24-hours", "2-day") |
 | estimated_attendee_count | Number | No | Expected attendees |
 | triage_status | Single line text | Yes | Status (e.g., "Approved") |
 | project_url | URL | No | Organizer's project URL |

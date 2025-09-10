@@ -720,6 +720,7 @@ export default function AdminPage() {
                   <option value="">All Formats</option>
                   <option value="12-hours">12 Hours</option>
                   <option value="24-hours">24 Hours</option>
+                  <option value="2-day">2 Days</option>
                 </select>
               </div>
             </div>

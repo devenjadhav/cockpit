@@ -15,7 +15,7 @@ interface EventData {
   lng: number;
   city: string;
   country: string;
-  eventFormat?: string; // '12-hours' or '24-hours'
+  eventFormat?: string; // '12-hours', '24-hours', or '2-day'
 }
 
 interface DensityPoint {
