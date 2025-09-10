@@ -123,6 +123,7 @@ export default function EventManagePage() {
   const [attendeeSortOrder, setAttendeeSortOrder] = useState<"asc" | "desc">(
     "asc"
   );
+  const [volunteerFilter, setVolunteerFilter] = useState<"all" | "volunteers" | "non-volunteers">("all");
   const [deletingAttendee, setDeletingAttendee] = useState<string | null>(null);
 
   // Quick links (computed based on event data)
@@ -422,6 +423,10 @@ export default function EventManagePage() {
     let filtered = event.attendees.filter((attendee) => {
       // Filter out soft deleted attendees
       if (attendee.deleted_in_cockpit) return false;
+
+      // Filter by volunteer status
+      if (volunteerFilter === "volunteers" && !attendee.event_volunteer) return false;
+      if (volunteerFilter === "non-volunteers" && attendee.event_volunteer) return false;
 
       const name = getAttendeeDisplayName(attendee).toLowerCase();
       const email = attendee.email.toLowerCase();
@@ -1655,8 +1660,25 @@ export default function EventManagePage() {
                     </div>
 
                     <div className="flex items-center space-x-3">
-                      <div className="flex items-center space-x-2">
-                        <SortAsc className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                    <div className="flex items-center space-x-2">
+                    <Filter className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                         <select
+                           value={volunteerFilter}
+                           onChange={(e) =>
+                             setVolunteerFilter(
+                               e.target.value as "all" | "volunteers" | "non-volunteers"
+                             )
+                           }
+                           className="text-sm border border-gray-300 dark:border-gray-600 rounded px-3 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400"
+                         >
+                           <option value="all">All Attendees</option>
+                           <option value="volunteers">Volunteers</option>
+                           <option value="non-volunteers">Attendees</option>
+                         </select>
+                       </div>
+
+                       <div className="flex items-center space-x-2">
+                         <SortAsc className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                         <select
                           value={attendeeSortBy}
                           onChange={(e) =>
