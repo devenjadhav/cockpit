@@ -84,7 +84,7 @@ export interface Attendee {
   preferredName?: string;
   firstName?: string;
   lastName?: string;
-  dob?: string;
+  age?: number; // Age calculated on backend, DOB is never exposed
   phone?: string;
   deleted_in_cockpit?: boolean; // Soft delete flag
   event_volunteer?: boolean; // Volunteer flag

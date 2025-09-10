@@ -230,7 +230,29 @@ class DatabaseService {
     `;
     
     const result = await this.query(query, [eventAirtableId]);
-    return result.rows;
+    
+    // Convert to safe attendees by calculating age instead of exposing DOB
+    return result.rows.map((row: any) => {
+      const { dob, ...safeData } = row;
+      
+      // Calculate age if DOB exists
+      let age = null;
+      if (dob) {
+        const birthDate = new Date(dob);
+        const today = new Date();
+        age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+        
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+          age = age - 1;
+        }
+      }
+      
+      return {
+        ...safeData,
+        age
+      };
+    });
   }
 
   async getVenueByEventAirtableId(eventAirtableId: string) {

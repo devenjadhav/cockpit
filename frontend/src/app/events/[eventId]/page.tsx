@@ -34,7 +34,7 @@ import { CountryFlag } from "@/components/ui/CountryFlag";
 import { CapacityIndicator } from "@/components/ui/CapacityIndicator";
 import { RichTextEditor } from "@/components/ui/RichTextEditor";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
+
 import { Attendee } from "@/types/api";
 
 interface EventData {
@@ -358,14 +358,13 @@ export default function EventManagePage() {
 
       // CSV rows
       const rows = attendees.map((attendee) => {
-        const age = calculateAge(attendee.dob || "");
         return [
           `"${attendee.preferredName || ""}"`,
           `"${attendee.firstName || ""}"`,
           `"${attendee.lastName || ""}"`,
           `"${attendee.email}"`,
           `"${attendee.phone || ""}"`,
-          age ? age.toString() : "",
+          attendee.age ? attendee.age.toString() : "",
           attendee.event_volunteer ? "Yes" : "No",
         ].join(",");
       });
@@ -395,21 +394,7 @@ export default function EventManagePage() {
     }
   };
 
-  const calculateAge = (dob: string): number | null => {
-    if (!dob) return null;
-    const birthDate = new Date(dob);
-    const today = new Date();
-    const age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
 
-    if (
-      monthDiff < 0 ||
-      (monthDiff === 0 && today.getDate() < birthDate.getDate())
-    ) {
-      return age - 1;
-    }
-    return age;
-  };
 
   const getAttendeeDisplayName = (attendee: Attendee): string => {
     return attendee.preferredName || (attendee.firstName && attendee.lastName)
@@ -449,8 +434,8 @@ export default function EventManagePage() {
           bValue = b.email;
           break;
         case "age":
-          aValue = calculateAge(a.dob || "") || 0;
-          bValue = calculateAge(b.dob || "") || 0;
+          aValue = a.age || 0;
+          bValue = b.age || 0;
           break;
         default:
           return 0;
@@ -1732,7 +1717,6 @@ export default function EventManagePage() {
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                       {filteredAndSortedAttendees().map((attendee) => {
-                        const age = calculateAge(attendee.dob || "");
                         return (
                           <div
                             key={attendee.id}
@@ -1845,11 +1829,11 @@ export default function EventManagePage() {
                                     </span>
                                   </div>
                                 )}
-                                {age && (
-                                  <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
-                                    <Calendar className="w-3 h-3 mr-1.5" />
-                                    <span>{age} years old</span>
-                                  </div>
+                                {attendee.age && (
+                                <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                                <Calendar className="w-3 h-3 mr-1.5" />
+                                <span>{attendee.age} years old</span>
+                                </div>
                                 )}
 
                                 {/* Delete button */}
