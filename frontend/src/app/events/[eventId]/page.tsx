@@ -129,8 +129,8 @@ export default function EventManagePage() {
   const quickLinks = [
     {
       id: "4",
-      title: "Week-4 check in",
-      url: "https://forms.hackclub.com/daydream-check-in-4",
+      title: "Week-5 check in",
+      url: "https://forms.hackclub.com/daydream-check-in-5",
       icon: HelpCircle,
     },
     {
@@ -1470,6 +1470,98 @@ export default function EventManagePage() {
               </div>
             </div>
           )}
+
+          {/* Volunteer Signup Section */}
+          <div className="mt-8 bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden border border-gray-200 dark:border-gray-700">
+            <div className="bg-purple-50 dark:bg-purple-900/20 px-6 py-4 border-b border-purple-200 dark:border-purple-800/30">
+              <div className="flex items-center">
+                <Users className="w-6 h-6 text-purple-600 dark:text-purple-400 mr-3" />
+                <div>
+                  <h2 className="text-xl font-semibold text-purple-900 dark:text-purple-100">
+                    Volunteer Signup
+                  </h2>
+                  <p className="text-sm text-purple-700 dark:text-purple-300 mt-1">
+                    Get your volunteers signed up for the event
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6">
+              <div className="prose dark:prose-invert max-w-none">
+                <p className="text-gray-700 dark:text-gray-300 mb-4">
+                  Please use this form to get your volunteers to sign up for the
+                  event. This is important so we can keep accurate count for
+                  food and swag!
+                </p>
+
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Form link:
+                      </label>
+                      <div className="flex items-center space-x-2">
+                        <code
+                          className="flex-1 text-sm bg-white dark:bg-gray-800 px-3 py-2 rounded border border-gray-300 dark:border-gray-600 text-blue-600 dark:text-blue-400 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                          onClick={() =>
+                            copyText(
+                              "https://forms.hackclub.com/t/kwmV49QpGTus",
+                              "volunteer-form-link"
+                            )
+                          }
+                          title="Click to copy form link"
+                        >
+                          https://forms.hackclub.com/t/kwmV49QpGTus
+                          {copiedField === "volunteer-form-link" && (
+                            <span className="ml-2 text-green-600 dark:text-green-400">
+                              ✓
+                            </span>
+                          )}
+                        </code>
+                        <button
+                          onClick={() =>
+                            window.open(
+                              "https://forms.hackclub.com/t/kwmV49QpGTus",
+                              "_blank"
+                            )
+                          }
+                          className="inline-flex items-center px-3 py-2 text-sm font-medium text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/40 hover:bg-blue-200 dark:hover:bg-blue-800/60 border border-blue-300 dark:border-blue-700 rounded transition-colors"
+                          title="Open form in new tab"
+                        >
+                          <ExternalLink className="w-4 h-4 mr-1" />
+                          Open
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Password:
+                      </label>
+                      <code
+                        className="inline-block text-sm bg-white dark:bg-gray-800 px-3 py-2 rounded border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                        onClick={() =>
+                          copyText("bright-denim-snake", "volunteer-password")
+                        }
+                        title="Click to copy password"
+                      >
+                        bright-denim-snake
+                        {copiedField === "volunteer-password" && (
+                          <span className="ml-2 text-green-600 dark:text-green-400">
+                            ✓
+                          </span>
+                        )}
+                      </code>
+                        <p className="text-xs text-red-600 dark:text-red-400 mt-2 flex items-center">
+                         ⚠️ This password is top secret and must NOT be shared on Slack
+                       </p>
+                     </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
 
           {/* Attendees Section */}
           {event.attendees && (
