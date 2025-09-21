@@ -88,4 +88,10 @@ export interface Attendee {
   phone?: string;
   deleted_in_cockpit?: boolean; // Soft delete flag
   event_volunteer?: boolean; // Volunteer flag
+  shirt_size?: string;
+  additional_accommodations?: string;
+  dietary_restrictions?: string;
+  emergency_contact_1_phone?: string;
+  emergency_contact_1_name?: string;
+  checkin_completed?: boolean;
 }

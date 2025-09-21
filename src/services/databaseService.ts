@@ -222,7 +222,13 @@ class DatabaseService {
         dob,
         phone,
         deleted_in_cockpit as "deleted_in_cockpit",
-        event_volunteer as "event_volunteer"
+        event_volunteer as "event_volunteer",
+        shirt_size,
+        additional_accommodations,
+        dietary_restrictions,
+        emergency_contact_1_phone,
+        emergency_contact_1_name,
+        checkin_completed
       FROM attendees 
       WHERE event_airtable_id = $1
         AND (deleted_in_cockpit IS NULL OR deleted_in_cockpit = FALSE)

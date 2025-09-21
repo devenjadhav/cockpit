@@ -492,16 +492,22 @@ class SyncService {
       this.sanitizeString(attendee.phone),
       this.sanitizeString(attendee.event),
       attendee.deleted_in_cockpit || false,
-      attendee.event_volunteer || false
+      attendee.event_volunteer || false,
+      this.sanitizeString(attendee.shirt_size),
+      this.sanitizeString(attendee.additional_accommodations),
+      this.sanitizeString(attendee.dietary_restrictions),
+      this.sanitizeString(attendee.emergency_contact_1_phone),
+      this.sanitizeString(attendee.emergency_contact_1_name),
+      attendee.checkin_completed || false
     ]);
 
     const placeholders = values.map((_, index) => {
-      const offset = index * 10;
-      return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9}, $${offset + 10})`;
+      const offset = index * 16;
+      return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9}, $${offset + 10}, $${offset + 11}, $${offset + 12}, $${offset + 13}, $${offset + 14}, $${offset + 15}, $${offset + 16})`;
     }).join(', ');
 
     const query = `
-      INSERT INTO attendees (airtable_id, email, preferred_name, first_name, last_name, dob, phone, event_airtable_id, deleted_in_cockpit, event_volunteer)
+      INSERT INTO attendees (airtable_id, email, preferred_name, first_name, last_name, dob, phone, event_airtable_id, deleted_in_cockpit, event_volunteer, shirt_size, additional_accommodations, dietary_restrictions, emergency_contact_1_phone, emergency_contact_1_name, checkin_completed)
       VALUES ${placeholders}
       ON CONFLICT (airtable_id) DO UPDATE SET
         email = EXCLUDED.email,
@@ -513,6 +519,12 @@ class SyncService {
         event_airtable_id = EXCLUDED.event_airtable_id,
         deleted_in_cockpit = EXCLUDED.deleted_in_cockpit,
         event_volunteer = EXCLUDED.event_volunteer,
+        shirt_size = EXCLUDED.shirt_size,
+        additional_accommodations = EXCLUDED.additional_accommodations,
+        dietary_restrictions = EXCLUDED.dietary_restrictions,
+        emergency_contact_1_phone = EXCLUDED.emergency_contact_1_phone,
+        emergency_contact_1_name = EXCLUDED.emergency_contact_1_name,
+        checkin_completed = EXCLUDED.checkin_completed,
         synced_at = NOW()
     `;
 

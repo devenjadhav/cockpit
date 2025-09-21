@@ -27,6 +27,10 @@ import {
   Download,
   ExternalLink,
   Trash2,
+  Shirt,
+  Utensils,
+  Accessibility,
+  AlertTriangle,
 } from "lucide-react";
 import { apiClient } from "@/lib/api";
 import { AuthGuard } from "@/components/AuthGuard";
@@ -123,7 +127,9 @@ export default function EventManagePage() {
   const [attendeeSortOrder, setAttendeeSortOrder] = useState<"asc" | "desc">(
     "asc"
   );
-  const [volunteerFilter, setVolunteerFilter] = useState<"all" | "volunteers" | "non-volunteers">("all");
+  const [volunteerFilter, setVolunteerFilter] = useState<
+    "all" | "volunteers" | "non-volunteers" | "checked-in"
+  >("all");
   const [deletingAttendee, setDeletingAttendee] = useState<string | null>(null);
 
   // Quick links (computed based on event data)
@@ -354,6 +360,12 @@ export default function EventManagePage() {
         "Phone",
         "Age",
         "Volunteer",
+        "Shirt Size",
+        "Dietary Restrictions",
+        "Additional Accommodations",
+        "Emergency Contact Name",
+        "Emergency Contact Phone",
+        "Checked In",
       ];
 
       // CSV rows
@@ -366,6 +378,12 @@ export default function EventManagePage() {
           `"${attendee.phone || ""}"`,
           attendee.age ? attendee.age.toString() : "",
           attendee.event_volunteer ? "Yes" : "No",
+          `"${attendee.shirt_size || ""}"`,
+          `"${attendee.dietary_restrictions || ""}"`,
+          `"${attendee.additional_accommodations || ""}"`,
+          `"${attendee.emergency_contact_1_name || ""}"`,
+          `"${attendee.emergency_contact_1_phone || ""}"`,
+          attendee.checkin_completed ? "Yes" : "No",
         ].join(",");
       });
 
@@ -394,8 +412,6 @@ export default function EventManagePage() {
     }
   };
 
-
-
   const getAttendeeDisplayName = (attendee: Attendee): string => {
     return attendee.preferredName || (attendee.firstName && attendee.lastName)
       ? `${attendee.firstName} ${attendee.lastName}`
@@ -410,8 +426,14 @@ export default function EventManagePage() {
       if (attendee.deleted_in_cockpit) return false;
 
       // Filter by volunteer status
-      if (volunteerFilter === "volunteers" && !attendee.event_volunteer) return false;
-      if (volunteerFilter === "non-volunteers" && attendee.event_volunteer) return false;
+      if (volunteerFilter === "volunteers" && !attendee.event_volunteer)
+        return false;
+      if (volunteerFilter === "non-volunteers" && attendee.event_volunteer)
+        return false;
+
+      // Filter by check-in status
+      if (volunteerFilter === "checked-in" && !attendee.checkin_completed)
+        return false;
 
       const name = getAttendeeDisplayName(attendee).toLowerCase();
       const email = attendee.email.toLowerCase();
@@ -421,6 +443,15 @@ export default function EventManagePage() {
     });
 
     return filtered.sort((a, b) => {
+      // Primary sort: checked-in attendees first
+      const aCheckedIn = a.checkin_completed || false;
+      const bCheckedIn = b.checkin_completed || false;
+
+      if (aCheckedIn !== bCheckedIn) {
+        return bCheckedIn ? 1 : -1; // Checked-in attendees first
+      }
+
+      // Secondary sort: by selected criteria
       let aValue: string | number;
       let bValue: string | number;
 
@@ -1543,10 +1574,11 @@ export default function EventManagePage() {
                           </span>
                         )}
                       </code>
-                        <p className="text-xs text-red-600 dark:text-red-400 mt-2 flex items-center">
-                         ⚠️ This password is top secret and must NOT be shared on Slack
-                       </p>
-                     </div>
+                      <p className="text-xs text-red-600 dark:text-red-400 mt-2 flex items-center">
+                        ⚠️ This password is top secret and must NOT be shared on
+                        Slack
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1645,25 +1677,30 @@ export default function EventManagePage() {
                     </div>
 
                     <div className="flex items-center space-x-3">
-                    <div className="flex items-center space-x-2">
-                    <Filter className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                         <select
-                           value={volunteerFilter}
-                           onChange={(e) =>
-                             setVolunteerFilter(
-                               e.target.value as "all" | "volunteers" | "non-volunteers"
-                             )
-                           }
-                           className="text-sm border border-gray-300 dark:border-gray-600 rounded px-3 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400"
-                         >
-                           <option value="all">All Attendees</option>
-                           <option value="volunteers">Volunteers</option>
-                           <option value="non-volunteers">Attendees</option>
-                         </select>
-                       </div>
+                      <div className="flex items-center space-x-2">
+                        <Filter className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                        <select
+                          value={volunteerFilter}
+                          onChange={(e) =>
+                            setVolunteerFilter(
+                              e.target.value as
+                                | "all"
+                                | "volunteers"
+                                | "non-volunteers"
+                                | "checked-in"
+                            )
+                          }
+                          className="text-sm border border-gray-300 dark:border-gray-600 rounded px-3 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400"
+                        >
+                          <option value="all">All Attendees</option>
+                          <option value="volunteers">Volunteers</option>
+                          <option value="non-volunteers">Attendees</option>
+                          <option value="checked-in">Checked In</option>
+                        </select>
+                      </div>
 
-                       <div className="flex items-center space-x-2">
-                         <SortAsc className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                      <div className="flex items-center space-x-2">
+                        <SortAsc className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                         <select
                           value={attendeeSortBy}
                           onChange={(e) =>
@@ -1721,8 +1758,10 @@ export default function EventManagePage() {
                           <div
                             key={attendee.id}
                             className={`${
-                              attendee.event_volunteer === true
+                              attendee.checkin_completed === true
                                 ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
+                                : attendee.event_volunteer === true
+                                ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800"
                                 : "bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600"
                             } rounded-lg p-4 border hover:shadow-md hover:border-blue-300 dark:hover:border-blue-500 transition-all duration-200`}
                           >
@@ -1752,7 +1791,7 @@ export default function EventManagePage() {
                                       )}
                                     </h4>
                                     {attendee.event_volunteer === true && (
-                                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-100 border border-green-200 dark:border-green-700">
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-100 border border-blue-200 dark:border-blue-700">
                                         Volunteer
                                       </span>
                                     )}
@@ -1830,12 +1869,67 @@ export default function EventManagePage() {
                                   </div>
                                 )}
                                 {attendee.age && (
-                                <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
-                                <Calendar className="w-3 h-3 mr-1.5" />
-                                <span>{attendee.age} years old</span>
-                                </div>
+                                  <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                                    <Calendar className="w-3 h-3 mr-1.5" />
+                                    <span>{attendee.age} years old</span>
+                                  </div>
                                 )}
 
+                                {/* New attendee fields */}
+                                {attendee.shirt_size && (
+                                  <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                                    <Shirt className="w-3 h-3 mr-1.5" />
+                                    <span>{attendee.shirt_size}</span>
+                                  </div>
+                                )}
+
+                                {attendee.dietary_restrictions && (
+                                  <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                                    <Utensils className="w-3 h-3 mr-1.5" />
+                                    <span
+                                      className="truncate cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                                      title={attendee.dietary_restrictions}
+                                    >
+                                      {attendee.dietary_restrictions.length > 15
+                                        ? `${attendee.dietary_restrictions.substring(
+                                            0,
+                                            15
+                                          )}...`
+                                        : attendee.dietary_restrictions}
+                                    </span>
+                                  </div>
+                                )}
+
+                                {attendee.additional_accommodations && (
+                                  <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                                    <Accessibility className="w-3 h-3 mr-1.5" />
+                                    <span
+                                      className="truncate cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                                      title={attendee.additional_accommodations}
+                                    >
+                                      {attendee.additional_accommodations
+                                        .length > 15
+                                        ? `${attendee.additional_accommodations.substring(
+                                            0,
+                                            15
+                                          )}...`
+                                        : attendee.additional_accommodations}
+                                    </span>
+                                  </div>
+                                )}
+
+                                {(attendee.emergency_contact_1_name ||
+                                  attendee.emergency_contact_1_phone) && (
+                                  <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                                    <AlertTriangle className="w-3 h-3 mr-1.5" />
+                                    <span className="truncate">
+                                      {attendee.emergency_contact_1_name ||
+                                        "Contact"}
+                                      {attendee.emergency_contact_1_phone &&
+                                        ` - ${attendee.emergency_contact_1_phone}`}
+                                    </span>
+                                  </div>
+                                )}
                                 {/* Delete button */}
                                 <div className="flex justify-end pt-2">
                                   <button

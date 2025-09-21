@@ -345,7 +345,13 @@ export class AirtableService {
       phone: fields.phone,
       event: Array.isArray(fields.event) && fields.event.length > 0 ? fields.event[0] : undefined,
       deleted_in_cockpit: fields.deleted_in_cockpit || false,
-      event_volunteer: fields.event_volunteer || false
+      event_volunteer: fields.event_volunteer || false,
+      shirt_size: fields.shirt_size,
+      additional_accommodations: fields.additional_accommodations,
+      dietary_restrictions: fields.dietary_restrictions,
+      emergency_contact_1_phone: fields.emergency_contact_1_phone,
+      emergency_contact_1_name: fields.emergency_contact_1_name,
+      checkin_completed: fields.checkin_completed || false
     };
   }
 
