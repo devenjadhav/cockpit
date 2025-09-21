@@ -312,7 +312,7 @@ export default function EventManagePage() {
   const handleDeleteAttendee = async (attendeeId: string) => {
     if (
       !window.confirm(
-        "Are you sure you want to remove this attendee from the event?"
+        "Are you sure you want to remove this attendee from the event? It will take up to a minute for the deletion to reflect everywhere."
       )
     ) {
       return;
