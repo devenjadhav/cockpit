@@ -536,7 +536,7 @@ export default function EventManagePage() {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
+      <div className={`min-h-screen transition-colors ${event.hasConfirmedVenue === false ? 'bg-red-900 dark:bg-red-950' : 'bg-gray-50 dark:bg-gray-900'}`}>
         <div className="max-w-4xl mx-auto px-4 py-8">
           {/* Header */}
           <div className="flex justify-end mb-8">
@@ -583,6 +583,39 @@ export default function EventManagePage() {
               )}
             </div>
           </div>
+
+          {/* Venue Not Confirmed Warning Banner */}
+          {event.hasConfirmedVenue === false && (
+            <div className="mb-6 bg-red-700 dark:bg-red-800 border-4 border-red-600 dark:border-red-700 text-white px-6 py-6 rounded-lg shadow-2xl animate-pulse">
+              <div className="flex items-center">
+                <AlertTriangle className="w-8 h-8 mr-4 flex-shrink-0 text-red-200" />
+                <div>
+                  <h3 className="font-bold text-2xl mb-2 text-red-100">⚠️ VENUE NOT CONFIRMED ⚠️</h3>
+                  <p className="text-lg font-semibold text-red-200">
+                    Your venue has not been confirmed yet! This is a critical issue that needs immediate attention.
+                  </p>
+                  <p className="text-sm mt-2 text-red-300">
+                    Please contact your event coordinator immediately to secure your venue.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Triage Status Warning Banner */}
+          {event.status && event.status.toLowerCase() !== "approved" && (
+            <div className="mb-6 bg-red-600 dark:bg-red-700 border border-red-700 dark:border-red-600 text-white px-6 py-4 rounded-lg">
+              <div className="flex items-center">
+                <AlertTriangle className="w-6 h-6 mr-3 flex-shrink-0" />
+                <div>
+                  <h3 className="font-semibold text-lg mb-1">Event Status Alert</h3>
+                  <p className="text-sm">
+                    This event has either been cancelled or merged into another event. The information you see below is not up to date. Please reach out to your event's point of contact for additional information.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Greeting */}
           <div className="mb-8">

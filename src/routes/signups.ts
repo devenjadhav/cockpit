@@ -13,6 +13,7 @@ router.get('/daily', async (req, res) => {
         COUNT(*)::integer as signups
       FROM attendees 
       WHERE created_at >= CURRENT_DATE - INTERVAL '90 days'
+        AND deleted_in_cockpit = false
       GROUP BY DATE(created_at)
       ORDER BY date DESC
     `;
@@ -50,7 +51,7 @@ router.get('/top-events', async (req, res) => {
         e.event_format as "eventFormat",
         COUNT(a.airtable_id)::integer as "signupCount"
       FROM events e
-      LEFT JOIN attendees a ON e.airtable_id = a.event_airtable_id 
+      LEFT JOIN attendees a ON e.airtable_id = a.event_airtable_id AND a.deleted_in_cockpit = false
       WHERE e.triage_status = 'approved'
       GROUP BY e.airtable_id, e.event_name, e.estimated_attendee_count, e.location, e.has_confirmed_venue, e.lat, e.long, e.city, e.country, e.event_format
       ORDER BY "signupCount" DESC
