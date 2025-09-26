@@ -458,6 +458,24 @@ export class AirtableService {
     }
   }
 
+  async updateAttendeeScannedInStatus(attendeeId: string, scanned_in: boolean): Promise<void> {
+    try {
+      await this.attendeesTable.update([
+        {
+          id: attendeeId,
+          fields: {
+            scanned_in
+          }
+        }
+      ]);
+      
+      console.log(`Updated attendee ${attendeeId} scanned_in to ${scanned_in}`);
+    } catch (error) {
+      console.error('Error updating attendee scanned_in status in Airtable:', error);
+      throw error;
+    }
+  }
+
 }
 
 export const airtableService = new AirtableService();

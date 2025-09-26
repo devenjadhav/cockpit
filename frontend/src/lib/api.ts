@@ -124,6 +124,13 @@ class ApiClient {
     return response.data;
   }
 
+  async updateAttendeeScannedInStatus(eventId: string, attendeeId: string, scanned_in: boolean): Promise<ApiResponse<any>> {
+    const response: AxiosResponse<ApiResponse<any>> = await this.client.put(`/events/${eventId}/attendees/${attendeeId}`, {
+      scanned_in
+    });
+    return response.data;
+  }
+
   // Signup analytics endpoints (unauthenticated)
   async getDailySignups(): Promise<ApiResponse<{ date: string; signups: number }[]>> {
     const response: AxiosResponse<ApiResponse<{ date: string; signups: number }[]>> = await axios.get(`${this.client.defaults.baseURL}/signups/daily`);

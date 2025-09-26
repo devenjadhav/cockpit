@@ -131,6 +131,7 @@ export default function EventManagePage() {
     "all" | "volunteers" | "non-volunteers" | "checked-in" | "scanned-in"
   >("all");
   const [deletingAttendee, setDeletingAttendee] = useState<string | null>(null);
+  const [scanningAttendee, setScanningAttendee] = useState<string | null>(null);
 
   // Quick links (computed based on event data)
   const quickLinks = [
@@ -337,6 +338,37 @@ export default function EventManagePage() {
       setError(err.response?.data?.message || "Failed to delete attendee");
     } finally {
       setDeletingAttendee(null);
+    }
+  };
+
+  const handleManualInScan = async (attendeeId: string) => {
+    if (
+      !window.confirm(
+        "Are you sure you want to mark this attendee as manually scanned in? It might take up to 15 minutes for cockpit to reflect this change."
+      )
+    ) {
+      return;
+    }
+
+    try {
+      setScanningAttendee(attendeeId);
+      const response = await apiClient.updateAttendeeScannedInStatus(
+        eventId,
+        attendeeId,
+        true
+      );
+
+      if (response.success) {
+        // Refresh the event data to reflect the change
+        await fetchEvent();
+      } else {
+        setError(response.message || "Failed to update scan status");
+      }
+    } catch (err: any) {
+      console.error("Error updating scan status:", err);
+      setError(err.response?.data?.message || "Failed to update scan status");
+    } finally {
+      setScanningAttendee(null);
     }
   };
 
@@ -1733,10 +1765,13 @@ export default function EventManagePage() {
                       <code
                         className="inline-block text-sm bg-white dark:bg-gray-800 px-3 py-2 rounded border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                         onClick={() =>
-                        copyText("mamamiamamamiamamamialetmego", "scanner-password")
+                          copyText(
+                            "mamamiamamamiamamamialetmego",
+                            "scanner-password"
+                          )
                         }
                         title="Click to copy password"
-                        >
+                      >
                         mamamiamamamiamamamialetmego
                         {copiedField === "scanner-password" && (
                           <span className="ml-2 text-green-600 dark:text-green-400">
@@ -2108,8 +2143,29 @@ export default function EventManagePage() {
                                     </span>
                                   </div>
                                 )}
-                                {/* Delete button */}
-                                <div className="flex justify-end pt-2">
+                                {/* Action buttons */}
+                                <div className="flex justify-end gap-2 pt-2">
+                                  {/* Manual in-scan button - only show for checked-in attendees who haven't been scanned yet */}
+                                  {attendee.checkin_completed &&
+                                    !attendee.scanned_in && (
+                                      <button
+                                        onClick={() =>
+                                          handleManualInScan(attendee.id)
+                                        }
+                                        disabled={
+                                          scanningAttendee === attendee.id
+                                        }
+                                        className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md text-orange-700 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 hover:bg-orange-100 dark:hover:bg-orange-900/40 border border-orange-200 dark:border-orange-800 transition-colors disabled:opacity-50"
+                                        title="Mark attendee as manually scanned in"
+                                      >
+                                        <Database className="w-3 h-3 mr-1" />
+                                        {scanningAttendee === attendee.id
+                                          ? "Scanning..."
+                                          : "Manual Scan"}
+                                      </button>
+                                    )}
+
+                                  {/* Delete button */}
                                   <button
                                     onClick={() =>
                                       handleDeleteAttendee(attendee.id)

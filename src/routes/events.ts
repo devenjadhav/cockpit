@@ -265,13 +265,13 @@ router.put('/:eventId/attendees/:attendeeId', async (req: AuthenticatedRequest, 
     }
 
     const { eventId, attendeeId } = req.params;
-    const { deleted_in_cockpit } = req.body;
+    const { deleted_in_cockpit, scanned_in } = req.body;
     
-    // Validate required fields
-    if (typeof deleted_in_cockpit !== 'boolean') {
+    // Validate that at least one field is provided
+    if (typeof deleted_in_cockpit !== 'boolean' && typeof scanned_in !== 'boolean') {
       return res.status(400).json({
         success: false,
-        message: 'deleted_in_cockpit field is required and must be boolean',
+        message: 'Either deleted_in_cockpit or scanned_in field is required and must be boolean',
       } as ApiResponse);
     }
 
@@ -293,15 +293,28 @@ router.put('/:eventId/attendees/:attendeeId', async (req: AuthenticatedRequest, 
       } as ApiResponse);
     }
 
-    // Update the attendee's deleted_in_cockpit field in Airtable
-    await airtableService.updateAttendeeDeletedStatus(attendeeId, deleted_in_cockpit);
+    // Update the appropriate field in Airtable
+    if (typeof deleted_in_cockpit === 'boolean') {
+      await airtableService.updateAttendeeDeletedStatus(attendeeId, deleted_in_cockpit);
+    }
+    
+    if (typeof scanned_in === 'boolean') {
+      await airtableService.updateAttendeeScannedInStatus(attendeeId, scanned_in);
+    }
+
+    let message = '';
+    if (typeof deleted_in_cockpit === 'boolean') {
+      message = deleted_in_cockpit ? 'Attendee soft deleted successfully' : 'Attendee restored successfully';
+    } else if (typeof scanned_in === 'boolean') {
+      message = scanned_in ? 'Attendee marked as scanned in successfully' : 'Attendee scan status cleared successfully';
+    }
 
     res.json({
       success: true,
-      message: deleted_in_cockpit ? 'Attendee soft deleted successfully' : 'Attendee restored successfully',
+      message,
     } as ApiResponse);
   } catch (error) {
-    console.error('Update attendee deleted status error:', error);
+    console.error('Update attendee status error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to update attendee status',
