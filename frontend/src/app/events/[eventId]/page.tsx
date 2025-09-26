@@ -128,7 +128,7 @@ export default function EventManagePage() {
     "asc"
   );
   const [volunteerFilter, setVolunteerFilter] = useState<
-    "all" | "volunteers" | "non-volunteers" | "checked-in"
+    "all" | "volunteers" | "non-volunteers" | "checked-in" | "scanned-in"
   >("all");
   const [deletingAttendee, setDeletingAttendee] = useState<string | null>(null);
 
@@ -136,8 +136,8 @@ export default function EventManagePage() {
   const quickLinks = [
     {
       id: "4",
-      title: "Week-5 check in",
-      url: "https://forms.hackclub.com/daydream-check-in-5",
+      title: "Day-of Guide",
+      url: "https://docs.google.com/document/d/11CKq_4Kxz36WXiqyd_HhdLGkAqHtOXeRposswI6c3hI/edit?usp=sharing",
       icon: HelpCircle,
     },
     {
@@ -366,6 +366,7 @@ export default function EventManagePage() {
         "Emergency Contact Name",
         "Emergency Contact Phone",
         "Checked In",
+        "Scanned In",
       ];
 
       // CSV rows
@@ -384,6 +385,7 @@ export default function EventManagePage() {
           `"${attendee.emergency_contact_1_name || ""}"`,
           `"${attendee.emergency_contact_1_phone || ""}"`,
           attendee.checkin_completed ? "Yes" : "No",
+          attendee.scanned_in ? "Yes" : "No",
         ].join(",");
       });
 
@@ -433,6 +435,10 @@ export default function EventManagePage() {
 
       // Filter by check-in status
       if (volunteerFilter === "checked-in" && !attendee.checkin_completed)
+        return false;
+
+      // Filter by scanned-in status
+      if (volunteerFilter === "scanned-in" && !attendee.scanned_in)
         return false;
 
       const name = getAttendeeDisplayName(attendee).toLowerCase();
@@ -536,7 +542,13 @@ export default function EventManagePage() {
 
   return (
     <AuthGuard>
-      <div className={`min-h-screen transition-colors ${event.hasConfirmedVenue === false ? 'bg-red-900 dark:bg-red-950' : 'bg-gray-50 dark:bg-gray-900'}`}>
+      <div
+        className={`min-h-screen transition-colors ${
+          event.hasConfirmedVenue === false
+            ? "bg-red-900 dark:bg-red-950"
+            : "bg-gray-50 dark:bg-gray-900"
+        }`}
+      >
         <div className="max-w-4xl mx-auto px-4 py-8">
           {/* Header */}
           <div className="flex justify-end mb-8">
@@ -590,12 +602,16 @@ export default function EventManagePage() {
               <div className="flex items-center">
                 <AlertTriangle className="w-8 h-8 mr-4 flex-shrink-0 text-red-200" />
                 <div>
-                  <h3 className="font-bold text-2xl mb-2 text-red-100">⚠️ VENUE NOT CONFIRMED ⚠️</h3>
+                  <h3 className="font-bold text-2xl mb-2 text-red-100">
+                    ⚠️ VENUE NOT CONFIRMED ⚠️
+                  </h3>
                   <p className="text-lg font-semibold text-red-200">
-                    Your venue has not been confirmed yet! This is a critical issue that needs immediate attention.
+                    Your venue has not been confirmed yet! This is a critical
+                    issue that needs immediate attention.
                   </p>
                   <p className="text-sm mt-2 text-red-300">
-                    Please contact your event coordinator immediately to secure your venue.
+                    Please contact your event coordinator immediately to secure
+                    your venue.
                   </p>
                 </div>
               </div>
@@ -608,9 +624,14 @@ export default function EventManagePage() {
               <div className="flex items-center">
                 <AlertTriangle className="w-6 h-6 mr-3 flex-shrink-0" />
                 <div>
-                  <h3 className="font-semibold text-lg mb-1">Event Status Alert</h3>
+                  <h3 className="font-semibold text-lg mb-1">
+                    Event Status Alert
+                  </h3>
                   <p className="text-sm">
-                    This event has either been cancelled or merged into another event. The information you see below is not up to date. Please reach out to your event's point of contact for additional information.
+                    This event has either been cancelled or merged into another
+                    event. The information you see below is not up to date.
+                    Please reach out to your event's point of contact for
+                    additional information.
                   </p>
                 </div>
               </div>
@@ -1618,6 +1639,116 @@ export default function EventManagePage() {
             </div>
           </div>
 
+          {/* Scanning Instructions Section */}
+          <div className="mt-8 bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden border border-gray-200 dark:border-gray-700">
+            <div className="bg-green-50 dark:bg-green-900/20 px-6 py-4 border-b border-green-200 dark:border-green-800/30">
+              <div className="flex items-center">
+                <Search className="w-6 h-6 text-green-600 dark:text-green-400 mr-3" />
+                <div>
+                  <h2 className="text-xl font-semibold text-green-900 dark:text-green-100">
+                    Scanning Instructions
+                  </h2>
+                  <p className="text-sm text-green-700 dark:text-green-300 mt-1">
+                    Here's how to scan people into your Daydream event!
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6">
+              <div className="prose dark:prose-invert max-w-none">
+                <p className="text-gray-700 dark:text-gray-300 mb-4">
+                  Use the link below to open the scanner site on your phone,
+                  iPad, or laptop! It is designed to work on most browsers. All
+                  events must scan every person in the room: both attendees and
+                  event staff. People you scan in will show up in red on
+                  Cockpit. Please note that it might take upto 15 minutes for
+                  their status to update.
+                </p>
+
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Scanner URL:
+                      </label>
+                      <div className="flex items-center space-x-2">
+                        <code
+                          className="flex-1 text-sm bg-white dark:bg-gray-800 px-3 py-2 rounded border border-gray-300 dark:border-gray-600 text-blue-600 dark:text-blue-400 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                          onClick={() =>
+                            copyText(
+                              "https://scanner.hackclub.dev",
+                              "scanner-url"
+                            )
+                          }
+                          title="Click to copy scanner URL"
+                        >
+                          https://scanner.hackclub.dev
+                          {copiedField === "scanner-url" && (
+                            <span className="ml-2 text-green-600 dark:text-green-400">
+                              ✓
+                            </span>
+                          )}
+                        </code>
+                        <button
+                          onClick={() =>
+                            window.open(
+                              "https://scanner.hackclub.dev",
+                              "_blank"
+                            )
+                          }
+                          className="inline-flex items-center px-3 py-2 text-sm font-medium text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-900/40 hover:bg-green-200 dark:hover:bg-green-800/60 border border-green-300 dark:border-green-700 rounded transition-colors"
+                          title="Open scanner in new tab"
+                        >
+                          <ExternalLink className="w-4 h-4 mr-1" />
+                          Open
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Username:
+                      </label>
+                      <code
+                        className="inline-block text-sm bg-white dark:bg-gray-800 px-3 py-2 rounded border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                        onClick={() => copyText("admin", "scanner-username")}
+                        title="Click to copy username"
+                      >
+                        admin
+                        {copiedField === "scanner-username" && (
+                          <span className="ml-2 text-green-600 dark:text-green-400">
+                            ✓
+                          </span>
+                        )}
+                      </code>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Password:
+                      </label>
+                      <code
+                        className="inline-block text-sm bg-white dark:bg-gray-800 px-3 py-2 rounded border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                        onClick={() =>
+                        copyText("mamamiamamamiamamamialetmego", "scanner-password")
+                        }
+                        title="Click to copy password"
+                        >
+                        mamamiamamamiamamamialetmego
+                        {copiedField === "scanner-password" && (
+                          <span className="ml-2 text-green-600 dark:text-green-400">
+                            ✓
+                          </span>
+                        )}
+                      </code>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Attendees Section */}
           {event.attendees && (
             <div className="mt-8 bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden border border-gray-200 dark:border-gray-700">
@@ -1634,6 +1765,14 @@ export default function EventManagePage() {
                         {filteredAndSortedAttendees().length}{" "}
                         {attendeeSearch ? "matching" : "active"} attendees
                         {attendeeSearch && ` for "${attendeeSearch}"`}
+                      </p>
+                      <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
+                        <span className="inline-block w-3 h-3 bg-green-200 dark:bg-green-800 rounded-full mr-1"></span>
+                        Checked in
+                        <span className="inline-block w-3 h-3 bg-red-200 dark:bg-red-800 rounded-full ml-3 mr-1"></span>
+                        Scanned in
+                        <span className="inline-block w-3 h-3 bg-blue-200 dark:bg-blue-800 rounded-full ml-3 mr-1"></span>
+                        Event staff
                       </p>
                     </div>
                   </div>
@@ -1721,6 +1860,7 @@ export default function EventManagePage() {
                                 | "volunteers"
                                 | "non-volunteers"
                                 | "checked-in"
+                                | "scanned-in"
                             )
                           }
                           className="text-sm border border-gray-300 dark:border-gray-600 rounded px-3 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400"
@@ -1729,6 +1869,7 @@ export default function EventManagePage() {
                           <option value="volunteers">Volunteers</option>
                           <option value="non-volunteers">Attendees</option>
                           <option value="checked-in">Checked In</option>
+                          <option value="scanned-in">Scanned In</option>
                         </select>
                       </div>
 
@@ -1791,7 +1932,9 @@ export default function EventManagePage() {
                           <div
                             key={attendee.id}
                             className={`${
-                              attendee.checkin_completed === true
+                              attendee.scanned_in === true
+                                ? "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800"
+                                : attendee.checkin_completed === true
                                 ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
                                 : attendee.event_volunteer === true
                                 ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800"

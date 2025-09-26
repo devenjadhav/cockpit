@@ -498,16 +498,17 @@ class SyncService {
       this.sanitizeString(attendee.dietary_restrictions),
       this.sanitizeString(attendee.emergency_contact_1_phone),
       this.sanitizeString(attendee.emergency_contact_1_name),
-      attendee.checkin_completed || false
+      attendee.checkin_completed || false,
+      attendee.scanned_in || false
     ]);
 
     const placeholders = values.map((_, index) => {
-      const offset = index * 16;
-      return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9}, $${offset + 10}, $${offset + 11}, $${offset + 12}, $${offset + 13}, $${offset + 14}, $${offset + 15}, $${offset + 16})`;
+      const offset = index * 17;
+      return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9}, $${offset + 10}, $${offset + 11}, $${offset + 12}, $${offset + 13}, $${offset + 14}, $${offset + 15}, $${offset + 16}, $${offset + 17})`;
     }).join(', ');
 
     const query = `
-      INSERT INTO attendees (airtable_id, email, preferred_name, first_name, last_name, dob, phone, event_airtable_id, deleted_in_cockpit, event_volunteer, shirt_size, additional_accommodations, dietary_restrictions, emergency_contact_1_phone, emergency_contact_1_name, checkin_completed)
+      INSERT INTO attendees (airtable_id, email, preferred_name, first_name, last_name, dob, phone, event_airtable_id, deleted_in_cockpit, event_volunteer, shirt_size, additional_accommodations, dietary_restrictions, emergency_contact_1_phone, emergency_contact_1_name, checkin_completed, scanned_in)
       VALUES ${placeholders}
       ON CONFLICT (airtable_id) DO UPDATE SET
         email = EXCLUDED.email,
@@ -525,6 +526,7 @@ class SyncService {
         emergency_contact_1_phone = EXCLUDED.emergency_contact_1_phone,
         emergency_contact_1_name = EXCLUDED.emergency_contact_1_name,
         checkin_completed = EXCLUDED.checkin_completed,
+        scanned_in = EXCLUDED.scanned_in,
         synced_at = NOW()
     `;
 
@@ -586,17 +588,17 @@ class SyncService {
   private async upsertVenuesBatch(venues: Venue[]): Promise<void> {
     const values = venues.map(venue => [
       venue.id, // airtable_id
-      this.sanitizeString(venue.venueId),
-      this.sanitizeString(venue.eventName),
-      this.sanitizeString(venue.venueName),
-      this.sanitizeString(venue.address1),
-      this.sanitizeString(venue.address2),
-      this.sanitizeString(venue.city),
-      this.sanitizeString(venue.state),
-      this.sanitizeString(venue.country),
-      this.sanitizeString(venue.zipCode),
-      this.sanitizeString(venue.venueContactName),
-      this.sanitizeString(venue.venueContactEmail)
+      this.sanitizeString(venue.venueId, 255),
+      this.sanitizeString(venue.eventName, 500),
+      this.sanitizeString(venue.venueName, 500),
+      this.sanitizeString(venue.address1, 500),
+      this.sanitizeString(venue.address2, 500),
+      this.sanitizeString(venue.city, 255),
+      this.sanitizeString(venue.state, 255),
+      this.sanitizeString(venue.country, 255),
+      this.sanitizeString(venue.zipCode, 20),
+      this.sanitizeString(venue.venueContactName, 255),
+      this.sanitizeString(venue.venueContactEmail, 500)
     ]);
 
     const placeholders = values.map((_, index) => {
@@ -642,12 +644,19 @@ class SyncService {
     await databaseService.query(query, [tableName, status, recordsSynced, errorsCount, errorDetails || null]);
   }
 
-  private sanitizeString(value: any): string | null {
+  private sanitizeString(value: any, maxLength?: number): string | null {
     if (value === null || value === undefined) {
       return null;
     }
     
-    const str = String(value).trim();
+    let str = String(value).trim();
+    
+    // Truncate if maxLength is specified and string is too long
+    if (maxLength && str.length > maxLength) {
+      str = str.substring(0, maxLength);
+      console.warn(`String truncated to ${maxLength} characters: "${str}..."`);
+    }
+    
     return str.length > 0 ? str : null;
   }
 
