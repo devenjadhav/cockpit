@@ -229,7 +229,8 @@ class DatabaseService {
         emergency_contact_1_phone,
         emergency_contact_1_name,
         checkin_completed,
-        scanned_in
+        scanned_in,
+        referral_information
       FROM attendees 
       WHERE event_airtable_id = $1
         AND (deleted_in_cockpit IS NULL OR deleted_in_cockpit = FALSE)

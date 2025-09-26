@@ -367,6 +367,7 @@ export default function EventManagePage() {
         "Emergency Contact Phone",
         "Checked In",
         "Scanned In",
+        "Referral Information",
       ];
 
       // CSV rows
@@ -386,6 +387,7 @@ export default function EventManagePage() {
           `"${attendee.emergency_contact_1_phone || ""}"`,
           attendee.checkin_completed ? "Yes" : "No",
           attendee.scanned_in ? "Yes" : "No",
+          `"${attendee.referral_information || ""}"`,
         ].join(",");
       });
 

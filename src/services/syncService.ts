@@ -499,16 +499,17 @@ class SyncService {
       this.sanitizeString(attendee.emergency_contact_1_phone),
       this.sanitizeString(attendee.emergency_contact_1_name),
       attendee.checkin_completed || false,
-      attendee.scanned_in || false
+      attendee.scanned_in || false,
+      this.sanitizeString(attendee.referral_information)
     ]);
 
     const placeholders = values.map((_, index) => {
-      const offset = index * 17;
-      return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9}, $${offset + 10}, $${offset + 11}, $${offset + 12}, $${offset + 13}, $${offset + 14}, $${offset + 15}, $${offset + 16}, $${offset + 17})`;
+      const offset = index * 18;
+      return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9}, $${offset + 10}, $${offset + 11}, $${offset + 12}, $${offset + 13}, $${offset + 14}, $${offset + 15}, $${offset + 16}, $${offset + 17}, $${offset + 18})`;
     }).join(', ');
 
     const query = `
-      INSERT INTO attendees (airtable_id, email, preferred_name, first_name, last_name, dob, phone, event_airtable_id, deleted_in_cockpit, event_volunteer, shirt_size, additional_accommodations, dietary_restrictions, emergency_contact_1_phone, emergency_contact_1_name, checkin_completed, scanned_in)
+      INSERT INTO attendees (airtable_id, email, preferred_name, first_name, last_name, dob, phone, event_airtable_id, deleted_in_cockpit, event_volunteer, shirt_size, additional_accommodations, dietary_restrictions, emergency_contact_1_phone, emergency_contact_1_name, checkin_completed, scanned_in, referral_information)
       VALUES ${placeholders}
       ON CONFLICT (airtable_id) DO UPDATE SET
         email = EXCLUDED.email,
@@ -527,6 +528,7 @@ class SyncService {
         emergency_contact_1_name = EXCLUDED.emergency_contact_1_name,
         checkin_completed = EXCLUDED.checkin_completed,
         scanned_in = EXCLUDED.scanned_in,
+        referral_information = EXCLUDED.referral_information,
         synced_at = NOW()
     `;
 

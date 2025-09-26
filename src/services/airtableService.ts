@@ -352,7 +352,8 @@ export class AirtableService {
       emergency_contact_1_phone: fields.emergency_contact_1_phone,
       emergency_contact_1_name: fields.emergency_contact_1_name,
       checkin_completed: fields.checkin_completed || false,
-      scanned_in: fields.scanned_in || false
+      scanned_in: fields.scanned_in || false,
+      referral_information: fields.referral_information
     };
   }
 

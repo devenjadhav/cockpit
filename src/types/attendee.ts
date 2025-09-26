@@ -16,6 +16,7 @@ export interface Attendee {
   emergency_contact_1_name?: string;
   checkin_completed?: boolean;
   scanned_in?: boolean;
+  referral_information?: string;
 }
 
 // Safe interface for client-side use - DOB is not exposed, only age
@@ -37,6 +38,7 @@ export interface SafeAttendee {
   emergency_contact_1_name?: string;
   checkin_completed?: boolean;
   scanned_in?: boolean;
+  referral_information?: string;
 }
 
 export interface AttendeeFields {
@@ -56,5 +58,6 @@ export interface AttendeeFields {
   emergency_contact_1_name?: string;
   checkin_completed?: boolean;
   scanned_in?: boolean;
+  referral_information?: string;
   [key: string]: any; // Index signature for Airtable FieldSet
 }

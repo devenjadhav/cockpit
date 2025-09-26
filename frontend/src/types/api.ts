@@ -95,4 +95,5 @@ export interface Attendee {
   emergency_contact_1_name?: string;
   checkin_completed?: boolean;
   scanned_in?: boolean;
+  referral_information?: string;
 }
