@@ -15,7 +15,9 @@ export class LoopsService {
 
   constructor() {
     if (!process.env.LOOPS_API_KEY) {
-      throw new Error('LOOPS_API_KEY must be set in environment variables');
+      console.warn('LOOPS_API_KEY not set - email sending will be disabled');
+      this.apiKey = '';
+      return;
     }
     this.apiKey = process.env.LOOPS_API_KEY;
   }

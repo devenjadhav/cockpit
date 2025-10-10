@@ -1,65 +1,140 @@
 import { Request, Response, NextFunction } from 'express';
-import { JWTUtils } from '../utils/jwt';
+import { clerkClient } from '@clerk/clerk-sdk-node';
 import { AuthenticatedRequest } from '../types/auth';
 
-export const authenticateToken = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+// Validate Clerk configuration on startup
+if (!process.env.CLERK_SECRET_KEY) {
+  console.error('[Auth] CLERK_SECRET_KEY is not set! Authentication will fail.');
+}
 
-  if (!token) {
-    return res.status(401).json({
-      success: false,
-      message: 'Access token required',
-    });
-  }
+export const authenticateToken = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
 
-  // Extract IP address for security validation
-  const ipAddress = req.ip || req.connection.remoteAddress || req.headers['x-forwarded-for'] as string;
-  
-  const { payload, validationResult } = JWTUtils.verifyToken(token, ipAddress);
-  
-  if (!validationResult.isValid || !payload) {
-    // Log security violations for monitoring
-    if (validationResult.securityViolations.length > 0) {
-      console.warn(`[Auth Security] Token validation failed from ${ipAddress}: ${validationResult.securityViolations.join(', ')}`);
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: 'Access token required',
+      });
     }
+
+    console.log('[Auth] Verifying Clerk token...');
     
-    const message = validationResult.errors.length > 0 
-      ? validationResult.errors[0] 
-      : 'Invalid or expired token';
+    // Add timeout to Clerk API call to prevent hanging
+    const verifyWithTimeout = Promise.race([
+      clerkClient.verifyToken(token),
+      new Promise<any>((_, reject) => 
+        setTimeout(() => reject(new Error('Clerk verification timeout')), 5000)
+      )
+    ]);
     
+    const payload: any = await verifyWithTimeout;
+    console.log('[Auth] Token verified successfully');
+    
+    if (!payload || !payload.sub) {
+      return res.status(403).json({
+        success: false,
+        message: 'Invalid or expired token',
+      });
+    }
+
+    const user = await clerkClient.users.getUser(payload.sub);
+    
+    if (!user || !user.emailAddresses || user.emailAddresses.length === 0) {
+      return res.status(403).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    const primaryEmail = user.emailAddresses.find(e => e.id === user.primaryEmailAddressId);
+    const email = primaryEmail?.emailAddress || user.emailAddresses[0].emailAddress;
+
+    // Get organization memberships for the user
+    const memberships = await clerkClient.users.getOrganizationMembershipList({
+      userId: user.id,
+    });
+
+    // Check if user has org:hq_admin role
+    const isAdmin = memberships.some(
+      (membership: any) => membership.role === 'org:hq_admin'
+    ) || false;
+
+    // Extract organization slug for all users (admin and non-admin)
+    let organizationSlug: string | undefined = undefined;
+    if (memberships.length > 0) {
+      const firstMembership = memberships[0] as any;
+      organizationSlug = firstMembership.organization.slug;
+      console.log(`[Auth] User ${email} belongs to organization: ${organizationSlug}`);
+    }
+
+    req.user = {
+      email,
+      isAdmin,
+      clerkId: user.id,
+      organizationSlug,
+    };
+
+    next();
+  } catch (error) {
+    console.error('Clerk token verification error:', error);
     return res.status(403).json({
       success: false,
-      message,
+      message: 'Invalid or expired token',
     });
   }
-
-  req.user = {
-    email: payload.email,
-    isAdmin: payload.isAdmin || false,
-  };
-
-  next();
 };
 
-export const optionalAuth = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+export const optionalAuth = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
 
-  if (token) {
-    const ipAddress = req.ip || req.connection.remoteAddress || req.headers['x-forwarded-for'] as string;
-    const { payload, validationResult } = JWTUtils.verifyToken(token, ipAddress);
-    
-    if (validationResult.isValid && payload) {
-      req.user = {
-        email: payload.email,
-        isAdmin: payload.isAdmin || false,
-      };
-    } else if (validationResult.securityViolations.length > 0) {
-      // Log security violations but don't block request for optional auth
-      console.warn(`[Auth Security] Optional auth validation failed from ${ipAddress}: ${validationResult.securityViolations.join(', ')}`);
+    if (token) {
+      try {
+        const payload = await clerkClient.verifyToken(token);
+        
+        if (payload && payload.sub) {
+          const user = await clerkClient.users.getUser(payload.sub);
+          
+          if (user && user.emailAddresses && user.emailAddresses.length > 0) {
+            const primaryEmail = user.emailAddresses.find(e => e.id === user.primaryEmailAddressId);
+            const email = primaryEmail?.emailAddress || user.emailAddresses[0].emailAddress;
+            
+            // Get organization memberships for the user
+            const memberships = await clerkClient.users.getOrganizationMembershipList({
+              userId: user.id,
+            });
+
+            // Check if user has org:hq_admin role
+            const isAdmin = memberships.some(
+              (membership: any) => membership.role === 'org:hq_admin'
+            ) || false;
+
+            // Extract organization slug for non-admin users
+            let organizationSlug: string | undefined = undefined;
+            if (!isAdmin && memberships.length > 0) {
+              const firstMembership = memberships[0] as any;
+              organizationSlug = firstMembership.organization.slug;
+            }
+            
+            req.user = {
+              email,
+              isAdmin,
+              clerkId: user.id,
+              organizationSlug,
+            };
+          }
+        }
+      } catch (error) {
+        console.warn('Optional auth validation failed:', error);
+      }
     }
-  }
 
-  next();
+    next();
+  } catch (error) {
+    console.error('Optional auth error:', error);
+    next();
+  }
 };

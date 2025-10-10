@@ -1,22 +1,24 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { LogOut, RefreshCw, Users, Calendar, Globe, TrendingUp, Filter, Search, X, Zap, Type } from 'lucide-react';
+import { RefreshCw, Users, Calendar, Globe, TrendingUp, Filter, Search, X, Zap, Type } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useDashboard } from '@/hooks/useDashboard';
 import { useTriageStatuses } from '@/hooks/useTriageStatuses';
+import { useAdmin } from '@/hooks/useAdmin';
 import { EventCard } from './EventCard';
 import { StatsCard } from './StatsCard';
 import { EventMap } from './EventMap';
 import { AdminConsole } from './AdminConsole';
 import { apiClient } from '@/lib/api';
+import { UserButton } from '@clerk/nextjs';
 
 export function Dashboard() {
-  const { user, logout, token } = useAuth();
+  const { user, getToken } = useAuth();
+  const { isAdmin, loading: adminLoading } = useAdmin();
   const [selectedTriageStatus, setSelectedTriageStatus] = useState<string>('Approved');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [fuzzySearchEnabled, setFuzzySearchEnabled] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [adminLoading, setAdminLoading] = useState(true);
   const [adminConsoleActive, setAdminConsoleActive] = useState(false);
+  const [authToken, setAuthToken] = useState<string>('');
   const [userProfile, setUserProfile] = useState<{firstName?: string; pocPreferredName?: string} | null>(null);
   const { data, loading, error, refresh } = useDashboard({ 
     filters: { triageStatus: selectedTriageStatus || undefined },
@@ -33,27 +35,30 @@ export function Dashboard() {
     return 'Good evening';
   };
 
-  // Check admin status and fetch user profile
+  // Fetch admin profile and token if user is admin
   useEffect(() => {
-    const checkAdminStatusAndProfile = async () => {
-      try {
-        const response = await apiClient.getAdminStatus();
-        if (response.success) {
-          setIsAdmin(response.data.isAdmin);
-          if (response.data.isAdmin && response.data.admin) {
+    const fetchAdminData = async () => {
+      if (isAdmin && !adminLoading) {
+        try {
+          // Get auth token
+          const token = await getToken();
+          if (token) {
+            setAuthToken(token);
+          }
+          
+          // Fetch admin profile
+          const response = await apiClient.getAdminStatus();
+          if (response.success && response.data.admin) {
             setUserProfile({ firstName: response.data.admin.firstName });
           }
+        } catch (error) {
+          console.error('Failed to fetch admin data:', error);
         }
-      } catch (error) {
-        console.error('Failed to check admin status:', error);
-        setIsAdmin(false);
-      } finally {
-        setAdminLoading(false);
       }
     };
 
-    checkAdminStatusAndProfile();
-  }, []);
+    fetchAdminData();
+  }, [isAdmin, adminLoading, getToken]);
 
   // Set user profile from dashboard data for non-admin users
   useEffect(() => {
@@ -387,13 +392,7 @@ export function Dashboard() {
               >
                 <RefreshCw className="w-5 h-5" />
               </button>
-              <button
-                onClick={logout}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Logout
-              </button>
+              <UserButton afterSignOutUrl="/sign-in" />
             </div>
           </div>
         </div>
@@ -474,7 +473,7 @@ export function Dashboard() {
               <div>
                 <h3 className="text-sm font-medium text-gray-900 mb-3">Database Console</h3>
                 <AdminConsole 
-                  authToken={token || ''} 
+                  authToken={authToken} 
                   onActiveChange={setAdminConsoleActive}
                 />
               </div>

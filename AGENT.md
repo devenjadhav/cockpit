@@ -10,12 +10,12 @@
 - **Security**: `npm run security-audit` (security audit script)
 
 ## Architecture
-- **Backend**: Express.js + TypeScript (src/), PostgreSQL cache + Airtable primary, JWT auth, magic link via Loops
+- **Backend**: Express.js + TypeScript (src/), PostgreSQL cache + Airtable primary, Clerk authentication
 - **Database**: PostgreSQL local cache (Docker), syncs from Airtable every 30 seconds, SSL-enabled, read-only user for queries
 - **Frontend**: Next.js 14 + TypeScript (frontend/src/), Tailwind CSS, React hooks, Recharts for visualizations
 - **Structure**: src/{routes,services,middleware,types,utils}/, frontend/src/{app,components,hooks,lib}/
-- **APIs**: REST endpoints (/api/auth, /api/events, /api/dashboard, /api/admin-console, /api/health), PostgreSQL query layer
-- **Auth**: Magic link → JWT tokens, passwordless authentication
+- **APIs**: REST endpoints (/api/events, /api/dashboard, /api/admin-console, /api/health), PostgreSQL query layer
+- **Auth**: Clerk authentication with session tokens, pre-built UI components (/sign-in, /sign-up routes)
 - **Admin Console**: Claude-powered natural language SQL queries on PostgreSQL (requires ANTHROPIC_API_KEY)
 - **Health Dashboard**: Real-time system monitoring with charts (/admin/health), tracks CPU, memory, sync jobs
 - **Sync**: Automated Airtable → PostgreSQL sync with error handling, audit logging, PII protection

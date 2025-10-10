@@ -1,18 +1,16 @@
 import express from 'express';
 import { airtableService } from '../services/airtableService';
 import { databaseService } from '../services/databaseService';
-import { adminAuth } from '../middleware/adminAuth';
+import { authenticateToken } from '../middleware/auth';
+import { requireAdmin } from '../middleware/adminOnly';
 import { ApiResponse } from '../types/api';
 import { Event } from '../types/event';
-
-interface AuthenticatedRequest extends express.Request {
-  user?: { email: string };
-}
+import { AuthenticatedRequest } from '../types/auth';
 
 const router = express.Router();
 
 // Get all events (admin only)
-router.get('/events', adminAuth, async (req, res) => {
+router.get('/events', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const events = await airtableService.getAllEvents();
     
@@ -56,7 +54,7 @@ router.get('/events', adminAuth, async (req, res) => {
 });
 
 // Check admin status
-router.get('/status', adminAuth, async (req: AuthenticatedRequest, res) => {
+router.get('/status', authenticateToken, requireAdmin, async (req: AuthenticatedRequest, res) => {
   try {
     if (!req.user?.email) {
       return res.status(401).json({
@@ -89,7 +87,7 @@ router.get('/status', adminAuth, async (req: AuthenticatedRequest, res) => {
 });
 
 // Clear cache (admin only)
-router.post('/clear-cache', adminAuth, async (req, res) => {
+router.post('/clear-cache', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const { cacheService } = await import('../services/cacheService');
     cacheService.clear();

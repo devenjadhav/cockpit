@@ -1,13 +1,11 @@
 import express from 'express';
-import { adminAuth } from '../middleware/adminAuth';
+import { authenticateToken } from '../middleware/auth';
+import { requireAdmin } from '../middleware/adminOnly';
 import { claudeService } from '../services/claudeService';
 import { ApiResponse } from '../types/api';
 import { adminConsoleRateLimit } from '../middleware/rateLimiting';
 import { validateAdminConsoleRequest } from '../middleware/inputValidation';
-
-interface AuthenticatedRequest extends express.Request {
-  user?: { email: string };
-}
+import { AuthenticatedRequest } from '../types/auth';
 
 const router = express.Router();
 
@@ -29,7 +27,7 @@ interface ConsoleQueryResponse {
 }
 
 // POST /api/admin-console/query
-router.post('/query', adminConsoleRateLimit, adminAuth, validateAdminConsoleRequest, async (req: AuthenticatedRequest, res) => {
+router.post('/query', authenticateToken, requireAdmin, adminConsoleRateLimit, validateAdminConsoleRequest, async (req: AuthenticatedRequest, res) => {
   try {
     const { query, conversationHistory }: ConsoleQueryRequest = req.body;
 
@@ -83,7 +81,7 @@ router.post('/query', adminConsoleRateLimit, adminAuth, validateAdminConsoleRequ
 });
 
 // GET /api/admin-console/status
-router.get('/status', adminAuth, async (req: AuthenticatedRequest, res) => {
+router.get('/status', authenticateToken, requireAdmin, async (req: AuthenticatedRequest, res) => {
   try {
     const isConfigured = !!process.env.ANTHROPIC_API_KEY;
     

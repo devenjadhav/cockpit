@@ -25,12 +25,29 @@ router.get('/', dashboardRateLimit, async (req: AuthenticatedRequest, res) => {
     // Check if user is an admin
     const isAdmin = await airtableService.isAdmin(req.user.email);
 
+    console.log(`[Dashboard Route] User: ${req.user.email}, isAdmin: ${isAdmin}, organizationSlug: ${req.user.organizationSlug}`);
+
+    // All users must have an organization
+    if (!req.user.organizationSlug) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. You must be part of an organization to access this portal.',
+      } as ApiResponse);
+    }
+
     // Extract filter parameters from query
     const triageStatusFilter = req.query.triageStatus as string;
 
-    const dashboardData = await DashboardService.getDashboardData(req.user.email, isAdmin, {
-      triageStatus: triageStatusFilter
-    });
+    console.log(`[Dashboard Route] Calling getDashboardData with organizationSlug: ${req.user.organizationSlug}`);
+
+    const dashboardData = await DashboardService.getDashboardData(
+      req.user.email, 
+      isAdmin, 
+      { triageStatus: triageStatusFilter },
+      req.user.organizationSlug
+    );
+    
+    console.log(`[Dashboard Route] Returning ${dashboardData.events.length} events`);
 
     res.json({
       success: true,
@@ -58,12 +75,16 @@ router.get('/triage-statuses', async (req: AuthenticatedRequest, res) => {
     // Check if user is an admin - only admins can see all triage statuses
     const isAdmin = await airtableService.isAdmin(req.user.email);
     
-    let events: Event[];
-    if (isAdmin) {
-      events = await airtableService.getAllEvents();
-    } else {
-      events = await airtableService.getEventsByOrganizer(req.user.email);
+    // All users must have an organization
+    if (!req.user.organizationSlug) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. You must be part of an organization to access this portal.',
+      } as ApiResponse);
     }
+    
+    // Get events by organization slug for all users
+    const events = await airtableService.getEventsByOrganizationSlug(req.user.organizationSlug);
 
     // Extract unique triage status values
     const triageStatuses = [...new Set(events.map(event => event.triageStatus).filter(Boolean))];

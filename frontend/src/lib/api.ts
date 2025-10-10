@@ -1,8 +1,9 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
-import { ApiResponse, DashboardData, LoginRequest, VerifyTokenRequest, AuthResponse } from '@/types/api';
+import { ApiResponse, DashboardData } from '@/types/api';
 
 class ApiClient {
   private client: AxiosInstance;
+  private tokenProvider: (() => Promise<string | null>) | null = null;
 
   constructor() {
     const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
@@ -15,12 +16,14 @@ class ApiClient {
       },
     });
 
-    // Add request interceptor to include auth token
+    // Add request interceptor to include Clerk auth token
     this.client.interceptors.request.use(
-      (config) => {
-        const token = this.getToken();
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
+      async (config) => {
+        if (this.tokenProvider) {
+          const token = await this.tokenProvider();
+          if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+          }
         }
         return config;
       },
@@ -33,45 +36,15 @@ class ApiClient {
       (error) => {
         console.error('API Error:', error);
         if (error.response?.status === 401) {
-          this.clearToken();
-          window.location.href = '/login';
+          window.location.href = '/sign-in';
         }
         return Promise.reject(error);
       }
     );
   }
 
-  private getToken(): string | null {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('auth_token');
-    }
-    return null;
-  }
-
-  private setToken(token: string): void {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('auth_token', token);
-    }
-  }
-
-  private clearToken(): void {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('auth_token');
-    }
-  }
-
-  // Auth endpoints
-  async requestLogin(data: LoginRequest): Promise<AuthResponse> {
-    const response: AxiosResponse<AuthResponse> = await this.client.post('/auth/request-login', data);
-    return response.data;
-  }
-
-  async verifyToken(data: VerifyTokenRequest): Promise<AuthResponse> {
-    const response: AxiosResponse<AuthResponse> = await this.client.post('/auth/verify-token', data);
-    if (response.data.success && response.data.jwt) {
-      this.setToken(response.data.jwt);
-    }
-    return response.data;
+  setTokenProvider(provider: () => Promise<string | null>): void {
+    this.tokenProvider = provider;
   }
 
   // Dashboard endpoints
@@ -146,16 +119,6 @@ class ApiClient {
   async getEventsWithLocation(): Promise<ApiResponse<any[]>> {
     const response: AxiosResponse<ApiResponse<any[]>> = await axios.get(`${this.client.defaults.baseURL}/signups/top-events`);
     return response.data;
-  }
-
-  // Auth helpers
-  isAuthenticated(): boolean {
-    return !!this.getToken();
-  }
-
-  logout(): void {
-    this.clearToken();
-    window.location.href = '/login';
   }
 }
 

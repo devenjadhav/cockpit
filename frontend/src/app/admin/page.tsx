@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useAdmin } from '@/hooks/useAdmin';
 import { AuthGuard } from '@/components/AuthGuard';
 import { useRouter } from 'next/navigation';
 import { Search, X, Zap, Type } from 'lucide-react';
@@ -38,12 +39,12 @@ interface TabCounts {
 
 export default function AdminPage() {
   const { token, user, logout, loading: authLoading } = useAuth();
+  const { isAdmin, loading: adminLoading } = useAdmin();
   const router = useRouter();
   const [events, setEvents] = useState<Event[]>([]);
   const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [activeTab, setActiveTab] = useState('approved');
 
 
@@ -85,63 +86,29 @@ export default function AdminPage() {
   };
 
   useEffect(() => {
-    if (authLoading) {
+    if (authLoading || adminLoading) {
       return;
     }
 
-    if (!token) {
-      router.push('/login');
+    if (!user) {
+      router.push('/sign-in');
       return;
     }
 
-    checkAdminStatus();
-  }, [token, authLoading, router]);
-
-  useEffect(() => {
-    if (isAdmin && token) {
-      fetchAllEvents();
+    if (!isAdmin) {
+      setError('Access denied. You need the org:hq_admin role to access this page.');
+      setLoading(false);
+      return;
     }
-  }, [isAdmin, token]);
+
+    fetchAllEvents();
+  }, [user, authLoading, adminLoading, isAdmin, router]);
 
   useEffect(() => {
     setCurrentPage(1); // Reset to first page when filters change
   }, [searchQuery, filters, activeTab, fuzzySearchEnabled]);
 
-  const checkAdminStatus = async () => {
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/status`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
 
-      if (!response.ok) {
-        if (response.status === 401) {
-          setLoading(false);
-          router.push('/login');
-          return;
-        }
-        if (response.status === 403) {
-          setError('Access denied. Admin privileges required.');
-          setLoading(false);
-          return;
-        }
-        throw new Error('Failed to check admin status');
-      }
-
-      const data = await response.json();
-      setIsAdmin(data.success);
-      
-      if (!data.success) {
-        setError('Access denied. Admin privileges required.');
-        setLoading(false);
-      }
-    } catch (err) {
-      console.error('Admin status check error:', err);
-      setError('Failed to verify admin access');
-      setLoading(false);
-    }
-  };
 
   const fetchAllEvents = async () => {
     try {

@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
+import { useAdmin } from '@/hooks/useAdmin';
 import { formatBytes, formatUptime, formatPercentage } from '@/lib/utils';
 import {
   LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
@@ -69,7 +71,10 @@ interface SlackSyncLog {
 
 
 export default function HealthDashboard() {
-  const { user, token } = useAuth();
+  const router = useRouter();
+  const { user, getToken, loading: authLoading } = useAuth();
+  const { isAdmin, loading: adminLoading } = useAdmin();
+  const [token, setToken] = useState<string>('');
   const [healthData, setHealthData] = useState<ServerMetrics | null>(null);
   const [syncLogs, setSyncLogs] = useState<SyncLog[]>([]);
   const [slackSyncLogs, setSlackSyncLogs] = useState<SlackSyncLog[]>([]);
@@ -254,30 +259,73 @@ export default function HealthDashboard() {
 
 
 
+  // Check admin access and get token
   useEffect(() => {
-    if (user && token) {
+    const checkAccess = async () => {
+      if (authLoading || adminLoading) {
+        return;
+      }
+
+      if (!user) {
+        router.push('/sign-in');
+        return;
+      }
+
+      if (!isAdmin) {
+        setError('Access denied. You need the org:hq_admin role to access this page.');
+        setLoading(false);
+        return;
+      }
+
+      // Get token
+      const authToken = await getToken();
+      if (authToken) {
+        setToken(authToken);
+      }
+    };
+
+    checkAccess();
+  }, [user, authLoading, adminLoading, isAdmin, getToken, router]);
+
+  // Fetch data when token is available
+  useEffect(() => {
+    if (token && isAdmin) {
       setLoading(true);
       Promise.all([fetchHealthData(), fetchSyncLogs(), fetchSlackSyncLogs()])
         .finally(() => setLoading(false));
     }
-  }, [user, token]);
+  }, [token, isAdmin]);
 
+  // Auto-refresh every 30 seconds
   useEffect(() => {
+    if (!token || !isAdmin) return;
+
     const interval = setInterval(() => {
-      if (user && token) {
-        fetchHealthData();
-        fetchSyncLogs();
-        fetchSlackSyncLogs();
-      }
-    }, 30000); // Refresh every 30 seconds
+      fetchHealthData();
+      fetchSyncLogs();
+      fetchSlackSyncLogs();
+    }, 30000);
 
     return () => clearInterval(interval);
-  }, [user, token]);
+  }, [token, isAdmin]);
 
+  if (authLoading || adminLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-lg">Loading...</div>
+      </div>
+    );
+  }
 
-
-  if (!user) {
-    return <div>Please log in to access the health dashboard.</div>;
+  if (!isAdmin) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-2">Access Denied</h1>
+          <p className="text-gray-600">You need the org:hq_admin role to access this page.</p>
+        </div>
+      </div>
+    );
   }
 
   if (loading) {

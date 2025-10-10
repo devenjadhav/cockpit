@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import '@/styles/globals.css'
 import { Providers } from '@/components/providers'
+import { ClerkProvider } from '@clerk/nextjs'
 
 export const metadata: Metadata = {
   title: 'Hack Club Cockpit',
@@ -52,9 +53,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <Providers>
-          {children}
-        </Providers>
+        <ClerkProvider>
+          <Providers>
+            {children}
+          </Providers>
+        </ClerkProvider>
       </body>
     </html>
   )

@@ -38,6 +38,7 @@ import { CountryFlag } from "@/components/ui/CountryFlag";
 import { CapacityIndicator } from "@/components/ui/CapacityIndicator";
 import { RichTextEditor } from "@/components/ui/RichTextEditor";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
+import { useAdmin } from "@/hooks/useAdmin";
 
 import { Attendee } from "@/types/api";
 
@@ -112,11 +113,10 @@ export default function EventManagePage() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [adminEditing, setAdminEditing] = useState(false);
+  const { isAdmin, loading: adminLoading } = useAdmin();
   const [saving, setSaving] = useState(false);
   const [adminSaving, setAdminSaving] = useState(false);
   const [error, setError] = useState("");
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [adminLoading, setAdminLoading] = useState(true);
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
   // Attendee management state
@@ -181,26 +181,8 @@ export default function EventManagePage() {
   useEffect(() => {
     if (eventId) {
       fetchEvent();
-      checkAdminStatus();
     }
   }, [eventId]);
-
-  const checkAdminStatus = async () => {
-    try {
-      const response = await apiClient.getAdminStatus();
-
-      if (response.success) {
-        setIsAdmin(response.data.isAdmin);
-      } else {
-        setIsAdmin(false);
-      }
-    } catch (error) {
-      console.error("Failed to check admin status:", error);
-      setIsAdmin(false);
-    } finally {
-      setAdminLoading(false);
-    }
-  };
 
   const fetchEvent = async () => {
     try {

@@ -1,38 +1,28 @@
+/**
+ * DEPRECATED: This middleware is replaced by the combination of:
+ * - authenticateToken (from './auth.ts') - verifies Clerk token
+ * - requireAdmin (from './adminOnly.ts') - checks admin role
+ * 
+ * This file is kept for backwards compatibility but should not be used.
+ * Use: router.get('/path', authenticateToken, requireAdmin, handler)
+ */
+
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
-import { airtableService } from '../services/airtableService';
+import { AuthenticatedRequest } from '../types/auth';
 
-interface AuthenticatedRequest extends Request {
-  user?: { email: string };
-}
-
+/**
+ * @deprecated Use authenticateToken + requireAdmin instead
+ */
 export const adminAuth = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-  try {
-    const token = req.header('Authorization')?.replace('Bearer ', '');
-    
-    if (!token) {
-      return res.status(401).json({ message: 'Access denied. No token provided.' });
-    }
-
-    if (!process.env.JWT_SECRET) {
-      throw new Error('JWT_SECRET not configured');
-    }
-
-    // Verify the JWT token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET) as { email: string };
-    
-    // Check if the user is an admin
-    const isAdmin = await airtableService.isAdmin(decoded.email);
-    
-    if (!isAdmin) {
-      console.log('Admin auth failed: User is not an admin');
-      return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
-    }
-
-    req.user = decoded;
-    next();
-  } catch (error) {
-    console.error('Admin auth error:', error);
-    return res.status(401).json({ message: 'Invalid token.' });
+  console.warn('[DEPRECATED] adminAuth middleware is deprecated. Use authenticateToken + requireAdmin instead.');
+  
+  // Check if user was already authenticated by the new Clerk middleware
+  if (req.user && req.user.isAdmin) {
+    return next();
   }
+  
+  return res.status(403).json({ 
+    success: false,
+    message: 'Admin privileges required' 
+  });
 };

@@ -35,5 +35,7 @@ export interface AuthenticatedRequest extends Request {
   user?: {
     email: string;
     isAdmin: boolean;
+    clerkId?: string;
+    organizationSlug?: string;
   };
 }

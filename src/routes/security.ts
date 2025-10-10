@@ -4,7 +4,8 @@
  */
 
 import express from 'express';
-import { adminAuth } from '../middleware/adminAuth';
+import { authenticateToken } from '../middleware/auth';
+import { requireAdmin } from '../middleware/adminOnly';
 import { getSecurityStats } from '../middleware/rateLimiting';
 import { JWTUtils } from '../utils/jwt';
 import { MagicLinkManager } from '../security/magicLinkManager';
@@ -19,7 +20,8 @@ interface AuthenticatedRequest extends express.Request {
 
 // Apply admin authentication and rate limiting to all routes
 router.use(adminConsoleRateLimit);
-router.use(adminAuth);
+router.use(authenticateToken);
+router.use(requireAdmin);
 
 /**
  * GET /api/security/stats - Get comprehensive security statistics

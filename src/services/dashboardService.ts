@@ -8,17 +8,19 @@ interface DashboardFilters {
 }
 
 export class DashboardService {
-  static async getDashboardData(organizerEmail: string, isAdmin: boolean = false, filters?: DashboardFilters): Promise<DashboardData> {
+  static async getDashboardData(organizerEmail: string, isAdmin: boolean = false, filters?: DashboardFilters, organizationSlug?: string): Promise<DashboardData> {
     let events: Event[];
     
-    if (isAdmin) {
-      // Get all events for admin users
-      events = await airtableService.getAllEvents();
-      // Found events for admin
+    console.log(`[DashboardService] getDashboardData called with organizationSlug: ${organizationSlug}, isAdmin: ${isAdmin}`);
+    
+    if (organizationSlug) {
+      // Get events by organization slug for all users (admin and non-admin)
+      events = await airtableService.getEventsByOrganizationSlug(organizationSlug);
+      console.log(`[DashboardService] Found ${events.length} events for organization ${organizationSlug}`);
     } else {
-      // Get only organizer's events for regular users
-      events = await airtableService.getEventsByOrganizer(organizerEmail);
-      // Found events for organizer
+      // No organization - return empty (should be blocked at route level)
+      console.log(`[DashboardService] No organization slug provided, returning empty events`);
+      events = [];
     }
     
     // Apply filters if provided

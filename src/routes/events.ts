@@ -25,7 +25,23 @@ router.get('/', async (req: AuthenticatedRequest, res) => {
       } as ApiResponse);
     }
 
-    const events = await airtableService.getEventsByOrganizer(req.user.email);
+    // Check if user is an admin
+    const isAdmin = await airtableService.isAdmin(req.user.email);
+    
+    // Non-admin users must have an organization
+    if (!isAdmin && !req.user.organizationSlug) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. You must be part of an organization to access this portal.',
+      } as ApiResponse);
+    }
+    
+    let events;
+    if (isAdmin) {
+      events = await airtableService.getAllEvents();
+    } else {
+      events = await airtableService.getEventsByOrganizationSlug(req.user.organizationSlug!);
+    }
 
     // Enhance events with basic stats (no attendee data)
     const eventsWithStats: EventWithStats[] = events.map(event => ({
@@ -68,12 +84,22 @@ router.get('/:eventId', async (req: AuthenticatedRequest, res) => {
       } as ApiResponse);
     }
 
-    // Check if user is an admin or the organizer
+    // Check if user is an admin or has matching organization slug
     const isAdmin = await airtableService.isAdmin(req.user.email);
-    if (!isAdmin && event.email !== req.user.email) {
+    
+    // Non-admin users must have an organization
+    if (!isAdmin && !req.user.organizationSlug) {
       return res.status(403).json({
         success: false,
-        message: 'Access denied. You can only view your own events.',
+        message: 'Access denied. You must be part of an organization to access this portal.',
+      } as ApiResponse);
+    }
+    
+    const hasOrgAccess = req.user.organizationSlug && event.slug === req.user.organizationSlug;
+    if (!isAdmin && !hasOrgAccess) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. You can only view events in your organization.',
       } as ApiResponse);
     }
 
@@ -146,12 +172,22 @@ router.put('/:eventId', async (req: AuthenticatedRequest, res) => {
       } as ApiResponse);
     }
 
-    // Check if user is an admin or the organizer
+    // Check if user is an admin or has matching organization slug
     const isAdmin = await airtableService.isAdmin(req.user.email);
-    if (!isAdmin && existingEvent.email !== req.user.email) {
+    
+    // Non-admin users must have an organization
+    if (!isAdmin && !req.user.organizationSlug) {
       return res.status(403).json({
         success: false,
-        message: 'Access denied. You can only update your own events.',
+        message: 'Access denied. You must be part of an organization to access this portal.',
+      } as ApiResponse);
+    }
+    
+    const hasOrgAccess = req.user.organizationSlug && existingEvent.slug === req.user.organizationSlug;
+    if (!isAdmin && !hasOrgAccess) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. You can only update events in your organization.',
       } as ApiResponse);
     }
 
@@ -219,12 +255,22 @@ router.get('/:eventId/stats', async (req: AuthenticatedRequest, res) => {
       } as ApiResponse);
     }
 
-    // Check if user is an admin or the organizer
+    // Check if user is an admin or has matching organization slug
     const isAdmin = await airtableService.isAdmin(req.user.email);
-    if (!isAdmin && event.email !== req.user.email) {
+    
+    // Non-admin users must have an organization
+    if (!isAdmin && !req.user.organizationSlug) {
       return res.status(403).json({
         success: false,
-        message: 'Access denied. You can only view statistics for your own events.',
+        message: 'Access denied. You must be part of an organization to access this portal.',
+      } as ApiResponse);
+    }
+    
+    const hasOrgAccess = req.user.organizationSlug && event.slug === req.user.organizationSlug;
+    if (!isAdmin && !hasOrgAccess) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. You can only view statistics for events in your organization.',
       } as ApiResponse);
     }
 
@@ -284,12 +330,22 @@ router.put('/:eventId/attendees/:attendeeId', async (req: AuthenticatedRequest, 
       } as ApiResponse);
     }
 
-    // Check if user is an admin or the organizer
+    // Check if user is an admin or has matching organization slug
     const isAdmin = await airtableService.isAdmin(req.user.email);
-    if (!isAdmin && event.email !== req.user.email) {
+    
+    // Non-admin users must have an organization
+    if (!isAdmin && !req.user.organizationSlug) {
       return res.status(403).json({
         success: false,
-        message: 'Access denied. You can only modify attendees for your own events.',
+        message: 'Access denied. You must be part of an organization to access this portal.',
+      } as ApiResponse);
+    }
+    
+    const hasOrgAccess = req.user.organizationSlug && event.slug === req.user.organizationSlug;
+    if (!isAdmin && !hasOrgAccess) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. You can only modify attendees for events in your organization.',
       } as ApiResponse);
     }
 
@@ -352,12 +408,22 @@ router.post('/:eventId/notify', async (req: AuthenticatedRequest, res) => {
       } as ApiResponse);
     }
 
-    // Check if user is an admin or the organizer
+    // Check if user is an admin or has matching organization slug
     const isAdmin = await airtableService.isAdmin(req.user.email);
-    if (!isAdmin && event.email !== req.user.email) {
+    
+    // Non-admin users must have an organization
+    if (!isAdmin && !req.user.organizationSlug) {
       return res.status(403).json({
         success: false,
-        message: 'Access denied. You can only send updates for your own events.',
+        message: 'Access denied. You must be part of an organization to access this portal.',
+      } as ApiResponse);
+    }
+    
+    const hasOrgAccess = req.user.organizationSlug && event.slug === req.user.organizationSlug;
+    if (!isAdmin && !hasOrgAccess) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. You can only send updates for events in your organization.',
       } as ApiResponse);
     }
 

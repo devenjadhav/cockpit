@@ -1,5 +1,6 @@
 import express from 'express';
-import { adminAuth } from '../middleware/adminAuth';
+import { authenticateToken } from '../middleware/auth';
+import { requireAdmin } from '../middleware/adminOnly';
 import { ApiResponse } from '../types/api';
 import { syncService } from '../services/syncService';
 import { databaseService } from '../services/databaseService';
@@ -71,7 +72,7 @@ router.get('/', async (req, res) => {
 });
 
 // Get comprehensive health status
-router.get('/status', adminAuth, async (req, res) => {
+router.get('/status', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const healthData = await getSystemHealth();
     
@@ -94,7 +95,7 @@ router.get('/status', adminAuth, async (req, res) => {
 });
 
 // Get sync job details
-router.get('/sync-jobs', adminAuth, async (req, res) => {
+router.get('/sync-jobs', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const syncStatus = await syncService.getSyncStatus();
     const isRunning = syncService.isRunning();
@@ -151,7 +152,7 @@ router.get('/sync-jobs', adminAuth, async (req, res) => {
 });
 
 // Get detailed sync logs
-router.get('/sync-logs', adminAuth, async (req, res) => {
+router.get('/sync-logs', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const limit = parseInt(req.query.limit as string) || 50;
     const offset = parseInt(req.query.offset as string) || 0;
@@ -185,7 +186,7 @@ router.get('/sync-logs', adminAuth, async (req, res) => {
 });
 
 // Get Slack sync details
-router.get('/slack-sync', adminAuth, async (req, res) => {
+router.get('/slack-sync', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const status = await slackService.getHealthStatus();
     const metrics = await slackService.getSyncMetrics();
@@ -217,7 +218,7 @@ router.get('/slack-sync', adminAuth, async (req, res) => {
 });
 
 // Force manual Slack sync
-router.post('/slack-sync/trigger', adminAuth, async (req, res) => {
+router.post('/slack-sync/trigger', authenticateToken, requireAdmin, async (req, res) => {
   try {
     await slackSyncJobService.performSync();
 
@@ -240,7 +241,7 @@ router.post('/slack-sync/trigger', adminAuth, async (req, res) => {
 });
 
 // Force manual sync
-router.post('/sync/trigger', adminAuth, async (req, res) => {
+router.post('/sync/trigger', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const result = await syncService.performFullSync();
     
@@ -264,7 +265,7 @@ router.post('/sync/trigger', adminAuth, async (req, res) => {
 });
 
 // Database health check
-router.get('/database', adminAuth, async (req, res) => {
+router.get('/database', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const isHealthy = await databaseService.healthCheck();
     const poolInfo = databaseService.getPoolInfo();

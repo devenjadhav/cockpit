@@ -110,6 +110,46 @@ export class AirtableService {
     }
   }
 
+  async getEventsByOrganizationSlug(organizationSlug: string): Promise<Event[]> {
+    console.log(`[AirtableService] getEventsByOrganizationSlug called with organizationSlug: ${organizationSlug}`);
+    
+    // Check cache first
+    const cacheKey = `events:org:${organizationSlug}`;
+    const cachedEvents = cacheService.get<Event[]>(cacheKey);
+    if (cachedEvents) {
+      console.log(`[AirtableService] Returning ${cachedEvents.length} cached events for organization ${organizationSlug}`);
+      return cachedEvents;
+    }
+
+    try {
+      const filterFormula = `{slug} = "${organizationSlug}"`;
+      console.log(`[AirtableService] Querying Airtable with formula: ${filterFormula}`);
+      
+      const records = await this.eventsTable
+        .select({
+          filterByFormula: filterFormula,
+          sort: [{ field: 'event_name', direction: 'asc' }],
+        })
+        .all();
+
+      console.log(`[AirtableService] Airtable returned ${records.length} records`);
+      const events = records.map(record => this.mapEventRecord(record));
+      
+      // Log sample event slugs to debug
+      if (events.length > 0) {
+        console.log(`[AirtableService] Sample event slugs: ${events.slice(0, 3).map(e => e.slug).join(', ')}`);
+      }
+      
+      // Cache the results
+      cacheService.set(cacheKey, events, 5 * 60 * 1000); // 5 minutes
+      
+      return events;
+    } catch (error) {
+      console.error(`[AirtableService] Error fetching events for organization ${organizationSlug}:`, error);
+      throw new Error(`Failed to fetch events for organization ${organizationSlug}: ${error}`);
+    }
+  }
+
   async getEventById(eventId: string): Promise<Event | null> {
     // Check cache first
     const cacheKey = cacheService.getEventCacheKey(eventId);
