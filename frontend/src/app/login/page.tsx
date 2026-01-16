@@ -32,20 +32,18 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Sign in to Cockpit
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-md cockpit-panel p-8">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-white">Cockpit</h1>
+          <p className="mt-2 text-sm text-white/60">
             Enter your email to receive a magic link
           </p>
         </div>
-        
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+
+        <form className="space-y-6" onSubmit={handleSubmit}>
           <div>
-            <label htmlFor="email" className="sr-only">
+            <label htmlFor="email" className="label block mb-2">
               Email address
             </label>
             <input
@@ -56,22 +54,23 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="relative block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
-              placeholder="Email address"
+              className="block w-full px-3 py-2 bg-black text-white border border-white/30 placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/30 sm:text-sm"
+              placeholder="you@example.com"
             />
           </div>
-
-
 
           <div>
             <button
               type="submit"
               disabled={isLoading}
-              className="group relative flex w-full justify-center rounded-md border border-transparent bg-blue-600 py-2 px-4 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-primary w-full flex justify-center items-center"
             >
               {isLoading ? (
                 <div className="flex items-center">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  <svg className="animate-spin h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                  </svg>
                   Sending magic link...
                 </div>
               ) : (
@@ -80,6 +79,10 @@ export default function LoginPage() {
             </button>
           </div>
         </form>
+
+        <p className="mt-6 text-center text-xs text-white/40">
+          If you don't get it now, you will get it never
+        </p>
       </div>
     </div>
   );

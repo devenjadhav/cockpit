@@ -12,27 +12,31 @@ interface CapacityIndicatorProps {
 
 const statusConfig = {
   low: {
-    color: 'bg-success-500',
-    textColor: 'text-success-700',
-    bgColor: 'bg-success-50',
+    color: 'bg-green-500',
+    textColor: 'text-green-400',
+    bgColor: 'bg-green-500/20',
+    borderColor: 'border-green-500/30',
     label: 'Low capacity',
   },
   medium: {
-    color: 'bg-warning-500',
-    textColor: 'text-warning-700',
-    bgColor: 'bg-warning-50',
+    color: 'bg-yellow-500',
+    textColor: 'text-yellow-400',
+    bgColor: 'bg-yellow-500/20',
+    borderColor: 'border-yellow-500/30',
     label: 'Medium capacity',
   },
   high: {
-    color: 'bg-danger-500',
-    textColor: 'text-danger-700',
-    bgColor: 'bg-danger-50',
+    color: 'bg-red-500',
+    textColor: 'text-red-400',
+    bgColor: 'bg-red-500/20',
+    borderColor: 'border-red-500/30',
     label: 'High capacity',
   },
   full: {
-    color: 'bg-danger-600',
-    textColor: 'text-danger-800',
-    bgColor: 'bg-danger-100',
+    color: 'bg-red-600',
+    textColor: 'text-red-400',
+    bgColor: 'bg-red-500/30',
+    borderColor: 'border-red-500/50',
     label: 'At capacity',
   },
 };
@@ -70,9 +74,9 @@ export function CapacityIndicator({
   return (
     <div className={clsx('space-y-1', className)}>
       {/* Progress bar */}
-      <div className={clsx('w-full bg-gray-200 rounded-full overflow-hidden', sizeStyles.height)}>
+      <div className={clsx('w-full bg-white/10 overflow-hidden', sizeStyles.height)}>
         <div
-          className={clsx('transition-all duration-500 ease-out rounded-full', config.color, sizeStyles.height)}
+          className={clsx('transition-all duration-500 ease-out', config.color, sizeStyles.height)}
           style={{ width: `${percentage}%` }}
         />
       </div>
@@ -81,11 +85,12 @@ export function CapacityIndicator({
       <div className="flex items-center justify-between">
         <span
           className={clsx(
-            'inline-flex items-center rounded-full font-medium',
+            'inline-flex items-center font-medium border',
             sizeStyles.text,
             sizeStyles.padding,
             config.textColor,
-            config.bgColor
+            config.bgColor,
+            config.borderColor
           )}
         >
           {current}{maximum ? `/${maximum}` : ''} attendees
@@ -108,14 +113,15 @@ export function CapacityBadge({ status, size = 'sm' }: { status: 'low' | 'medium
   return (
     <span
       className={clsx(
-        'inline-flex items-center rounded-full font-medium',
+        'inline-flex items-center font-medium border',
         sizeStyles.text,
         sizeStyles.padding,
         config.textColor,
-        config.bgColor
+        config.bgColor,
+        config.borderColor
       )}
     >
-      <span className={clsx('w-2 h-2 rounded-full mr-1', config.color)} />
+      <span className={clsx('w-2 h-2 mr-1', config.color)} />
       {config.label}
     </span>
   );

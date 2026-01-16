@@ -302,21 +302,27 @@ export function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center">
+          <svg className="animate-spin h-12 w-12 text-white mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+          </svg>
+          <span className="text-white/60">Loading cockpit data...</span>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Error loading dashboard</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center cockpit-panel p-8">
+          <h2 className="text-xl font-bold text-white mb-2">Error loading dashboard</h2>
+          <p className="text-white/60 mb-4">{error}</p>
           <button
             onClick={refresh}
-            className="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700"
+            className="btn-primary inline-flex items-center"
           >
             <RefreshCw className="w-4 h-4 mr-2" />
             Try Again
@@ -328,13 +334,13 @@ export function Dashboard() {
 
   if (!data || !data.stats) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900">No data available</h2>
-          <p className="text-gray-600 mt-2">Dashboard data is loading or unavailable</p>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center cockpit-panel p-8">
+          <h2 className="text-xl font-bold text-white">No data available</h2>
+          <p className="text-white/60 mt-2">Dashboard data is loading or unavailable</p>
           <button
             onClick={refresh}
-            className="mt-4 inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            className="mt-4 btn-primary inline-flex items-center"
           >
             <RefreshCw className="w-4 h-4 mr-2" />
             Retry
@@ -345,29 +351,29 @@ export function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen text-white">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
+      <header className="w-full border-b border-white/30 bg-black/60 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                {userProfile 
-                  ? `${getTimeBasedGreeting()}, ${isAdmin ? userProfile.firstName : userProfile.pocPreferredName}` 
-                  : 'Event Dashboard'
+              <h1 className="text-2xl font-bold text-white">
+                {userProfile
+                  ? `${getTimeBasedGreeting()}, ${isAdmin ? userProfile.firstName : userProfile.pocPreferredName}`
+                  : 'Cockpit'
                 }
               </h1>
-              <p className="text-sm text-gray-600">{data.organizerEmail || user?.email}</p>
+              <p className="text-xs text-white/50">{data.organizerEmail || user?.email}</p>
             </div>
             <div className="flex items-center space-x-4">
               {/* Triage Status Filter */}
               {isAdmin && (
-                <div className="flex items-center space-x-2 border-2 border-dashed border-yellow-400 rounded px-2 py-1">
-                  <Filter className="w-4 h-4 text-gray-500" />
+                <div className="flex items-center space-x-2 border border-yellow-500/50 px-2 py-1">
+                  <Filter className="w-4 h-4 text-yellow-500" />
                   <select
                     value={selectedTriageStatus}
                     onChange={(e) => setSelectedTriageStatus(e.target.value)}
-                    className="text-sm border border-gray-300 rounded-md px-3 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="text-sm px-3 py-1 bg-black text-white border border-white/30 focus:outline-none focus:ring-2 focus:ring-white/30"
                     disabled={statusesLoading}
                   >
                     <option value="">All Status</option>
@@ -379,17 +385,17 @@ export function Dashboard() {
                   </select>
                 </div>
               )}
-              
+
               <button
                 onClick={refresh}
-                className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                className="p-2 text-white/50 hover:text-white transition-colors"
                 title="Refresh data"
               >
                 <RefreshCw className="w-5 h-5" />
               </button>
               <button
                 onClick={logout}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                className="btn-secondary inline-flex items-center text-sm"
               >
                 <LogOut className="w-4 h-4 mr-2" />
                 Logout
@@ -402,20 +408,20 @@ export function Dashboard() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Admin Tools */}
         {isAdmin && (
-          <div className="mb-8 bg-white rounded-lg shadow-md overflow-hidden border-2 border-dashed border-yellow-400">
+          <div className="mb-8 cockpit-panel border-yellow-500/50 overflow-hidden">
             <div className="p-6 space-y-6">
               {/* Event Search */}
               <div>
-                <h3 className="text-sm font-medium text-gray-900 mb-3">Event Search</h3>
+                <h3 className="label mb-3">Event Search</h3>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search className="h-5 w-5 text-gray-400" />
+                    <Search className="h-5 w-5 text-white/40" />
                   </div>
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="block w-full pl-10 pr-32 py-3 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                    className="block w-full pl-10 pr-32 py-3 bg-black text-white border border-white/30 leading-5 placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-yellow-500/50"
                     placeholder={
                       fuzzySearchEnabled
                         ? "Fuzzy search across all event fields: name, location, organizer, status, format, tags, etc..."
@@ -425,10 +431,10 @@ export function Dashboard() {
                   <div className="absolute inset-y-0 right-0 pr-3 flex items-center space-x-1">
                     <button
                       onClick={toggleFuzzySearch}
-                      className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded transition-colors ${
+                      className={`inline-flex items-center px-2 py-1 text-xs font-medium transition-colors ${
                         fuzzySearchEnabled
-                          ? 'bg-yellow-200 text-yellow-800 hover:bg-yellow-300'
-                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                          ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/50'
+                          : 'bg-white/10 text-white/70 border border-white/30'
                       }`}
                       title={fuzzySearchEnabled ? 'Switch to Simple Search' : 'Switch to Fuzzy Search'}
                     >
@@ -447,7 +453,7 @@ export function Dashboard() {
                     {searchQuery && (
                       <button
                         onClick={clearSearch}
-                        className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                        className="p-1 text-white/40 hover:text-white transition-colors"
                         title="Clear search"
                       >
                         <X className="h-4 w-4" />
@@ -457,13 +463,13 @@ export function Dashboard() {
                 </div>
                 {searchQuery && (
                   <div className="mt-3 flex items-center justify-between text-sm">
-                    <p className="text-gray-600">
-                      {fuzzySearchEnabled 
+                    <p className="text-white/60">
+                      {fuzzySearchEnabled
                         ? "Searching across all event fields with intelligent relevance ranking"
                         : "Searching event names only (simple text matching)"
                       }
                     </p>
-                    <p className="text-gray-500">
+                    <p className="text-white/50">
                       {filteredEvents.length} result{filteredEvents.length !== 1 ? 's' : ''}
                     </p>
                   </div>
@@ -472,9 +478,9 @@ export function Dashboard() {
 
               {/* Admin Console */}
               <div>
-                <h3 className="text-sm font-medium text-gray-900 mb-3">Database Console</h3>
-                <AdminConsole 
-                  authToken={token || ''} 
+                <h3 className="label mb-3">Database Console</h3>
+                <AdminConsole
+                  authToken={token || ''}
                   onActiveChange={setAdminConsoleActive}
                 />
               </div>
@@ -493,43 +499,43 @@ export function Dashboard() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-4">
-              <h2 className="text-xl font-semibold text-gray-900">
+              <h2 className="text-xl font-bold text-white">
                 {searchQuery ? 'Search Results' : 'Your Events'}
               </h2>
               {selectedTriageStatus && (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                <span className="badge badge-cyan">
                   Filtered: {selectedTriageStatus}
                 </span>
               )}
               {searchQuery && (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                <span className="badge badge-yellow">
                   Search: "{searchQuery}"
                 </span>
               )}
-              <span className="text-sm text-gray-500">
-                {searchQuery 
-                  ? `${filteredEvents.length} result${filteredEvents.length !== 1 ? 's' : ''}` 
+              <span className="text-sm text-white/50">
+                {searchQuery
+                  ? `${filteredEvents.length} result${filteredEvents.length !== 1 ? 's' : ''}`
                   : data.events ? `${data.events.length} event${data.events.length !== 1 ? 's' : ''}` : ''
                 }
               </span>
             </div>
-            <span className="text-sm text-gray-500">
+            <span className="text-xs text-white/40">
               Updates every 5 minutes
             </span>
           </div>
 
           {(!filteredEvents || filteredEvents.length === 0) ? (
-            <div className="text-center py-12 bg-white rounded-lg shadow">
-              <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <div className="text-center py-12 cockpit-panel">
+              <Calendar className="w-12 h-12 text-white/30 mx-auto mb-4" />
               {searchQuery ? (
                 <>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No events found</h3>
-                  <p className="text-gray-600 mb-4">
+                  <h3 className="text-lg font-bold text-white mb-2">No events found</h3>
+                  <p className="text-white/60 mb-4">
                     No events match your search for "{searchQuery}". Try different keywords or clear the search.
                   </p>
                   <button
                     onClick={clearSearch}
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                    className="btn-secondary inline-flex items-center"
                   >
                     <X className="w-4 h-4 mr-2" />
                     Clear Search
@@ -537,8 +543,8 @@ export function Dashboard() {
                 </>
               ) : (
                 <>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No events yet</h3>
-                  <p className="text-gray-600">Create your first event to get started.</p>
+                  <h3 className="text-lg font-bold text-white mb-2">No events yet</h3>
+                  <p className="text-white/60">Create your first event to get started.</p>
                 </>
               )}
             </div>
@@ -561,19 +567,19 @@ export function Dashboard() {
         {/* Recent Activity */}
         {(data.recentActivity && data.recentActivity.length > 0) && (
           <div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">Recent Activity</h2>
-            <div className="bg-white rounded-lg shadow overflow-hidden">
-              <ul className="divide-y divide-gray-200">
+            <h2 className="text-xl font-bold text-white mb-6">Recent Activity</h2>
+            <div className="cockpit-panel overflow-hidden">
+              <ul className="divide-y divide-white/10">
                 {data.recentActivity.map((activity) => (
                   <li key={activity.id} className="px-6 py-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-gray-900">
+                        <p className="text-sm font-medium text-white">
                           {activity.description}
                         </p>
-                        <p className="text-sm text-gray-500">{activity.eventName}</p>
+                        <p className="text-sm text-white/50">{activity.eventName}</p>
                       </div>
-                      <span className="text-xs text-gray-400">
+                      <span className="text-xs text-white/40">
                         {new Date(activity.timestamp).toLocaleDateString()}
                       </span>
                     </div>

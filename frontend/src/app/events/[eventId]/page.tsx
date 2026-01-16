@@ -527,10 +527,13 @@ export default function EventManagePage() {
 
   if (loading || adminLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400 mx-auto"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">
+          <svg className="animate-spin h-12 w-12 text-white mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+          </svg>
+          <p className="mt-4 text-white/60">
             {loading ? "Loading event..." : "Checking permissions..."}
           </p>
         </div>
@@ -540,14 +543,14 @@ export default function EventManagePage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-400 px-4 py-3 rounded">
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center cockpit-panel p-8">
+          <div className="bg-red-500/20 border border-red-500/50 text-red-400 px-4 py-3">
             {error}
           </div>
           <button
             onClick={() => router.push("/dashboard")}
-            className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600"
+            className="mt-4 btn-primary inline-flex items-center"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Dashboard
@@ -559,12 +562,12 @@ export default function EventManagePage() {
 
   if (!event) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-600 dark:text-gray-400">Event not found</p>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center cockpit-panel p-8">
+          <p className="text-white/60">Event not found</p>
           <button
             onClick={() => router.push("/dashboard")}
-            className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600"
+            className="mt-4 btn-primary inline-flex items-center"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Dashboard
@@ -577,10 +580,10 @@ export default function EventManagePage() {
   return (
     <AuthGuard>
       <div
-        className={`min-h-screen transition-colors ${
+        className={`min-h-screen text-white transition-colors ${
           event.hasConfirmedVenue === false
-            ? "bg-red-900 dark:bg-red-950"
-            : "bg-gray-50 dark:bg-gray-900"
+            ? "bg-red-900/50"
+            : ""
         }`}
       >
         <div className="max-w-4xl mx-auto px-4 py-8">
@@ -590,7 +593,7 @@ export default function EventManagePage() {
               {!editing ? (
                 <button
                   onClick={() => setEditing(true)}
-                  className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
+                  className="btn-secondary inline-flex items-center text-sm"
                 >
                   <Edit className="w-4 h-4 mr-2" />
                   Edit Event
@@ -600,7 +603,7 @@ export default function EventManagePage() {
                   <button
                     onClick={handleSave}
                     disabled={saving}
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 disabled:opacity-50"
+                    className="inline-flex items-center px-4 py-2 text-sm font-bold bg-green-500 text-black hover:bg-green-400 disabled:opacity-50"
                   >
                     <Save className="w-4 h-4 mr-2" />
                     {saving ? "Saving..." : "Save"}
@@ -620,7 +623,7 @@ export default function EventManagePage() {
                         notes: event.notes || "",
                       });
                     }}
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
+                    className="btn-secondary inline-flex items-center text-sm"
                   >
                     <X className="w-4 h-4 mr-2" />
                     Cancel
@@ -632,7 +635,7 @@ export default function EventManagePage() {
 
           {/* Venue Not Confirmed Warning Banner */}
           {event.hasConfirmedVenue === false && (
-            <div className="mb-6 bg-red-700 dark:bg-red-800 border-4 border-red-600 dark:border-red-700 text-white px-6 py-6 rounded-lg shadow-2xl animate-pulse">
+            <div className="mb-6 bg-red-500/30 border-2 border-red-500 text-white px-6 py-6 shadow-2xl animate-pulse">
               <div className="flex items-center">
                 <AlertTriangle className="w-8 h-8 mr-4 flex-shrink-0 text-red-200" />
                 <div>
@@ -674,7 +677,7 @@ export default function EventManagePage() {
 
           {/* Greeting */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+            <h1 className="text-3xl font-bold text-white">
               {getGreeting()},{" "}
               {event.pocPreferredName || event.pocFirstName || "organizer"}
             </h1>
@@ -688,7 +691,7 @@ export default function EventManagePage() {
           )}
 
           {/* Quick Links Section */}
-          <div className="mb-8 bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
+          <div className="mb-8 cockpit-panel border border-white/20">
             <div className="bg-blue-50 dark:bg-blue-900/20 px-6 py-4 border-b border-blue-200 dark:border-blue-800/30">
               <div className="flex items-center">
                 <Globe className="w-5 h-5 text-blue-600 dark:text-blue-400 mr-3" />
@@ -707,13 +710,13 @@ export default function EventManagePage() {
                     return (
                       <div key={link.id} className="group relative">
                         {link.url ? (
-                          <div className="flex items-center p-3 h-20 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200">
+                          <div className="flex items-center p-3 h-20 bg-black/30 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200">
                             <IconComponent className="w-5 h-5 text-blue-600 dark:text-blue-400 mr-3 flex-shrink-0" />
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                              <p className="text-sm font-medium text-white">
                                 {link.title}
                               </p>
-                              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                              <p className="text-xs text-white/50 truncate">
                                 {link.url}
                               </p>
                             </div>
@@ -722,7 +725,7 @@ export default function EventManagePage() {
                                 onClick={() =>
                                   copyText(link.url, `quicklink-${link.id}`)
                                 }
-                                className="p-1 text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                                className="p-1 text-white/40 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                                 title="Copy link"
                               >
                                 {copiedField === `quicklink-${link.id}` ? (
@@ -735,7 +738,7 @@ export default function EventManagePage() {
                                 href={link.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="p-1 text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                                className="p-1 text-white/40 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                                 title="Open link"
                               >
                                 <ExternalLink className="w-4 h-4" />
@@ -743,13 +746,13 @@ export default function EventManagePage() {
                             </div>
                           </div>
                         ) : (
-                          <div className="flex items-center p-3 h-20 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600 opacity-50">
-                            <IconComponent className="w-5 h-5 text-gray-400 dark:text-gray-500 mr-3 flex-shrink-0" />
+                          <div className="flex items-center p-3 h-20 bg-black/30 rounded-lg border border-gray-200 dark:border-gray-600 opacity-50">
+                            <IconComponent className="w-5 h-5 text-white/40 mr-3 flex-shrink-0" />
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+                              <p className="text-sm font-medium text-white/50 truncate">
                                 {link.title}
                               </p>
-                              <p className="text-xs text-gray-400 dark:text-gray-500">
+                              <p className="text-xs text-white/40">
                                 URL not set
                               </p>
                             </div>
@@ -760,7 +763,7 @@ export default function EventManagePage() {
                   })}
                 </div>
               ) : (
-                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                <div className="text-center py-8 text-white/50">
                   <Globe className="w-12 h-12 mx-auto mb-3 opacity-50" />
                   <p className="text-sm">No quick links added yet</p>
                   <p className="text-xs mt-1">
@@ -772,7 +775,7 @@ export default function EventManagePage() {
           </div>
 
           {/* Event Info Card */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden border border-gray-200 dark:border-gray-700">
+          <div className="cockpit-panel overflow-hidden border border-white/20">
             <div className="p-6">
               {/* Header with flag and name */}
               <div className="flex items-start justify-between mb-6">
@@ -783,15 +786,15 @@ export default function EventManagePage() {
                     size="lg"
                   />
                   <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                    <h1 className="text-2xl font-bold text-white">
                       {event.name}
                     </h1>
                     {editing && (
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      <p className="text-xs text-white/50 mt-1">
                         Event name cannot be edited (computed field)
                       </p>
                     )}
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    <p className="text-sm text-white/50 mt-1">
                       Event ID: {event.id}
                     </p>
                   </div>
@@ -807,11 +810,11 @@ export default function EventManagePage() {
               {/* Event Description */}
               {event.description && (
                 <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">
+                  <h3 className="text-lg font-semibold text-white mb-3">
                     Event Description
                   </h3>
-                  <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
-                    <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                  <div className="bg-black/30 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+                    <p className="text-white/70 whitespace-pre-wrap">
                       {event.description}
                     </p>
                   </div>
@@ -822,8 +825,8 @@ export default function EventManagePage() {
               {event.tags && (
                 <div className="mb-6">
                   <div className="flex items-center space-x-2 mb-3">
-                    <Tag className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    <Tag className="w-5 h-5 text-white/60" />
+                    <h3 className="text-lg font-semibold text-white">
                       Tags
                     </h3>
                   </div>
@@ -843,12 +846,12 @@ export default function EventManagePage() {
               {/* Website and Contact Info */}
               {(event.website || event.contactInfo) && (
                 <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">
+                  <h3 className="text-lg font-semibold text-white mb-3">
                     Contact Information
                   </h3>
                   <div className="space-y-3">
                     {event.website && (
-                      <div className="flex items-center text-gray-600 dark:text-gray-400">
+                      <div className="flex items-center text-white/60">
                         <Globe className="w-5 h-5 mr-3" />
                         <div>
                           <p className="font-medium">Website</p>
@@ -864,7 +867,7 @@ export default function EventManagePage() {
                       </div>
                     )}
                     {event.contactInfo && (
-                      <div className="flex items-center text-gray-600 dark:text-gray-400">
+                      <div className="flex items-center text-white/60">
                         <Phone className="w-5 h-5 mr-3" />
                         <div>
                           <p className="font-medium">Contact</p>
@@ -880,16 +883,16 @@ export default function EventManagePage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 {/* Date Info */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  <h3 className="text-lg font-semibold text-white">
                     Event Details
                   </h3>
 
-                  <div className="text-gray-600 dark:text-gray-400">
+                  <div className="text-white/60">
                     <div className="flex items-center mb-2">
                       <MapPin className="w-5 h-5 mr-3" />
                       <p className="font-medium">Shipping Address</p>
                       <div className="relative group ml-2">
-                        <HelpCircle className="w-4 h-4 text-gray-400 dark:text-gray-500 cursor-help" />
+                        <HelpCircle className="w-4 h-4 text-white/40 cursor-help" />
                         <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-sm rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
                           This is where we will ship you event swag, etc
                           <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900 dark:border-t-gray-100"></div>
@@ -907,7 +910,7 @@ export default function EventManagePage() {
                               streetAddress: e.target.value,
                             })
                           }
-                          className="text-sm border border-gray-300 dark:border-gray-600 rounded px-2 py-1 w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                          className="text-sm border border-white/30 rounded px-2 py-1 w-full bg-black text-white"
                           placeholder="Street Address"
                         />
                         <input
@@ -919,7 +922,7 @@ export default function EventManagePage() {
                               streetAddress2: e.target.value,
                             })
                           }
-                          className="text-sm border border-gray-300 dark:border-gray-600 rounded px-2 py-1 w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                          className="text-sm border border-white/30 rounded px-2 py-1 w-full bg-black text-white"
                           placeholder="Street Address 2 (Optional)"
                         />
                         <div className="grid grid-cols-2 gap-2">
@@ -929,7 +932,7 @@ export default function EventManagePage() {
                             onChange={(e) =>
                               setEditForm({ ...editForm, city: e.target.value })
                             }
-                            className="text-sm border border-gray-300 dark:border-gray-600 rounded px-2 py-1 w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            className="text-sm border border-white/30 rounded px-2 py-1 w-full bg-black text-white"
                             placeholder="City"
                           />
                           <input
@@ -941,7 +944,7 @@ export default function EventManagePage() {
                                 state: e.target.value,
                               })
                             }
-                            className="text-sm border border-gray-300 dark:border-gray-600 rounded px-2 py-1 w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            className="text-sm border border-white/30 rounded px-2 py-1 w-full bg-black text-white"
                             placeholder="State/Province"
                           />
                         </div>
@@ -954,7 +957,7 @@ export default function EventManagePage() {
                               zipcode: e.target.value,
                             })
                           }
-                          className="text-sm border border-gray-300 dark:border-gray-600 rounded px-2 py-1 w-32 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                          className="text-sm border border-white/30 rounded px-2 py-1 w-32 bg-black text-white"
                           placeholder="ZIP/Postal Code"
                         />
                       </div>
@@ -969,7 +972,7 @@ export default function EventManagePage() {
                         </p>
                         {event.country && <p>{event.country}</p>}
                         {event.name && (
-                          <p className="mt-2 text-gray-500 dark:text-gray-400 italic">
+                          <p className="mt-2 text-white/50 italic">
                             Event name: {event.name}
                           </p>
                         )}
@@ -977,7 +980,7 @@ export default function EventManagePage() {
                     )}
                   </div>
 
-                  <div className="flex items-center text-gray-600 dark:text-gray-400">
+                  <div className="flex items-center text-white/60">
                     <Users className="w-5 h-5 mr-3" />
                     <div className="flex-1">
                       <p className="font-medium">Expected Attendees</p>
@@ -992,7 +995,7 @@ export default function EventManagePage() {
                                 parseInt(e.target.value) || 0,
                             })
                           }
-                          className="text-sm border border-gray-300 dark:border-gray-600 rounded px-2 py-1 w-20 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                          className="text-sm border border-white/30 rounded px-2 py-1 w-20 bg-black text-white"
                           min="0"
                         />
                       ) : (
@@ -1006,12 +1009,12 @@ export default function EventManagePage() {
 
                 {/* Status and Capacity */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  <h3 className="text-lg font-semibold text-white">
                     Status & Capacity
                   </h3>
 
                   <div>
-                    <p className="font-medium text-gray-600 dark:text-gray-400 mb-2">
+                    <p className="font-medium text-white/60 mb-2">
                       Event Status
                     </p>
                     <span
@@ -1020,7 +1023,7 @@ export default function EventManagePage() {
                           ? "bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-200"
                           : event.status === "pending"
                           ? "bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-200"
-                          : "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                          : "bg-black/40 text-gray-800 dark:text-gray-200"
                       }`}
                     >
                       {event.status?.charAt(0).toUpperCase() +
@@ -1029,7 +1032,7 @@ export default function EventManagePage() {
                   </div>
 
                   <div>
-                    <p className="font-medium text-gray-600 dark:text-gray-400 mb-2">
+                    <p className="font-medium text-white/60 mb-2">
                       Venue Status
                     </p>
                     <div className="space-y-3">
@@ -1063,10 +1066,10 @@ export default function EventManagePage() {
                   </div>
 
                   <div>
-                    <p className="font-medium text-gray-600 dark:text-gray-400 mb-2">
+                    <p className="font-medium text-white/60 mb-2">
                       Registration Status
                     </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                    <p className="text-sm text-white/60 mb-2">
                       {event.attendeeCount} registered
                       {event.maxAttendees ? ` of ${event.maxAttendees}` : ""}
                     </p>
@@ -1090,7 +1093,7 @@ export default function EventManagePage() {
 
           {/* Admin-Only Information Section */}
           {isAdmin && (
-            <div className="mt-8 bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden border-2 border-dashed border-yellow-400 dark:border-yellow-500">
+            <div className="mt-8 cockpit-panel overflow-hidden border-2 border-dashed border-yellow-400 dark:border-yellow-500">
               <div className="bg-yellow-50 dark:bg-yellow-900/20 px-4 py-2 border-b border-yellow-200 dark:border-yellow-800/30">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
@@ -1143,12 +1146,12 @@ export default function EventManagePage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Organizer Information */}
                   <div className="space-y-4">
-                    <h4 className="font-semibold text-gray-900 dark:text-gray-100">
+                    <h4 className="font-semibold text-white">
                       Organizer Details
                     </h4>
 
                     {event.organizerEmail && (
-                      <div className="flex items-center text-gray-600 dark:text-gray-400">
+                      <div className="flex items-center text-white/60">
                         <Mail className="w-4 h-4 mr-3" />
                         <div className="flex-1">
                           <p className="font-medium">Organizer Email</p>
@@ -1163,7 +1166,7 @@ export default function EventManagePage() {
                               "organizerEmail"
                             )
                           }
-                          className="ml-2 p-1 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                          className="ml-2 p-1 text-white/40 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                           title="Copy email to clipboard"
                         >
                           {copiedField === "organizerEmail" ? (
@@ -1176,7 +1179,7 @@ export default function EventManagePage() {
                     )}
 
                     {event.registrationDeadline && (
-                      <div className="flex items-center text-gray-600 dark:text-gray-400">
+                      <div className="flex items-center text-white/60">
                         <Clock className="w-4 h-4 mr-3" />
                         <div>
                           <p className="font-medium">Registration Deadline</p>
@@ -1190,12 +1193,12 @@ export default function EventManagePage() {
 
                   {/* System Information */}
                   <div className="space-y-4">
-                    <h4 className="font-semibold text-gray-900 dark:text-gray-100">
+                    <h4 className="font-semibold text-white">
                       System Metadata
                     </h4>
 
                     {event.createdAt && (
-                      <div className="flex items-center text-gray-600 dark:text-gray-400">
+                      <div className="flex items-center text-white/60">
                         <Calendar className="w-4 h-4 mr-3" />
                         <div>
                           <p className="font-medium">Created At</p>
@@ -1207,7 +1210,7 @@ export default function EventManagePage() {
                     )}
 
                     {event.updatedAt && (
-                      <div className="flex items-center text-gray-600 dark:text-gray-400">
+                      <div className="flex items-center text-white/60">
                         <Calendar className="w-4 h-4 mr-3" />
                         <div>
                           <p className="font-medium">Last Updated</p>
@@ -1483,7 +1486,7 @@ export default function EventManagePage() {
 
           {/* Venue Section */}
           {event.venue && (
-            <div className="mt-8 bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden border border-gray-200 dark:border-gray-700">
+            <div className="mt-8 cockpit-panel overflow-hidden border border-white/20">
               <div className="bg-green-50 dark:bg-green-900/20 px-6 py-4 border-b border-green-200 dark:border-green-800/30">
                 <div className="flex items-center">
                   <MapPin className="w-6 h-6 text-green-600 dark:text-green-400 mr-3" />
@@ -1503,7 +1506,7 @@ export default function EventManagePage() {
                   {/* Venue Details */}
                   <div className="space-y-4">
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                      <h3 className="text-lg font-semibold text-white mb-2">
                         {event.venue.venueName}
                       </h3>
                       <div className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
@@ -1528,7 +1531,7 @@ export default function EventManagePage() {
                   {/* Contact Information */}
                   <div className="space-y-4">
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                      <h3 className="text-lg font-semibold text-white mb-2">
                         Venue Contact
                       </h3>
                       <div className="space-y-2">
@@ -1581,7 +1584,7 @@ export default function EventManagePage() {
           )}
 
           {/* Volunteer Signup Section */}
-          <div className="mt-8 bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden border border-gray-200 dark:border-gray-700">
+          <div className="mt-8 cockpit-panel overflow-hidden border border-white/20">
             <div className="bg-purple-50 dark:bg-purple-900/20 px-6 py-4 border-b border-purple-200 dark:border-purple-800/30">
               <div className="flex items-center">
                 <Users className="w-6 h-6 text-purple-600 dark:text-purple-400 mr-3" />
@@ -1598,7 +1601,7 @@ export default function EventManagePage() {
 
             <div className="p-6">
               <div className="prose dark:prose-invert max-w-none">
-                <p className="text-gray-700 dark:text-gray-300 mb-4">
+                <p className="text-white/70 mb-4">
                   Please use this form to get your volunteers to sign up for the
                   event. This is important so we can keep accurate count for
                   food and swag!
@@ -1607,12 +1610,12 @@ export default function EventManagePage() {
                 <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
                   <div className="space-y-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      <label className="block text-sm font-medium text-white/70 mb-1">
                         Form link:
                       </label>
                       <div className="flex items-center space-x-2">
                         <code
-                          className="flex-1 text-sm bg-white dark:bg-gray-800 px-3 py-2 rounded border border-gray-300 dark:border-gray-600 text-blue-600 dark:text-blue-400 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                          className="flex-1 text-sm bg-white dark:bg-gray-800 px-3 py-2 rounded border border-white/30 text-blue-600 dark:text-blue-400 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                           onClick={() =>
                             copyText(
                               "https://forms.hackclub.com/t/kwmV49QpGTus",
@@ -1645,11 +1648,11 @@ export default function EventManagePage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      <label className="block text-sm font-medium text-white/70 mb-1">
                         Password:
                       </label>
                       <code
-                        className="inline-block text-sm bg-white dark:bg-gray-800 px-3 py-2 rounded border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                        className="inline-block text-sm bg-white dark:bg-gray-800 px-3 py-2 rounded border border-white/30 text-white cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                         onClick={() =>
                           copyText("bright-denim-snake", "volunteer-password")
                         }
@@ -1674,7 +1677,7 @@ export default function EventManagePage() {
           </div>
 
           {/* Scanning Instructions Section */}
-          <div className="mt-8 bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden border border-gray-200 dark:border-gray-700">
+          <div className="mt-8 cockpit-panel overflow-hidden border border-white/20">
             <div className="bg-green-50 dark:bg-green-900/20 px-6 py-4 border-b border-green-200 dark:border-green-800/30">
               <div className="flex items-center">
                 <Search className="w-6 h-6 text-green-600 dark:text-green-400 mr-3" />
@@ -1691,7 +1694,7 @@ export default function EventManagePage() {
 
             <div className="p-6">
               <div className="prose dark:prose-invert max-w-none">
-                <p className="text-gray-700 dark:text-gray-300 mb-4">
+                <p className="text-white/70 mb-4">
                   Use the link below to open the scanner site on your phone,
                   iPad, or laptop! It is designed to work on most browsers. All
                   events must scan every person in the room: both attendees and
@@ -1703,12 +1706,12 @@ export default function EventManagePage() {
                 <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
                   <div className="space-y-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      <label className="block text-sm font-medium text-white/70 mb-1">
                         Scanner URL:
                       </label>
                       <div className="flex items-center space-x-2">
                         <code
-                          className="flex-1 text-sm bg-white dark:bg-gray-800 px-3 py-2 rounded border border-gray-300 dark:border-gray-600 text-blue-600 dark:text-blue-400 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                          className="flex-1 text-sm bg-white dark:bg-gray-800 px-3 py-2 rounded border border-white/30 text-blue-600 dark:text-blue-400 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                           onClick={() =>
                             copyText(
                               "https://scanner.hackclub.dev",
@@ -1741,11 +1744,11 @@ export default function EventManagePage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      <label className="block text-sm font-medium text-white/70 mb-1">
                         Username:
                       </label>
                       <code
-                        className="inline-block text-sm bg-white dark:bg-gray-800 px-3 py-2 rounded border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                        className="inline-block text-sm bg-white dark:bg-gray-800 px-3 py-2 rounded border border-white/30 text-white cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                         onClick={() => copyText("admin", "scanner-username")}
                         title="Click to copy username"
                       >
@@ -1759,11 +1762,11 @@ export default function EventManagePage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      <label className="block text-sm font-medium text-white/70 mb-1">
                         Password:
                       </label>
                       <code
-                        className="inline-block text-sm bg-white dark:bg-gray-800 px-3 py-2 rounded border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                        className="inline-block text-sm bg-white dark:bg-gray-800 px-3 py-2 rounded border border-white/30 text-white cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                         onClick={() =>
                           copyText(
                             "mamamiamamamiamamamialetmego",
@@ -1788,7 +1791,7 @@ export default function EventManagePage() {
 
           {/* Attendees Section */}
           {event.attendees && (
-            <div className="mt-8 bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden border border-gray-200 dark:border-gray-700">
+            <div className="mt-8 cockpit-panel overflow-hidden border border-white/20">
               {/* Header */}
               <div className="bg-blue-50 dark:bg-blue-900/20 px-6 py-4 border-b border-blue-200 dark:border-blue-800/30">
                 <div className="flex items-center justify-between">
@@ -1859,11 +1862,11 @@ export default function EventManagePage() {
 
               {filteredAndSortedAttendees().length === 0 && !attendeeSearch ? (
                 <div className="p-12 text-center">
-                  <Users className="w-16 h-16 text-gray-400 dark:text-gray-500 mx-auto mb-6" />
-                  <h3 className="text-xl font-medium text-gray-900 dark:text-gray-100 mb-2">
+                  <Users className="w-16 h-16 text-white/40 mx-auto mb-6" />
+                  <h3 className="text-xl font-medium text-white mb-2">
                     No attendees registered yet
                   </h3>
-                  <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto">
+                  <p className="text-white/50 max-w-md mx-auto">
                     Attendees will appear here once they register for the event.
                     Share your event link to start getting registrations!
                   </p>
@@ -1874,20 +1877,20 @@ export default function EventManagePage() {
                   <div className="mb-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
                     <div className="flex-1 max-w-md">
                       <div className="relative">
-                        <Search className="w-5 h-5 text-gray-400 dark:text-gray-500 absolute left-3 top-3" />
+                        <Search className="w-5 h-5 text-white/40 absolute left-3 top-3" />
                         <input
                           type="text"
                           placeholder="Search attendees by name or email..."
                           value={attendeeSearch}
                           onChange={(e) => setAttendeeSearch(e.target.value)}
-                          className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400"
+                          className="w-full pl-10 pr-4 py-2 border border-white/30 rounded-lg bg-black text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400"
                         />
                       </div>
                     </div>
 
                     <div className="flex items-center space-x-3">
                       <div className="flex items-center space-x-2">
-                        <Filter className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                        <Filter className="w-4 h-4 text-white/50" />
                         <select
                           value={volunteerFilter}
                           onChange={(e) =>
@@ -1900,7 +1903,7 @@ export default function EventManagePage() {
                                 | "scanned-in"
                             )
                           }
-                          className="text-sm border border-gray-300 dark:border-gray-600 rounded px-3 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400"
+                          className="text-sm border border-white/30 rounded px-3 py-1 bg-black text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400"
                         >
                           <option value="all">All Attendees</option>
                           <option value="volunteers">Volunteers</option>
@@ -1911,7 +1914,7 @@ export default function EventManagePage() {
                       </div>
 
                       <div className="flex items-center space-x-2">
-                        <SortAsc className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                        <SortAsc className="w-4 h-4 text-white/50" />
                         <select
                           value={attendeeSortBy}
                           onChange={(e) =>
@@ -1919,7 +1922,7 @@ export default function EventManagePage() {
                               e.target.value as "name" | "email" | "age"
                             )
                           }
-                          className="text-sm border border-gray-300 dark:border-gray-600 rounded px-3 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400"
+                          className="text-sm border border-white/30 rounded px-3 py-1 bg-black text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400"
                         >
                           <option value="name">Sort by Name</option>
                           <option value="email">Sort by Email</option>
@@ -1933,7 +1936,7 @@ export default function EventManagePage() {
                             attendeeSortOrder === "asc" ? "desc" : "asc"
                           )
                         }
-                        className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700"
+                        className="p-2 text-white/50 hover:text-gray-700 dark:hover:text-gray-200 border border-white/30 rounded hover:bg-gray-50 dark:hover:bg-gray-700"
                         title={`Sort ${
                           attendeeSortOrder === "asc"
                             ? "Descending"
@@ -1954,11 +1957,11 @@ export default function EventManagePage() {
                   {/* Attendees Grid */}
                   {filteredAndSortedAttendees().length === 0 ? (
                     <div className="text-center py-8">
-                      <Search className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-                      <p className="text-gray-500 dark:text-gray-400 text-lg">
+                      <Search className="w-12 h-12 text-white/40 mx-auto mb-4" />
+                      <p className="text-white/50 text-lg">
                         No attendees match your search
                       </p>
-                      <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">
+                      <p className="text-white/40 text-sm mt-1">
                         Try adjusting your search terms
                       </p>
                     </div>
@@ -1975,7 +1978,7 @@ export default function EventManagePage() {
                                 ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
                                 : attendee.event_volunteer === true
                                 ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800"
-                                : "bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600"
+                                : "bg-black/30 border-gray-200 dark:border-gray-600"
                             } rounded-lg p-4 border hover:shadow-md hover:border-blue-300 dark:hover:border-blue-500 transition-all duration-200`}
                           >
                             <div className="space-y-3">
@@ -1984,7 +1987,7 @@ export default function EventManagePage() {
                                   {/* Preferred name (primary display) */}
                                   <div className="flex items-center gap-2">
                                     <h4
-                                      className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex-1"
+                                      className="text-sm font-semibold text-white truncate cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex-1"
                                       onClick={() =>
                                         copyText(
                                           attendee.preferredName ||
@@ -2015,7 +2018,7 @@ export default function EventManagePage() {
                                     (attendee.firstName ||
                                       attendee.lastName) && (
                                       <p
-                                        className="text-xs text-gray-500 dark:text-gray-400 truncate cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                                        className="text-xs text-white/50 truncate cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                                         onClick={() =>
                                           copyText(
                                             `${attendee.firstName || ""} ${
@@ -2059,7 +2062,7 @@ export default function EventManagePage() {
 
                               <div className="space-y-1">
                                 {attendee.phone && (
-                                  <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                                  <div className="flex items-center text-xs text-white/50">
                                     <Phone className="w-3 h-3 mr-1.5" />
                                     <span
                                       className="truncate cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
@@ -2082,7 +2085,7 @@ export default function EventManagePage() {
                                   </div>
                                 )}
                                 {attendee.age && (
-                                  <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                                  <div className="flex items-center text-xs text-white/50">
                                     <Calendar className="w-3 h-3 mr-1.5" />
                                     <span>{attendee.age} years old</span>
                                   </div>
@@ -2090,14 +2093,14 @@ export default function EventManagePage() {
 
                                 {/* New attendee fields */}
                                 {attendee.shirt_size && (
-                                  <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                                  <div className="flex items-center text-xs text-white/50">
                                     <Shirt className="w-3 h-3 mr-1.5" />
                                     <span>{attendee.shirt_size}</span>
                                   </div>
                                 )}
 
                                 {attendee.dietary_restrictions && (
-                                  <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                                  <div className="flex items-center text-xs text-white/50">
                                     <Utensils className="w-3 h-3 mr-1.5" />
                                     <span
                                       className="truncate cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
@@ -2114,7 +2117,7 @@ export default function EventManagePage() {
                                 )}
 
                                 {attendee.additional_accommodations && (
-                                  <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                                  <div className="flex items-center text-xs text-white/50">
                                     <Accessibility className="w-3 h-3 mr-1.5" />
                                     <span
                                       className="truncate cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
@@ -2133,7 +2136,7 @@ export default function EventManagePage() {
 
                                 {(attendee.emergency_contact_1_name ||
                                   attendee.emergency_contact_1_phone) && (
-                                  <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                                  <div className="flex items-center text-xs text-white/50">
                                     <AlertTriangle className="w-3 h-3 mr-1.5" />
                                     <span className="truncate">
                                       {attendee.emergency_contact_1_name ||
@@ -2195,7 +2198,7 @@ export default function EventManagePage() {
                         <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                           {filteredAndSortedAttendees().length}
                         </div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        <div className="text-sm text-white/50 mt-1">
                           Active Attendees
                         </div>
                       </div>
@@ -2210,7 +2213,7 @@ export default function EventManagePage() {
                             : "-"}
                           %
                         </div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        <div className="text-sm text-white/50 mt-1">
                           Capacity Filled
                         </div>
                       </div>
