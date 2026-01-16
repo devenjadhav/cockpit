@@ -1,11 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { LogOut, RefreshCw, Users, Calendar, Globe, TrendingUp, Filter, Search, X, Zap, Type } from 'lucide-react';
+import { LogOut, RefreshCw, Calendar, Filter, Search, X, Zap, Type } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useDashboard } from '@/hooks/useDashboard';
 import { useTriageStatuses } from '@/hooks/useTriageStatuses';
 import { EventCard } from './EventCard';
-import { StatsCard } from './StatsCard';
-import { EventMap } from './EventMap';
 import { AdminConsole } from './AdminConsole';
 import { apiClient } from '@/lib/api';
 
@@ -487,13 +485,6 @@ export function Dashboard() {
             </div>
           </div>
         )}
-
-        {/* Map Section - Temporarily disabled */}
-        {/* {data.events && data.events.length > 0 && (
-          <div className="mb-8">
-            <EventMap events={data.events} />
-          </div>
-        )} */}
 
         {/* Events Section */}
         <div className="mb-8">

@@ -26,21 +26,3 @@ export function formatUptime(seconds: number): string {
 export function formatPercentage(value: number): string {
   return value.toFixed(1);
 }
-
-export function formatDuration(milliseconds: number): string {
-  if (milliseconds < 1000) {
-    return `${milliseconds}ms`;
-  }
-  
-  const seconds = milliseconds / 1000;
-  if (seconds < 60) {
-    return `${seconds.toFixed(1)}s`;
-  }
-  
-  const minutes = seconds / 60;
-  return `${minutes.toFixed(1)}m`;
-}
-
-export function cn(...classes: (string | undefined | null | false)[]): string {
-  return classes.filter(Boolean).join(' ');
-}

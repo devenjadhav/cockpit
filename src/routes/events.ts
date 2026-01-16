@@ -1,14 +1,10 @@
 import express from 'express';
 import { airtableService } from '../services/airtableService';
-import { loopsService } from '../services/loopsService';
-import { DashboardService } from '../services/dashboardService';
 import { databaseService } from '../services/databaseService';
 import { authenticateToken } from '../middleware/auth';
 import { AuthenticatedRequest } from '../types/auth';
-import { ApiResponse, EventWithStats, PaginatedResponse } from '../types/api';
+import { ApiResponse, EventWithStats } from '../types/api';
 import { UpdateEventData } from '../types/event';
-import { PaginationUtils } from '../utils/pagination';
-import { EventUpdateEmailData } from '../types/loops';
 
 const router = express.Router();
 
